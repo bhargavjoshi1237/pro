@@ -184,8 +184,130 @@ function LandingContent() {
           </div>
         </section>
 
+        {/* Pricing Section */}
+        <section id="pricing" className="relative z-10 px-6 py-32 bg-white dark:bg-[#191919]">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">Simple, transparent pricing</h2>
+              <p className="text-xl text-gray-600 dark:text-gray-400">Choose the plan that fits your writing needs</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {/* Free Plan */}
+              <div className="bg-white dark:bg-[#212121] rounded-2xl border-2 border-gray-200 dark:border-[#2a2a2a] p-8 hover:border-gray-300 dark:hover:border-[#3a3a3a] transition-all">
+                <h3 className="text-2xl font-bold mb-2">Free</h3>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">$0</span>
+                  <span className="text-gray-600 dark:text-gray-400">/month</span>
+                </div>
+                <ul className="space-y-4 mb-8">
+                  <PricingFeature text="3 workspaces" />
+                  <PricingFeature text="50 snippets per workspace" />
+                  <PricingFeature text="Basic editor" />
+                  <PricingFeature text="Folder organization" />
+                  <PricingFeature text="Auto-save" />
+                  <PricingFeature text="Share with 2 collaborators" />
+                  <PricingFeature text="Basic export (JSON)" />
+                </ul>
+                <button
+                  onClick={() => router.push('/login')}
+                  className="w-full px-6 py-3 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#3a3a3a] text-gray-900 dark:text-[#e7e7e7] rounded-xl font-semibold transition-all"
+                >
+                  Get Started
+                </button>
+              </div>
+
+              {/* Pro Plan */}
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl border-2 border-blue-500 p-8 relative transform scale-105 shadow-2xl">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-yellow-400 text-gray-900 text-sm font-bold rounded-full">
+                  POPULAR
+                </div>
+                <h3 className="text-2xl font-bold mb-2 text-white">Pro</h3>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-white">$5</span>
+                  <span className="text-blue-100">/month</span>
+                </div>
+                <ul className="space-y-4 mb-8">
+                  <PricingFeature text="Unlimited workspaces" light />
+                  <PricingFeature text="Unlimited snippets" light />
+                  <PricingFeature text="Rich text editor" light />
+                  <PricingFeature text="Tags & categories" light />
+                  <PricingFeature text="Advanced search" light />
+                  <PricingFeature text="Unlimited collaborators" light />
+                  <PricingFeature text="Version history (30 days)" light />
+                  <PricingFeature text="Export to PDF, DOCX, MD" light />
+                  <PricingFeature text="Real-time collaboration" light />
+                  <PricingFeature text="Priority support" light />
+                </ul>
+                <button
+                  onClick={() => router.push('/login')}
+                  className="w-full px-6 py-3 bg-white hover:bg-gray-100 text-blue-600 rounded-xl font-semibold transition-all"
+                >
+                  Start Pro Trial
+                </button>
+              </div>
+
+              {/* Premium Plan */}
+              <div className="bg-white dark:bg-[#212121] rounded-2xl border-2 border-gray-200 dark:border-[#2a2a2a] p-8 hover:border-gray-300 dark:hover:border-[#3a3a3a] transition-all">
+                <h3 className="text-2xl font-bold mb-2">Premium</h3>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">$10</span>
+                  <span className="text-gray-600 dark:text-gray-400">/month</span>
+                </div>
+                <ul className="space-y-4 mb-8">
+                  <PricingFeature text="Everything in Pro" />
+                  <PricingFeature text="AI writing assistant" />
+                  <PricingFeature text="Advanced analytics" />
+                  <PricingFeature text="Custom templates" />
+                  <PricingFeature text="Offline mode" />
+                  <PricingFeature text="API access" />
+                  <PricingFeature text="Version history (unlimited)" />
+                  <PricingFeature text="Custom branding" />
+                  <PricingFeature text="Team management" />
+                  <PricingFeature text="Priority support + SLA" />
+                </ul>
+                <button
+                  onClick={() => router.push('/login')}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-semibold transition-all"
+                >
+                  Start Premium Trial
+                </button>
+              </div>
+            </div>
+
+            {/* Feature Comparison */}
+            <div className="mt-16 max-w-4xl mx-auto">
+              <h3 className="text-2xl font-bold text-center mb-8">Feature Comparison</h3>
+              <div className="bg-white dark:bg-[#212121] rounded-2xl border border-gray-200 dark:border-[#2a2a2a] overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-[#2a2a2a]">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-semibold">Feature</th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold">Free</th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold">Pro</th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold">Premium</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-[#2a2a2a]">
+                    <ComparisonRow feature="Workspaces" free="3" pro="Unlimited" premium="Unlimited" />
+                    <ComparisonRow feature="Snippets per workspace" free="50" pro="Unlimited" premium="Unlimited" />
+                    <ComparisonRow feature="Collaborators" free="2" pro="Unlimited" premium="Unlimited" />
+                    <ComparisonRow feature="Real-time collaboration" free={false} pro={true} premium={true} />
+                    <ComparisonRow feature="Tags & categories" free={false} pro={true} premium={true} />
+                    <ComparisonRow feature="Version history" free={false} pro="30 days" premium="Unlimited" />
+                    <ComparisonRow feature="Export formats" free="JSON" pro="PDF, DOCX, MD" premium="All + EPUB" />
+                    <ComparisonRow feature="AI writing assistant" free={false} pro={false} premium={true} />
+                    <ComparisonRow feature="API access" free={false} pro={false} premium={true} />
+                    <ComparisonRow feature="Priority support" free={false} pro={true} premium={true} />
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* CTA Section */}
-        <section className="relative z-10 px-6 py-32">
+        <section className="relative z-10 px-6 py-32 bg-gray-50 dark:bg-[#212121]">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Ready to start writing?
@@ -232,6 +354,37 @@ function FeatureCard({ icon, title, description, color }) {
       <h3 className="text-xl font-semibold mb-3">{title}</h3>
       <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{description}</p>
     </div>
+  );
+}
+
+function PricingFeature({ text, light = false }) {
+  return (
+    <li className="flex items-center gap-3">
+      <CheckCircleIcon className={`w-5 h-5 flex-shrink-0 ${light ? 'text-white' : 'text-green-500'}`} />
+      <span className={light ? 'text-white' : 'text-gray-700 dark:text-gray-300'}>{text}</span>
+    </li>
+  );
+}
+
+function ComparisonRow({ feature, free, pro, premium }) {
+  const renderCell = (value) => {
+    if (typeof value === 'boolean') {
+      return value ? (
+        <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
+      ) : (
+        <span className="text-gray-400">—</span>
+      );
+    }
+    return <span className="text-sm">{value}</span>;
+  };
+
+  return (
+    <tr>
+      <td className="px-6 py-4 text-sm font-medium">{feature}</td>
+      <td className="px-6 py-4 text-center">{renderCell(free)}</td>
+      <td className="px-6 py-4 text-center">{renderCell(pro)}</td>
+      <td className="px-6 py-4 text-center">{renderCell(premium)}</td>
+    </tr>
   );
 }
 

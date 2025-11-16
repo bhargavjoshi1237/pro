@@ -158,7 +158,7 @@ function LoginContent() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full"
+                className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 border border-blue-600 dark:border-blue-600 text-white"
                 size="lg"
               >
                 {loading ? 'Processing...' : (isSignUp ? 'Create Account' : 'Sign In')}

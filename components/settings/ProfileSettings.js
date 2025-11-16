@@ -143,7 +143,7 @@ export default function ProfileSettings({ user }) {
             size="sm"
             onClick={() => document.getElementById('avatar-upload')?.click()}
             disabled={uploading}
-            className="bg-white dark:bg-[#212121]"
+            className="bg-white dark:bg-[#212121]  text-gray-900 dark:text-[#e7e7e7]"
           >
             {uploading ? 'Uploading...' : 'Change Avatar'}
           </Button>
@@ -162,7 +162,7 @@ export default function ProfileSettings({ user }) {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Enter your display name"
-            className="bg-white dark:bg-[#1c1c1c]"
+            className="bg-white dark:bg-[#1c1c1c]  text-gray-900 dark:text-[#e7e7e7]"
           />
         </div>
 
@@ -173,7 +173,7 @@ export default function ProfileSettings({ user }) {
             type="email"
             value={user?.email || ''}
             disabled
-            className="bg-gray-50 dark:bg-[#1c1c1c]"
+            className="bg-gray-50 dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] select-text"
           />
           <p className="text-xs text-gray-500 dark:text-gray-400">Email cannot be changed</p>
         </div>

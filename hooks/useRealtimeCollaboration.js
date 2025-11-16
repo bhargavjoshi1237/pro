@@ -106,17 +106,41 @@ export function useRealtimeCollaboration(workspaceId, snippetId, userId) {
     try {
       const { data, error } = await supabase
         .from('active_sessions')
-        .select(`
-          *,
-          profiles(email, display_name, avatar_url)
-        `)
+        .select('*')
         .eq('workspace_id', workspaceId)
         .neq('user_id', userId);
 
-      if (error) throw error;
-      setActiveSessions(data || []);
+      if (error) {
+        console.error('Error loading active sessions:', error.message || error);
+        setActiveSessions([]);
+        return;
+      }
+
+      // Fetch profiles separately for each session
+      if (data && data.length > 0) {
+        const userIds = data.map(session => session.user_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, email, display_name, avatar_url')
+          .in('id', userIds);
+
+        const profileMap = {};
+        profiles?.forEach(profile => {
+          profileMap[profile.id] = profile;
+        });
+
+        const sessionsWithProfiles = data.map(session => ({
+          ...session,
+          profiles: profileMap[session.user_id]
+        }));
+
+        setActiveSessions(sessionsWithProfiles);
+      } else {
+        setActiveSessions([]);
+      }
     } catch (error) {
-      console.error('Error loading active sessions:', error);
+      console.error('Error loading active sessions:', error?.message || 'Unknown error');
+      setActiveSessions([]);
     }
   }, [workspaceId, userId]);
 

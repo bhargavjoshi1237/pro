@@ -15,7 +15,8 @@ import {
   SunIcon,
   ChevronRightIcon,
   ClockIcon,
-  TrashIcon
+  TrashIcon,
+  ChatBubbleLeftIcon
 } from '@heroicons/react/24/outline';
 import { LoadingPage } from '@/components/LoadingSpinner';
 import SettingsDialog from '@/components/settings/SettingsDialog';
@@ -23,6 +24,10 @@ import ShareWorkspaceDialog from '@/components/workspace/ShareWorkspaceDialog';
 import MemberAvatars from '@/components/workspace/MemberAvatars';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
+import { CommandPalette } from '@/components/CommandPalette';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { Kbd, KbdGroup } from '@/components/ui/kbd';
+import { ChatDrawer } from '@/components/chat/ChatDrawer';
 
 function DashboardContent() {
   const router = useRouter();
@@ -268,11 +273,78 @@ function DashboardContent() {
   };
 
   if (loading) {
-    return <LoadingPage message="Loading your workspaces..." />;
+    return (
+      <div className="flex flex-col lg:flex-row h-screen bg-[#f8f9fa] dark:bg-[#1c1c1c]">
+        {/* Sidebar Skeleton */}
+        <div className="hidden lg:flex lg:w-64 bg-white dark:bg-[#181818] border-r border-gray-200 dark:border-[#2a2a2a] flex-col">
+          <div className="px-3 py-2.5 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
+              <div className="w-24 h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
+            </div>
+          </div>
+          <nav className="flex-1 p-3 space-y-1">
+            <div className="w-full h-10 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg animate-pulse" />
+          </nav>
+        </div>
+
+        {/* Main Content Skeleton */}
+        <div className="flex-1 overflow-auto">
+          <div className="bg-white dark:bg-[#181818] border-b border-gray-200 dark:border-[#2a2a2a] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className="w-48 h-8 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse mb-2" />
+            <div className="w-64 h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
+          </div>
+          
+          <div className="p-4 sm:p-6 lg:p-8">
+            {/* Stats Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="w-24 h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse mb-3" />
+                      <div className="w-16 h-8 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
+                    </div>
+                    <div className="w-12 h-12 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Workspaces Skeleton */}
+            <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-[#2a2a2a]">
+                <div className="w-32 h-6 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
+              </div>
+              <div className="divide-y divide-gray-200 dark:divide-[#2a2a2a]">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="px-4 sm:px-6 py-3 sm:py-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg animate-pulse" />
+                      <div className="flex-1">
+                        <div className="w-48 h-5 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse mb-2" />
+                        <div className="w-32 h-3 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
+                      </div>
+                      <div className="w-6 h-6 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-[#f8f9fa] dark:bg-[#1c1c1c] relative overflow-hidden">
+        {/* Command Palette */}
+        <CommandPalette workspaces={workspaces} />
+        
+        {/* Chat Drawer */}
+        {user && <ChatDrawer userId={user.id} />}
+        
         {/* Sidebar */}
         <div className="hidden lg:flex lg:w-64 bg-white dark:bg-[#181818] border-r border-gray-200 dark:border-[#2a2a2a] flex-col">
           {/* Logo with Theme Toggle */}
@@ -309,18 +381,24 @@ function DashboardContent() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-[#e7e7e7]">All Workspaces</h1>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
                   Manage and organize your writing projects
+                  <span className="hidden md:flex items-center gap-1 text-xs text-gray-500 dark:text-gray-500">
+                    • Press <KbdGroup><Kbd>⌘</Kbd><Kbd>K</Kbd></KbdGroup> for quick actions
+                  </span>
                 </p>
               </div>
-              <button
-                onClick={() => setShowNewWorkspace(true)}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-              >
-                <PlusIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">New Workspace</span>
-                <span className="sm:hidden">New</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {user && <NotificationCenter userId={user.id} />}
+                <button
+                  onClick={() => setShowNewWorkspace(true)}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">New Workspace</span>
+                  <span className="sm:hidden">New</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -366,11 +444,11 @@ function DashboardContent() {
                 </div>
 
                 {/* Workspaces Table */}
-                <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg overflow-hidden">
+                     <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg overflow-visible">
                   <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-[#2a2a2a]">
                     <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-[#e7e7e7]">Your Workspaces</h2>
                   </div>
-                  <div className="divide-y divide-gray-200 dark:divide-[#2a2a2a]">
+                  <div className="divide-y divide-gray-200 dark:divide-[#2a2a2a] overflow-visible">
                     {workspaces.map((workspace) => (
                       <div
                         key={workspace.id}
@@ -426,13 +504,26 @@ function DashboardContent() {
                                   className="fixed inset-0 z-30"
                                   onClick={() => setOpenMenuId(null)}
                                 />
-                                <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#212121] rounded-lg shadow-xl border border-gray-200 dark:border-[#2a2a2a] z-40 py-1">
+                                <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#212121] rounded-lg shadow-xl border border-gray-200 dark:border-[#2a2a2a] z-50 py-1">
                                   <button
                                     onClick={() => handleShareWorkspace(workspace)}
                                     className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
                                   >
                                     <UsersIcon className="w-4 h-4" />
                                     Share Workspace
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      setOpenMenuId(null);
+                                      const { exportWorkspace } = await import('@/lib/workspaceExport');
+                                      await exportWorkspace(workspace.id);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    Export Workspace
                                   </button>
                                   <button
                                     onClick={() => {
@@ -492,8 +583,8 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* User Menu - Bottom Right */}
-        <div className="absolute bottom-4 right-4 z-10">
+        {/* User Menu - Bottom Left */}
+        <div className="absolute bottom-4 left-4 z-10">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center font-semibold shadow-lg transition-colors"
@@ -507,7 +598,7 @@ function DashboardContent() {
                 className="fixed inset-0 z-20"
                 onClick={() => setShowUserMenu(false)}
               />
-              <div className="absolute bottom-12 right-0 w-56 bg-white dark:bg-[#212121] rounded-lg shadow-xl border border-gray-200 dark:border-[#2a2a2a] z-30">
+              <div className="absolute bottom-12 left-0 w-56 bg-white dark:bg-[#212121] rounded-lg shadow-xl border border-gray-200 dark:border-[#2a2a2a] z-30">
                 <div className="p-3 border-b border-gray-200 dark:border-[#2a2a2a]">
                   <p className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] truncate">
                     {user?.email}
@@ -619,7 +710,7 @@ function DashboardContent() {
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">Delete Workspace</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Are you sure you want to delete "{selectedWorkspace?.name}"? This action cannot be undone and will delete all snippets in this workspace.
+                    Are you sure you want to delete &ldquo;{selectedWorkspace?.name}&rdquo;? This action cannot be undone and will delete all snippets in this workspace.
                   </p>
                   <div className="flex gap-3">
                     <button

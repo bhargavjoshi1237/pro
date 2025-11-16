@@ -9,7 +9,11 @@ import EditorTabs from '@/components/workspace/EditorTabs';
 import UserMenu from '@/components/workspace/UserMenu';
 import { useWorkspace } from '@/hooks/useWorkspace';
 import { ThemeProvider } from '@/context/ThemeContext';
-import { Bars3Icon } from '@heroicons/react/24/outline';
+import { Bars3Icon, UserGroupIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PeoplePanel } from '@/components/workspace/PeoplePanel';
+import { CommandPalette } from '@/components/CommandPalette';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { ChatDrawer } from '@/components/chat/ChatDrawer';
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -17,6 +21,7 @@ export default function WorkspacePage() {
   const workspaceId = params.id;
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [peoplePanelOpen, setPeoplePanelOpen] = useState(false);
 
   const {
     workspace,
@@ -58,30 +63,47 @@ export default function WorkspacePage() {
   if (loading || !user) {
     return (
       <ThemeProvider>
-        <div className="flex h-screen bg-white dark:bg-[#191919]">
-          <div className="w-64 bg-[#fafafa] dark:bg-[#191919] border-r border-gray-200 dark:border-[#2a2a2a] p-4">
-            <div className="animate-pulse space-y-4">
-              <div className="h-8 bg-gray-200 dark:bg-[#2a2a2a] rounded w-3/4"></div>
+        <div className="flex h-screen bg-[#fafafa] dark:bg-[#191919]">
+          {/* Sidebar Skeleton */}
+          <div className="w-64 bg-white dark:bg-[#181818] border-r border-gray-200 dark:border-[#2a2a2a] p-4">
+            <div className="space-y-4">
+              {/* Header Skeleton */}
+              <div className="h-8 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg w-3/4 animate-pulse"></div>
+              
+              {/* Action Buttons Skeleton */}
               <div className="space-y-2">
-                <div className="h-10 bg-gray-200 dark:bg-[#2a2a2a] rounded"></div>
-                <div className="h-10 bg-gray-200 dark:bg-[#2a2a2a] rounded"></div>
+                <div className="h-10 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg animate-pulse"></div>
+                <div className="h-10 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg animate-pulse"></div>
               </div>
+              
+              {/* Snippets List Skeleton */}
               <div className="space-y-2 mt-8">
                 {[1, 2, 3, 4, 5].map(i => (
-                  <div key={i} className="h-12 bg-gray-200 dark:bg-[#2a2a2a] rounded"></div>
+                  <div key={i} className="h-12 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg animate-pulse"></div>
                 ))}
               </div>
             </div>
           </div>
-          <div className="flex-1 flex items-center justify-center bg-white dark:bg-[#212121]">
-            <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-4">
-                <svg className="animate-spin text-blue-600 dark:text-blue-500" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
+          
+          {/* Main Content Skeleton */}
+          <div className="flex-1 flex flex-col bg-white dark:bg-[#212121]">
+            {/* Tabs Skeleton */}
+            <div className="border-b border-gray-200 dark:border-[#2a2a2a] px-4 py-2 flex gap-2">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-8 w-32 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse"></div>
+              ))}
+            </div>
+            
+            {/* Editor Skeleton */}
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="relative w-16 h-16 mx-auto mb-6">
+                  <div className="absolute inset-0 border-4 border-blue-200 dark:border-blue-900 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-blue-600 dark:border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">Loading workspace...</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Preparing your writing environment</p>
               </div>
-              <p className="text-gray-600 dark:text-gray-400 text-lg">Loading workspace...</p>
             </div>
           </div>
         </div>
@@ -92,6 +114,12 @@ export default function WorkspacePage() {
   return (
     <ThemeProvider>
       <div className="flex h-screen bg-[#fafafa] dark:bg-[#191919] overflow-hidden">
+        {/* Command Palette */}
+        <CommandPalette workspaces={[workspace]} currentWorkspaceId={workspaceId} />
+        
+        {/* Chat Drawer */}
+        {user && <ChatDrawer userId={user.id} />}
+
         {/* Mobile sidebar */}
         <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)}>
           <Sidebar
@@ -140,6 +168,13 @@ export default function WorkspacePage() {
             <h1 className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7] truncate flex-1">
               {workspace?.name || 'Workspace'}
             </h1>
+            <NotificationCenter userId={user?.id} />
+            <button
+              onClick={() => setPeoplePanelOpen(!peoplePanelOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
+            >
+              <UserGroupIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            </button>
           </div>
 
           <EditorTabs
@@ -160,6 +195,44 @@ export default function WorkspacePage() {
         <div className="hidden lg:block">
           <UserMenu user={user} onSettingsClick={() => {}} />
         </div>
+
+        {/* People Panel - Desktop */}
+        <div className={`hidden lg:block transition-all duration-300 ${peoplePanelOpen ? 'w-80' : 'w-0'}`}>
+          {peoplePanelOpen && user && (
+            <PeoplePanel workspaceId={workspaceId} currentUserId={user.id} />
+          )}
+        </div>
+
+        {/* People Panel Toggle Button - Desktop */}
+        <div className="hidden lg:flex items-start pt-4 pr-2">
+          <button
+            onClick={() => setPeoplePanelOpen(!peoplePanelOpen)}
+            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+            title={peoplePanelOpen ? 'Hide people panel' : 'Show people panel'}
+          >
+            {peoplePanelOpen ? (
+              <XMarkIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <UserGroupIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
+        </div>
+
+        {/* People Panel - Mobile (Full Screen Overlay) */}
+        {peoplePanelOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 bg-white dark:bg-[#181818]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a]">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7]">People</h2>
+              <button
+                onClick={() => setPeoplePanelOpen(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
+              >
+                <XMarkIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              </button>
+            </div>
+            {user && <PeoplePanel workspaceId={workspaceId} currentUserId={user.id} />}
+          </div>
+        )}
       </div>
     </ThemeProvider>
   );
