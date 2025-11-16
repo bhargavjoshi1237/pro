@@ -72,6 +72,7 @@ export function ChatDrawer({ userId }) {
 
       const roomIds = memberData.map((m) => m.room_id);
 
+      // Single query to get rooms with workspace info
       const { data: roomsData } = await supabase
         .from('chat_rooms')
         .select('*, workspace:workspace_id(name)')
@@ -80,50 +81,67 @@ export function ChatDrawer({ userId }) {
 
       if (!roomsData) return;
 
-      const roomsWithDetails = await Promise.all(
-        roomsData.map(async (room) => {
-          const { data: lastMessage } = await supabase
-            .from('chat_messages')
-            .select('*')
-            .eq('room_id', room.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
+      // Batch fetch all last messages in one query
+      const { data: allLastMessages } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .in('room_id', roomIds)
+        .order('created_at', { ascending: false });
 
-          let otherMember = null;
-          if (room.type === 'direct') {
-            const { data: members } = await supabase
-              .from('chat_room_members')
-              .select('user_id')
-              .eq('room_id', room.id)
-              .neq('user_id', userId);
+      // Group messages by room_id and get the latest one
+      const lastMessagesByRoom = {};
+      allLastMessages?.forEach((msg) => {
+        if (!lastMessagesByRoom[msg.room_id]) {
+          lastMessagesByRoom[msg.room_id] = msg;
+        }
+      });
 
-            if (members && members.length > 0) {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('email, display_name')
-                .eq('id', members[0].user_id)
-                .single();
+      // Batch fetch all direct chat members
+      const directRoomIds = roomsData.filter(r => r.type === 'direct').map(r => r.id);
+      const { data: allMembers } = directRoomIds.length > 0 ? await supabase
+        .from('chat_room_members')
+        .select('room_id, user_id')
+        .in('room_id', directRoomIds)
+        .neq('user_id', userId) : { data: [] };
 
-              otherMember = profile;
-            }
-          }
+      // Batch fetch all member profiles
+      const memberUserIds = allMembers?.map(m => m.user_id) || [];
+      const { data: allProfiles } = memberUserIds.length > 0 ? await supabase
+        .from('profiles')
+        .select('id, email, display_name')
+        .in('id', memberUserIds) : { data: [] };
 
-          const memberInfo = memberData.find((m) => m.room_id === room.id);
-          const { count: unreadCount } = await supabase
-            .from('chat_messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('room_id', room.id)
-            .gt('created_at', memberInfo?.last_read_at || '1970-01-01');
+      // Create profile lookup map
+      const profileMap = {};
+      allProfiles?.forEach(p => {
+        profileMap[p.id] = p;
+      });
 
-          return {
-            ...room,
-            lastMessage,
-            otherMember,
-            unreadCount: unreadCount || 0,
-          };
-        })
-      );
+      // Create member lookup map
+      const membersByRoom = {};
+      allMembers?.forEach(m => {
+        membersByRoom[m.room_id] = profileMap[m.user_id];
+      });
+
+      // Build rooms with details (no more individual queries)
+      const roomsWithDetails = roomsData.map((room) => {
+        const memberInfo = memberData.find((m) => m.room_id === room.id);
+        const lastMessage = lastMessagesByRoom[room.id] || null;
+        const otherMember = room.type === 'direct' ? membersByRoom[room.id] : null;
+        
+        // Calculate unread count from messages we already have
+        const unreadCount = allLastMessages?.filter(
+          msg => msg.room_id === room.id && 
+          msg.created_at > (memberInfo?.last_read_at || '1970-01-01')
+        ).length || 0;
+
+        return {
+          ...room,
+          lastMessage,
+          otherMember,
+          unreadCount,
+        };
+      });
 
       setChatRooms(roomsWithDetails);
       const totalUnread = roomsWithDetails.reduce((sum, room) => sum + room.unreadCount, 0);

@@ -72,11 +72,6 @@ export function AIChatView({ userId }) {
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    if (!aiSettings?.apiKey) {
-      toast.error('Please configure your OpenAI API key in Settings');
-      return;
-    }
-
     const userMessage = {
       id: Date.now(),
       role: 'user',
@@ -84,6 +79,7 @@ export function AIChatView({ userId }) {
       created_at: new Date().toISOString(),
     };
 
+    const messageContent = input;
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
@@ -94,7 +90,7 @@ export function AIChatView({ userId }) {
       .insert({
         user_id: userId,
         role: 'user',
-        content: input,
+        content: messageContent,
       });
 
     try {
@@ -103,37 +99,26 @@ export function AIChatView({ userId }) {
         content: msg.content,
       }));
 
-      const apiUrl = aiSettings.apiUrl?.endsWith('/') 
-        ? aiSettings.apiUrl.slice(0, -1) 
-        : (aiSettings.apiUrl || 'https://api.openai.com/v1');
-      
-      const response = await fetch(`${apiUrl}/chat/completions`, {
+      // Call our secure API route instead of directly calling the AI provider
+      const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${aiSettings.apiKey}`,
         },
         body: JSON.stringify({
-          model: aiSettings.model || 'gpt-4',
           messages: [
             {
-              role: 'system',
-              content: aiSettings.systemPrompt || 'You are a helpful writing assistant. Help users with their creative writing, provide feedback, and answer questions about storytelling, character development, plot structure, and more.',
-            },
-            ...conversationHistory,
-            {
               role: 'user',
-              content: input,
+              content: messageContent,
             },
           ],
-          temperature: aiSettings.temperature || 0.7,
-          max_tokens: aiSettings.maxTokens || 2000,
+          conversationHistory,
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error?.message || 'Failed to get response');
+        throw new Error(error.error || 'Failed to get response');
       }
 
       const data = await response.json();

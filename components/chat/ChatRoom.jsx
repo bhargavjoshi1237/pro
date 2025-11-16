@@ -80,12 +80,14 @@ export function ChatRoom({ roomId, currentUserId, workspaceId = null }) {
   useEffect(() => {
     if (!roomId) return;
 
+    let mounted = true;
+
     // Load initial data
     (async () => {
       await Promise.all([loadMessages(), loadMembers()]);
     })();
 
-    // Subscribe to new messages
+    // Subscribe to new messages - only add new messages, don't reload all
     const channel = supabase
       .channel(`chat:${roomId}`)
       .on(
@@ -96,14 +98,29 @@ export function ChatRoom({ roomId, currentUserId, workspaceId = null }) {
           table: 'chat_messages',
           filter: `room_id=eq.${roomId}`,
         },
-        (payload) => {
-          setMessages(prev => [...prev, payload.new]);
+        async (payload) => {
+          if (!mounted) return;
+          
+          // Fetch user info for the new message
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('id, email, display_name')
+            .eq('id', payload.new.user_id)
+            .single();
+
+          const messageWithUser = {
+            ...payload.new,
+            user: userProfile,
+          };
+
+          setMessages(prev => [...prev, messageWithUser]);
           scrollToBottom();
         }
       )
       .subscribe();
 
     return () => {
+      mounted = false;
       channel.unsubscribe();
     };
   }, [loadMembers, loadMessages, roomId]);
