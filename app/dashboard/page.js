@@ -32,6 +32,7 @@ import { ChatDrawer } from '@/components/chat/ChatDrawer';
 function DashboardContent() {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -111,6 +112,18 @@ function DashboardContent() {
       }
 
       setUser(session.user);
+      
+      // Load user profile with avatar
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url, display_name')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profile) {
+        setUserProfile(profile);
+      }
+      
       loadWorkspaces(session.user.id);
     };
     
@@ -594,9 +607,17 @@ function DashboardContent() {
         <div className="absolute bottom-4 left-4 z-10">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center font-semibold shadow-lg transition-colors"
+            className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center font-semibold shadow-lg transition-colors overflow-hidden"
           >
-            {user?.email?.charAt(0).toUpperCase()}
+            {userProfile?.avatar_url ? (
+              <img 
+                src={userProfile.avatar_url} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              user?.email?.charAt(0).toUpperCase()
+            )}
           </button>
 
           {showUserMenu && (

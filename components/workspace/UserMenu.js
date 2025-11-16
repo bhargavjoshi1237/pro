@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserCircleIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabase';
@@ -6,6 +6,25 @@ import { supabase } from '@/lib/supabase';
 export default function UserMenu({ user, onSettingsClick }) {
   const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!supabase || !user?.id) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url, display_name')
+        .eq('id', user.id)
+        .single();
+
+      if (profile) {
+        setUserProfile(profile);
+      }
+    };
+
+    loadUserProfile();
+  }, [user?.id]);
 
   const handleLogout = async () => {
     if (!supabase) return;
@@ -22,9 +41,17 @@ export default function UserMenu({ user, onSettingsClick }) {
     <div className="absolute bottom-4 left-4 z-10">
       <button
         onClick={() => setShowMenu(!showMenu)}
-        className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center font-semibold shadow-lg transition-colors"
+        className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center font-semibold shadow-lg transition-colors overflow-hidden"
       >
-        {getInitials(user?.email)}
+        {userProfile?.avatar_url ? (
+          <img 
+            src={userProfile.avatar_url} 
+            alt="Profile" 
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          getInitials(user?.email)
+        )}
       </button>
 
       {showMenu && (
