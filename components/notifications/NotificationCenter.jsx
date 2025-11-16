@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { BellIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
-import { formatDistanceToNow, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

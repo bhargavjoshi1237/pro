@@ -9,11 +9,12 @@ import EditorTabs from '@/components/workspace/EditorTabs';
 import UserMenu from '@/components/workspace/UserMenu';
 import { useWorkspace } from '@/hooks/useWorkspace';
 import { ThemeProvider } from '@/context/ThemeContext';
-import { Bars3Icon, UserGroupIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, UserGroupIcon, XMarkIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { PeoplePanel } from '@/components/workspace/PeoplePanel';
 import { CommandPalette } from '@/components/CommandPalette';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
+import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function WorkspacePage() {
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [peoplePanelOpen, setPeoplePanelOpen] = useState(false);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   const {
     workspace,
@@ -170,8 +172,16 @@ export default function WorkspacePage() {
             </h1>
             <NotificationCenter userId={user?.id} />
             <button
+              onClick={() => setAiPanelOpen(!aiPanelOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
+              title="AI Assistant"
+            >
+              <SparklesIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            </button>
+            <button
               onClick={() => setPeoplePanelOpen(!peoplePanelOpen)}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
+              title="People"
             >
               <UserGroupIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             </button>
@@ -196,6 +206,13 @@ export default function WorkspacePage() {
           <UserMenu user={user} onSettingsClick={() => {}} />
         </div>
 
+        {/* AI Assistant Panel - Desktop */}
+        <div className={`hidden lg:block transition-all duration-300 ${aiPanelOpen ? 'w-80' : 'w-0'}`}>
+          {aiPanelOpen && user && (
+            <AIAssistantPanel workspaceId={workspaceId} currentUserId={user.id} />
+          )}
+        </div>
+
         {/* People Panel - Desktop */}
         <div className={`hidden lg:block transition-all duration-300 ${peoplePanelOpen ? 'w-80' : 'w-0'}`}>
           {peoplePanelOpen && user && (
@@ -203,8 +220,19 @@ export default function WorkspacePage() {
           )}
         </div>
 
-        {/* People Panel Toggle Button - Desktop */}
-        <div className="hidden lg:flex items-start pt-4 pr-2">
+        {/* Panel Toggle Buttons - Desktop */}
+        <div className="hidden lg:flex flex-col items-start pt-4 pr-2 gap-2">
+          <button
+            onClick={() => setAiPanelOpen(!aiPanelOpen)}
+            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+            title={aiPanelOpen ? 'Hide AI assistant' : 'Show AI assistant'}
+          >
+            {aiPanelOpen ? (
+              <XMarkIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            ) : (
+              <SparklesIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            )}
+          </button>
           <button
             onClick={() => setPeoplePanelOpen(!peoplePanelOpen)}
             className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
@@ -217,6 +245,22 @@ export default function WorkspacePage() {
             )}
           </button>
         </div>
+
+        {/* AI Assistant Panel - Mobile (Full Screen Overlay) */}
+        {aiPanelOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 bg-white dark:bg-[#181818]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a]">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7]">AI Assistant</h2>
+              <button
+                onClick={() => setAiPanelOpen(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
+              >
+                <XMarkIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              </button>
+            </div>
+            {user && <AIAssistantPanel workspaceId={workspaceId} currentUserId={user.id} />}
+          </div>
+        )}
 
         {/* People Panel - Mobile (Full Screen Overlay) */}
         {peoplePanelOpen && (

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PaperAirplaneIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
-import { formatDistanceToNow, cn } from '@/lib/utils';
+import { formatTimeAgo, cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ export function ChatRoom({ roomId, currentUserId, workspaceId = null }) {
   const [mentionSearch, setMentionSearch] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [loadingMembers, setLoadingMembers] = useState(true);
-  const messagesEndRef = useRef(null);
+  const scrollRef = useRef(null);
 
   const loadMessages = useCallback(async () => {
     setLoadingMessages(true);
@@ -67,7 +67,14 @@ export function ChatRoom({ roomId, currentUserId, workspaceId = null }) {
   }, [workspaceId]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (scrollRef.current) {
+      const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        setTimeout(() => {
+          viewport.scrollTop = viewport.scrollHeight;
+        }, 100);
+      }
+    }
   };
 
   useEffect(() => {
@@ -226,7 +233,9 @@ export function ChatRoom({ roomId, currentUserId, workspaceId = null }) {
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-white to-gray-50 dark:from-[#1a1a1a] dark:to-[#151515]">
       {/* Messages */}
-      <ScrollArea className="flex-1 p-6">
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full" ref={scrollRef}>
+          <div className="p-6 min-h-full">
         {loadingMessages ? (
           <div className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-3">
@@ -284,16 +293,17 @@ export function ChatRoom({ roomId, currentUserId, workspaceId = null }) {
                       </p>
                     </div>
                     <p className="text-xs text-gray-400 dark:text-gray-500 px-2">
-                      {formatDistanceToNow(message.created_at)}
+                      {formatTimeAgo(message.created_at)}
                     </p>
                   </div>
                 </div>
               );
             })}
-            <div ref={messagesEndRef} />
           </div>
         )}
-      </ScrollArea>
+          </div>
+        </ScrollArea>
+      </div>
 
       {/* Mention Suggestions */}
       {showMentions && filteredMembers.length > 0 && (

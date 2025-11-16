@@ -6,6 +6,7 @@ import { useTheme } from '@/context/ThemeContext';
 import ProfileSettings from './ProfileSettings';
 import SecuritySettings from './SecuritySettings';
 import PreferencesSettings from './PreferencesSettings';
+import AISettings from './AISettings';
 
 export default function SettingsDialog({ isOpen, onClose, user }) {
   const { theme } = useTheme();
@@ -34,6 +35,13 @@ export default function SettingsDialog({ isOpen, onClose, user }) {
             >
               Preferences
             </TabsTrigger>
+            
+            <TabsTrigger 
+              value="ai"
+              className="rounded-none border-0 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-[#e7e7e7] data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-[#2a2a2a] hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1c1c1c] whitespace-nowrap"
+            >
+              AI Assistant
+            </TabsTrigger>
           </TabsList>
           
           <div className="flex-1 overflow-y-auto">
@@ -43,6 +51,10 @@ export default function SettingsDialog({ isOpen, onClose, user }) {
            
             <TabsContent value="preferences" className="mt-0 p-4 sm:p-6 focus-visible:outline-none focus-visible:ring-0">
               <PreferencesSettings userId={user?.id} />
+            </TabsContent>
+            
+            <TabsContent value="ai" className="mt-0 p-4 sm:p-6 focus-visible:outline-none focus-visible:ring-0">
+              <AISettings user={user} />
             </TabsContent>
           </div>
         </Tabs>
