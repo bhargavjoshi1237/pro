@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Novel Snippets",
+  title: "Prodigys",
   description: "Collaborative writing workspace",
   viewport: {
     width: 'device-width',

@@ -295,7 +295,7 @@ export function PeoplePanel({ workspaceId, currentUserId }) {
       <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a]">
         <Button
           onClick={openWorkspaceChat}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
+          className="w-full bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
         >
           <ChatBubbleLeftIcon className="w-4 h-4" />
           <span>Workspace Chat</span>
@@ -320,7 +320,7 @@ export function PeoplePanel({ workspaceId, currentUserId }) {
                 {/* Avatar */}
                 <div className="relative">
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-blue-600 text-white">
+                    <AvatarFallback className="bg-gray-500 dark:bg-gray-600 text-white">
                       {member.profiles.email?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>

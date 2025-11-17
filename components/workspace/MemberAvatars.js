@@ -10,7 +10,7 @@ export default function MemberAvatars({ members, max = 5 }) {
         {displayMembers.map((member, index) => (
           <div
             key={member.id}
-            className="relative w-8 h-8 rounded-full border-2 border-white dark:border-[#181818] bg-blue-600 flex items-center justify-center text-white text-xs font-semibold hover:z-10 transition-transform hover:scale-110"
+            className="relative w-8 h-8 rounded-full border-2 border-white dark:border-[#181818] bg-gray-500 dark:bg-gray-600 flex items-center justify-center text-white text-xs font-semibold hover:z-10 transition-transform hover:scale-110"
             style={{ zIndex: displayMembers.length - index }}
             title={member.email}
           >

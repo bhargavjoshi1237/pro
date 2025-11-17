@@ -146,7 +146,7 @@ export default function ShareWorkspaceDialog({ isOpen, onClose, workspace, membe
                 theme === 'dark'
                   ? 'bg-[#1c1c1c] border-[#2a2a2a] text-[#e7e7e7] placeholder-gray-600'
                   : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
-              } focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none`}
+              } focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent outline-none`}
             />
           </div>
 
@@ -163,7 +163,7 @@ export default function ShareWorkspaceDialog({ isOpen, onClose, workspace, membe
                 theme === 'dark'
                   ? 'bg-[#1c1c1c] border-[#2a2a2a] text-[#e7e7e7]'
                   : 'bg-white border-gray-300 text-gray-900'
-              } focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none`}
+              } focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent outline-none`}
             >
               <option value="viewer">Viewer</option>
               <option value="editor">Editor</option>
@@ -183,7 +183,7 @@ export default function ShareWorkspaceDialog({ isOpen, onClose, workspace, membe
           <button
             onClick={handleShare}
             disabled={loading || !email.trim()}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
           >
             <UserPlusIcon className="w-4 h-4" />
             {loading ? 'Adding...' : 'Add Member'}
@@ -206,7 +206,7 @@ export default function ShareWorkspaceDialog({ isOpen, onClose, workspace, membe
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+                      <div className="w-8 h-8 rounded-full bg-gray-500 dark:bg-gray-600 flex items-center justify-center text-white text-sm font-semibold">
                         {member.email?.charAt(0).toUpperCase()}
                       </div>
                       <div>

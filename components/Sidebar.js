@@ -69,7 +69,7 @@ export default function Sidebar({
       <div className="px-3 py-2 space-y-1.5 border-b border-gray-200 dark:border-[#2a2a2a]">
         <button
           onClick={() => setShowNewSnippet(true)}
-          className="w-full flex items-center gap-2 px-2.5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm transition-colors"
+          className="w-full flex items-center gap-2 px-2.5 py-1.5 bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] rounded text-sm transition-colors"
         >
           <PlusIcon className="w-3.5 h-3.5" />
           New Snippet
@@ -166,7 +166,7 @@ export default function Sidebar({
           <div className="flex gap-2 mt-3">
             <button
               onClick={handleCreateFolder}
-              className="flex-1 px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+              className="flex-1 px-3 py-1.5 text-sm bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] rounded transition-colors"
             >
               Create
             </button>
@@ -189,13 +189,13 @@ export default function Sidebar({
             onChange={(e) => setNewSnippetTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreateSnippet()}
             placeholder="Snippet title"
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-blue-500 outline-none mb-2"
+            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none mb-2"
             autoFocus
           />
           <select
             value={selectedFolderId || ''}
             onChange={(e) => setSelectedFolderId(e.target.value || null)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none"
           >
             <option value="">No folder</option>
             {folders.map(folder => (
@@ -205,7 +205,7 @@ export default function Sidebar({
           <div className="flex gap-2 mt-3">
             <button
               onClick={handleCreateSnippet}
-              className="flex-1 px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+              className="flex-1 px-3 py-1.5 text-sm bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] rounded transition-colors"
             >
               Create
             </button>
@@ -225,16 +225,16 @@ export default function Sidebar({
 function SnippetItem({ snippet, isActive, onSelect, onDelete }) {
   return (
     <div className={`flex items-center gap-1 group px-2 py-1 rounded transition-colors cursor-pointer ${
-      isActive ? 'bg-blue-50 dark:bg-[#2a2a2a]' : 'hover:bg-gray-200 dark:hover:bg-[#212121]'
+      isActive ? 'bg-gray-100 dark:bg-[#2a2a2a]' : 'hover:bg-gray-200 dark:hover:bg-[#212121]'
     }`}>
       <button
         onClick={() => onSelect(snippet)}
         className="flex-1 flex items-center gap-1.5 text-left min-w-0"
       >
-        <DocumentTextIcon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-500' : 'text-gray-400 dark:text-gray-500'}`} />
+        <DocumentTextIcon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`} />
         <div className="flex-1 min-w-0">
           <p className={`text-xs font-medium truncate ${
-            isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-[#e7e7e7]'
+            isActive ? 'text-gray-900 dark:text-[#e7e7e7]' : 'text-gray-700 dark:text-[#e7e7e7]'
           }`}>
             {snippet.title}
           </p>

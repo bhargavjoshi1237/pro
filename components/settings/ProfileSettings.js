@@ -123,7 +123,7 @@ export default function ProfileSettings({ user }) {
           {avatarUrl ? (
             <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
-            <AvatarFallback className="bg-blue-600 text-white text-3xl font-semibold">
+            <AvatarFallback className="bg-gray-700 dark:bg-gray-600 text-white text-3xl font-semibold">
               {getInitials(user?.email)}
             </AvatarFallback>
           )}
@@ -187,7 +187,7 @@ export default function ProfileSettings({ user }) {
         <Button 
           onClick={handleSave} 
           disabled={saving}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900"
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>

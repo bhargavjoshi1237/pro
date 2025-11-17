@@ -293,7 +293,7 @@ export function AIChatView({ userId }) {
                 className={`flex gap-4 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
               >
                 <Avatar className="h-10 w-10 flex-shrink-0">
-                  <AvatarFallback className={message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'}>
+                  <AvatarFallback className={message.role === 'user' ? 'bg-gray-700 dark:bg-gray-600 text-white' : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white'}>
                     {message.role === 'user' ? 'U' : <SparklesIcon className="w-5 h-5" />}
                   </AvatarFallback>
                 </Avatar>
@@ -301,7 +301,7 @@ export function AIChatView({ userId }) {
                   <div
                     className={`inline-block max-w-[85%] px-4 py-3 rounded-lg ${
                       message.role === 'user'
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-gray-900 dark:bg-gray-700 text-white'
                         : 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-[#e7e7e7]'
                     }`}
                   >
@@ -362,7 +362,7 @@ export function AIChatView({ userId }) {
             }}
             placeholder={aiSettings?.apiKey ? "Ask me anything about writing..." : "Configure API key in Settings first"}
             disabled={loading || !aiSettings?.apiKey}
-            className="flex-1 bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a]"
+            className="flex-1 bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] focus:border-transparent focus:ring-0 focus:outline-none relative focus:before:content-[''] focus:before:absolute focus:before:inset-0 focus:before:rounded-md focus:before:p-[1px] focus:before:bg-gradient-to-r focus:before:from-red-400 focus:before:via-yellow-400 focus:before:via-green-400 focus:before:via-blue-400 focus:before:via-indigo-400 focus:before:to-purple-400 focus:before:animate-pulse focus:before:-z-10 focus:before:opacity-30"
           />
           <Button
             onClick={sendMessage}

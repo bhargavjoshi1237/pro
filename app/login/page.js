@@ -98,7 +98,7 @@ function LoginContent() {
           {/* Logo */}
           <div className="flex items-center justify-center gap-2 mb-8">
             <SparklesIcon className="w-8 h-8 text-blue-600 dark:text-blue-500" />
-            <span className="text-2xl font-bold text-gray-900 dark:text-[#e7e7e7]">Novel Snippets</span>
+            <span className="text-2xl font-bold text-gray-900 dark:text-[#e7e7e7]">Prodigy</span>
           </div>
 
           {/* Card */}
@@ -158,7 +158,7 @@ function LoginContent() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 border border-blue-600 dark:border-blue-600 text-white"
+                className="w-full bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 border border-gray-900 dark:border-white text-white dark:text-gray-900"
                 size="lg"
               >
                 {loading ? 'Processing...' : (isSignUp ? 'Create Account' : 'Sign In')}

@@ -57,7 +57,7 @@ export default function AIChatPage() {
           <div className="px-3 py-2.5 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <SparklesIcon className="w-6 h-6 text-purple-600 dark:text-purple-500" />
-              <span className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7]">Novel Snippets</span>
+              <span className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7]">Prodigy</span>
             </div>
           </div>
 

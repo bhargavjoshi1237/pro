@@ -37,7 +37,7 @@ function LandingContent() {
         <nav className="relative z-10 px-6 py-4 flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-2">
             <SparklesIcon className="w-8 h-8 text-blue-600 dark:text-blue-500" />
-            <span className="text-xl font-bold">Novel Snippets</span>
+            <span className="text-xl font-bold">Prodigys</span>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -80,7 +80,7 @@ function LandingContent() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up delay-200">
               <button
                 onClick={() => router.push('/login')}
-                className="group px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/25 flex items-center gap-2"
+                className="group px-8 py-4 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-xl font-semibold transition-all hover:scale-105 hover:shadow-xl flex items-center gap-2"
               >
                 Get Started Free
                 <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -313,11 +313,11 @@ function LandingContent() {
               Ready to start writing?
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-12">
-              Join thousands of writers who trust Novel Snippets for their creative work.
+              Join thousands of writers who trust Prodigys for their creative work.
             </p>
             <button
               onClick={() => router.push('/login')}
-              className="group px-10 py-5 bg-blue-600 hover:bg-blue-700 text-white text-lg rounded-xl font-semibold transition-all hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/25 inline-flex items-center gap-2"
+              className="group px-10 py-5 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 text-lg rounded-xl font-semibold transition-all hover:scale-105 hover:shadow-2xl inline-flex items-center gap-2"
             >
               Get Started Now
               <ArrowRightIcon className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
@@ -328,7 +328,7 @@ function LandingContent() {
         {/* Footer */}
         <footer className="relative z-10 px-6 py-8 border-t border-gray-200 dark:border-[#2a2a2a]">
           <div className="max-w-7xl mx-auto text-center text-gray-600 dark:text-gray-500 text-sm">
-            <p>© 2024 Novel Snippets. Built for writers, by writers.</p>
+            <p>© 2024 Prodigys. Built for writers, by writers.</p>
           </div>
         </footer>
       </div>

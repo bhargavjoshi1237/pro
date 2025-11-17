@@ -221,7 +221,7 @@ export default function WorkspacePage() {
         </div>
 
         {/* Panel Toggle Buttons - Desktop */}
-        <div className="hidden lg:flex flex-col items-start pt-4 pr-2 gap-2">
+        <div className="hidden lg:flex flex-col items-start pt-4 pl-2 pr-2 gap-2">
           <button
             onClick={() => setAiPanelOpen(!aiPanelOpen)}
             className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"

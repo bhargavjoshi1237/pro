@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -14,9 +14,7 @@ import {
   MoonIcon,
   SunIcon,
   ChevronRightIcon,
-  ClockIcon,
   TrashIcon,
-  ChatBubbleLeftIcon
 } from '@heroicons/react/24/outline';
 import { LoadingPage } from '@/components/LoadingSpinner';
 import SettingsDialog from '@/components/settings/SettingsDialog';
@@ -28,6 +26,42 @@ import { CommandPalette } from '@/components/CommandPalette';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
+
+// Counter animation component
+function AnimatedCounter({ value, duration = 1000 }) {
+  const [count, setCount] = useState(0);
+  const countRef = useRef(0);
+  const startTimeRef = useRef(null);
+
+  useEffect(() => {
+    if (value === 0) {
+      setCount(0);
+      return;
+    }
+
+    const animate = (timestamp) => {
+      if (!startTimeRef.current) startTimeRef.current = timestamp;
+      const progress = timestamp - startTimeRef.current;
+      const percentage = Math.min(progress / duration, 1);
+      
+      // Easing function for smooth animation
+      const easeOutQuart = 1 - Math.pow(1 - percentage, 4);
+      const current = Math.floor(easeOutQuart * value);
+      
+      setCount(current);
+      
+      if (percentage < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setCount(value);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [value, duration]);
+
+  return <span>{count}</span>;
+}
 
 function DashboardContent() {
   const router = useRouter();
@@ -46,6 +80,8 @@ function DashboardContent() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const { theme, toggleTheme } = useTheme();
+  const [totalCollaborators, setTotalCollaborators] = useState(0);
+  const [totalSnippets, setTotalSnippets] = useState(0);
 
   useEffect(() => {
     const loadWorkspaces = async (userId) => {
@@ -70,12 +106,28 @@ function DashboardContent() {
         setWorkspaces(enrichedWorkspaces);
 
         // Load all members for each workspace
-        loadAllWorkspaceMembers(enrichedWorkspaces.map(w => w.id));
+        loadAllWorkspaceMembers(enrichedWorkspaces.map(w => w.id), userId);
+        
+        // Load total snippets count
+        loadTotalSnippets(enrichedWorkspaces.map(w => w.id));
       }
       setLoading(false);
     };
 
-    const loadAllWorkspaceMembers = async (workspaceIds) => {
+    const loadTotalSnippets = async (workspaceIds) => {
+      if (!supabase || workspaceIds.length === 0) return;
+
+      const { count, error } = await supabase
+        .from('snippets')
+        .select('*', { count: 'exact', head: true })
+        .in('workspace_id', workspaceIds);
+
+      if (!error && count !== null) {
+        setTotalSnippets(count);
+      }
+    };
+
+    const loadAllWorkspaceMembers = async (workspaceIds, userId) => {
       if (!supabase || workspaceIds.length === 0) return;
 
       const { data, error } = await supabase
@@ -86,6 +138,8 @@ function DashboardContent() {
       if (!error && data) {
         // Group members by workspace_id
         const membersMap = {};
+        const uniqueCollaborators = new Set();
+        
         data.forEach(member => {
           if (!membersMap[member.workspace_id]) {
             membersMap[member.workspace_id] = [];
@@ -97,8 +151,15 @@ function DashboardContent() {
             email: member.profiles?.email,
             avatar_url: member.profiles?.avatar_url
           });
+          
+          // Count unique collaborators (excluding current user)
+          if (member.user_id !== userId) {
+            uniqueCollaborators.add(member.user_id);
+          }
         });
+        
         setWorkspaceMembersMap(membersMap);
+        setTotalCollaborators(uniqueCollaborators.size);
       }
     };
 
@@ -363,8 +424,8 @@ function DashboardContent() {
           {/* Logo with Theme Toggle */}
           <div className="px-3 py-2.5 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <SparklesIcon className="w-6 h-6 text-blue-600 dark:text-blue-500" />
-              <span className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7]">Novel Snippets</span>
+              <SparklesIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+              <span className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7]">Prodigy</span>
             </div>
             <button
               onClick={toggleTheme}
@@ -412,7 +473,7 @@ function DashboardContent() {
                 {user && <NotificationCenter userId={user.id} />}
                 <button
                   onClick={() => setShowNewWorkspace(true)}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#212121] dark:bg-[#e7e7e7] hover:bg-gray-300 dark:hover:bg-[#a5a5a5] border border-gray-300 dark:border-[#383838] text-[#e7e7e7] dark:text-gray-900 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
                 >
                   <PlusIcon className="w-4 h-4" />
                   <span className="hidden sm:inline">New Workspace</span>
@@ -432,7 +493,9 @@ function DashboardContent() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Workspaces</p>
-                        <p className="text-3xl font-semibold text-gray-900 dark:text-[#e7e7e7] mt-2">{workspaces.length}</p>
+                        <p className="text-3xl font-semibold text-gray-900 dark:text-[#e7e7e7] mt-2">
+                          <AnimatedCounter value={workspaces.length} />
+                        </p>
                       </div>
                       <div className="p-3 bg-blue-500/10 rounded-lg">
                         <FolderIcon className="w-6 h-6 text-blue-600 dark:text-blue-500" />
@@ -443,7 +506,9 @@ function DashboardContent() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Collaborators</p>
-                        <p className="text-3xl font-semibold text-gray-900 dark:text-[#e7e7e7] mt-2">0</p>
+                        <p className="text-3xl font-semibold text-gray-900 dark:text-[#e7e7e7] mt-2">
+                          <AnimatedCounter value={totalCollaborators} />
+                        </p>
                       </div>
                       <div className="p-3 bg-green-500/10 rounded-lg">
                         <UsersIcon className="w-6 h-6 text-green-600 dark:text-green-500" />
@@ -453,11 +518,13 @@ function DashboardContent() {
                   <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Last Active</p>
-                        <p className="text-3xl font-semibold text-gray-900 dark:text-[#e7e7e7] mt-2">Today</p>
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Snippets</p>
+                        <p className="text-3xl font-semibold text-gray-900 dark:text-[#e7e7e7] mt-2">
+                          <AnimatedCounter value={totalSnippets} />
+                        </p>
                       </div>
                       <div className="p-3 bg-purple-500/10 rounded-lg">
-                        <ClockIcon className="w-6 h-6 text-purple-600 dark:text-purple-500" />
+                        <SparklesIcon className="w-6 h-6 text-purple-600 dark:text-purple-500" />
                       </div>
                     </div>
                   </div>
@@ -478,12 +545,12 @@ function DashboardContent() {
                           onClick={() => openWorkspace(workspace.id)}
                           className="flex-1 flex items-center gap-4 text-left"
                         >
-                          <div className="p-2 bg-blue-500/10 rounded-lg">
-                            <FolderIcon className="w-5 h-5 text-blue-600 dark:text-blue-500" />
+                          <div className="p-2 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg">
+                            <FolderIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <h3 className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                              <h3 className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
                                 {workspace.name}
                               </h3>
                               {workspace.userRole && workspace.userRole !== 'owner' && (
@@ -593,7 +660,7 @@ function DashboardContent() {
                 </p>
                 <button
                   onClick={() => setShowNewWorkspace(true)}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
                 >
                   <PlusIcon className="w-4 h-4" />
                   Create Your First Workspace
@@ -607,7 +674,7 @@ function DashboardContent() {
         <div className="absolute bottom-4 left-4 z-10">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center font-semibold shadow-lg transition-colors overflow-hidden"
+            className="w-10 h-10 rounded-full bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] flex items-center justify-center font-semibold shadow-lg transition-colors overflow-hidden"
           >
             {userProfile?.avatar_url ? (
               <img 
@@ -702,14 +769,14 @@ function DashboardContent() {
                 onChange={(e) => setRenameWorkspaceName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleRenameWorkspace()}
                 placeholder="Workspace name"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] placeholder-gray-400 dark:placeholder-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm mb-4"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] placeholder-gray-400 dark:placeholder-gray-600 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent outline-none text-sm mb-4"
                 autoFocus
               />
               <div className="flex gap-3">
                 <button
                   onClick={handleRenameWorkspace}
                   disabled={!renameWorkspaceName.trim()}
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2 bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
                 >
                   Rename
                 </button>
@@ -776,7 +843,7 @@ function DashboardContent() {
                   onKeyDown={(e) => e.key === 'Enter' && !creating && createWorkspace()}
                   placeholder="My Novel Project"
                   disabled={creating}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] placeholder-gray-400 dark:placeholder-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:opacity-50 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] placeholder-gray-400 dark:placeholder-gray-600 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent outline-none transition-all disabled:opacity-50 text-sm"
                   autoFocus
                 />
               </div>
@@ -784,7 +851,7 @@ function DashboardContent() {
                 <button
                   onClick={createWorkspace}
                   disabled={creating || !newWorkspaceName.trim()}
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   {creating ? (
                     <>

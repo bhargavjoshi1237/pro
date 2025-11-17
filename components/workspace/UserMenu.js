@@ -41,7 +41,7 @@ export default function UserMenu({ user, onSettingsClick }) {
     <div className="absolute bottom-4 left-4 z-10">
       <button
         onClick={() => setShowMenu(!showMenu)}
-        className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center font-semibold shadow-lg transition-colors overflow-hidden"
+        className="w-10 h-10 rounded-full bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] flex items-center justify-center font-semibold shadow-lg transition-colors overflow-hidden"
       >
         {userProfile?.avatar_url ? (
           <img 

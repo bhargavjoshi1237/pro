@@ -101,7 +101,7 @@ export default function SecuritySettings({ user }) {
         <Button
           onClick={handleChangePassword}
           disabled={saving || !newPassword || !confirmPassword}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900"
         >
           {saving ? 'Updating...' : 'Update Password'}
         </Button>

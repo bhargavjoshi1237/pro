@@ -129,7 +129,7 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
                 type="checkbox"
                 checked={syncScroll}
                 onChange={(e) => setSyncScroll(e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-gray-300 dark:border-[#2a2a2a] text-blue-600 focus:ring-blue-500"
+                className="w-3.5 h-3.5 rounded border-gray-300 dark:border-[#2a2a2a] text-gray-600 dark:text-gray-400 focus:ring-gray-500"
               />
               Sync Scroll
             </label>
@@ -261,14 +261,14 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
               className={`p-2 rounded transition-colors ${
                 hasFinalVersion 
                   ? 'bg-green-600 hover:bg-green-700' 
-                  : 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838]'
               }`}
               title={hasFinalVersion ? 'View final version (split view)' : 'Create final version'}
             >
               {hasFinalVersion ? (
                 <CheckCircleIcon className="w-4 h-4 text-white" />
               ) : (
-                <DocumentDuplicateIcon className="w-4 h-4 text-white" />
+                <DocumentDuplicateIcon className="w-4 h-4 text-gray-900 dark:text-[#e7e7e7]" />
               )}
             </button>
           )}

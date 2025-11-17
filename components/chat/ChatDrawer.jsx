@@ -337,7 +337,7 @@ const sendMessage = async () => {
       <DrawerTrigger asChild>
         <Button
           size="icon"
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white z-50"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 z-50"
         >
           <ChatBubbleLeftIcon className="h-6 w-6" />
           {unreadCount > 0 && (
@@ -386,7 +386,7 @@ const sendMessage = async () => {
                       >
                         <div className="relative">
                           <Avatar className="h-12 w-12">
-                            <AvatarFallback className="bg-blue-600 text-white">
+                            <AvatarFallback className="bg-gray-700 dark:bg-gray-600 text-white">
                               {room.type === 'workspace' ? (
                                 <UserGroupIcon className="w-6 h-6" />
                               ) : (
@@ -467,7 +467,7 @@ const sendMessage = async () => {
                         className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
                       >
                         <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-blue-600 text-white text-xs">
+                          <AvatarFallback className="bg-gray-700 dark:bg-gray-600 text-white text-xs">
                             {message.user?.email?.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -484,7 +484,7 @@ const sendMessage = async () => {
                           <div
                             className={`px-4 py-2 rounded-lg ${
                               isOwn
-                                ? 'bg-blue-600 text-white'
+                                ? 'bg-gray-900 dark:bg-gray-700 text-white'
                                 : 'bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-[#e7e7e7]'
                             }`}
                           >
@@ -516,7 +516,7 @@ const sendMessage = async () => {
                   <Button
                     onClick={sendMessage}
                     disabled={!newMessage.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900"
                   >
                     <PaperAirplaneIcon className="h-5 w-5" />
                   </Button>
