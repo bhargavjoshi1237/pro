@@ -7,6 +7,7 @@ import {
 import { useRealtimeCollaboration } from '@/hooks/useRealtimeCollaboration';
 import { useSnippetMetadata } from '@/hooks/useSnippetMetadata';
 import ActiveUsers from '@/components/workspace/ActiveUsers';
+import AttachmentManager from '@/components/workspace/AttachmentManager';
 
 export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, hasFinalVersion, finalVersion, onOpenSnippet, user, entities = [], tags = [] }) {
   const [title, setTitle] = useState('');
@@ -301,8 +302,8 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
           <button
             onClick={() => setShowMetadataPanel(!showMetadataPanel)}
             className={`p-2 rounded transition-colors ${showMetadataPanel
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                : 'bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] text-gray-700 dark:text-[#e7e7e7]'
+              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+              : 'bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] text-gray-700 dark:text-[#e7e7e7]'
               }`}
             title="Toggle Metadata"
           >
@@ -313,8 +314,8 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
             <button
               onClick={hasFinalVersion ? () => setShowSplitView(true) : handleCreateOrViewFinal}
               className={`p-2 rounded transition-colors ${hasFinalVersion
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838]'
+                ? 'bg-green-600 hover:bg-green-700'
+                : 'bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838]'
                 }`}
               title={hasFinalVersion ? 'View final version (split view)' : 'Create final version'}
             >
@@ -467,6 +468,15 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
                   <p className="text-xs text-gray-400 italic">No entities attached</p>
                 )}
               </div>
+            </div>
+
+            {/* Attachments Section */}
+            <div>
+              <AttachmentManager
+                workspaceId={snippet?.workspace_id}
+                parentId={snippet?.id}
+                parentType="snippet"
+              />
             </div>
           </div>
         )}

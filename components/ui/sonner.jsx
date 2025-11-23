@@ -26,14 +26,13 @@ const Toaster = ({
         error: <OctagonXIcon className="size-4" />,
         loading: <Loader2Icon className="size-4 animate-spin" />,
       }}
-      style={
-        {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)"
-        }
-      }
+      toastOptions={{
+        style: {
+          background: theme === 'dark' ? 'rgb(33, 33, 33)' : 'rgb(255, 255, 255)',
+          color: theme === 'dark' ? 'rgb(231, 231, 231)' : 'rgb(17, 24, 39)',
+          border: `1px solid ${theme === 'dark' ? 'rgb(42, 42, 42)' : 'rgb(229, 231, 235)'}`,
+        },
+      }}
       {...props} />
   );
 }

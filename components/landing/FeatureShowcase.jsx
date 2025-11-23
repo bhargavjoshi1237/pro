@@ -13,7 +13,7 @@ export function FeatureShowcase() {
     return (
         <section className="py-24 px-6 max-w-7xl mx-auto">
             <div className="mb-20 text-center max-w-3xl mx-auto">
-                <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-600 to-gray-900 dark:from-white dark:via-gray-200 dark:to-white">
+                <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-600 to-gray-900 dark:from-white dark:via-gray-200 dark:to-white font-serif">
                     Everything you need to write your masterpiece
                 </h2>
                 <p className="text-xl text-gray-600 dark:text-gray-400">

@@ -125,7 +125,9 @@ export function useKanban(workspaceId) {
                 .select(`
                   *,
                   tags:kanban_card_tags(tag_id),
-                  entities:kanban_card_entities(entity_id)
+                  entities:kanban_card_entities(entity_id),
+                  creator:created_by(id, email, avatar_url),
+                  assignee:assignee_id(id, email, avatar_url)
                 `)
                 .in('column_id', columnIds)
                 .order('position', { ascending: true });
@@ -182,7 +184,9 @@ export function useKanban(workspaceId) {
                             .select(`
                                 *,
                                 tags:kanban_card_tags(tag_id),
-                                entities:kanban_card_entities(entity_id)
+                                entities:kanban_card_entities(entity_id),
+                                creator:created_by(id, email, avatar_url),
+                                assignee:assignee_id(id, email, avatar_url)
                             `)
                             .eq('id', payload.new.id)
                             .single();
@@ -226,7 +230,10 @@ export function useKanban(workspaceId) {
                             .from('kanban_cards')
                             .select(`
                                 *,
-                                tags:kanban_card_tags(tag_id)
+                                tags:kanban_card_tags(tag_id),
+                                entities:kanban_card_entities(entity_id),
+                                creator:created_by(id, email, avatar_url),
+                                assignee:assignee_id(id, email, avatar_url)
                             `)
                             .eq('id', payload.new.id)
                             .single();
@@ -389,7 +396,9 @@ export function useKanban(workspaceId) {
             .select(`
                 *,
                 tags:kanban_card_tags(tag_id),
-                entities:kanban_card_entities(entity_id)
+                entities:kanban_card_entities(entity_id),
+                creator:created_by(id, email, avatar_url),
+                assignee:assignee_id(id, email, avatar_url)
             `)
             .single();
 

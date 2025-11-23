@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useEntities } from '@/hooks/useEntities';
 import { supabase } from '@/lib/supabase';
+import AttachmentManager from '@/components/workspace/AttachmentManager';
 
 export function CardEditModal({ card, isOpen, onClose, onUpdate, workspaceId }) {
     const [title, setTitle] = useState(card.title);
@@ -29,28 +30,32 @@ export function CardEditModal({ card, isOpen, onClose, onUpdate, workspaceId }) 
     }, [card, isOpen]);
 
     const handleSave = async () => {
-        // Update basic fields
-        await onUpdate(card.id, { title, description, priority });
+        try {
+            // Update basic fields
+            await onUpdate(card.id, { title, description, priority });
 
-        // Update tags
-        // First delete existing
-        await supabase.from('kanban_card_tags').delete().eq('card_id', card.id);
-        // Then insert new
-        if (selectedTags.length > 0) {
-            await supabase.from('kanban_card_tags').insert(
-                selectedTags.map(tagId => ({ card_id: card.id, tag_id: tagId }))
-            );
+            // Update tags
+            // First delete existing
+            await supabase.from('kanban_card_tags').delete().eq('card_id', card.id);
+            // Then insert new
+            if (selectedTags.length > 0) {
+                await supabase.from('kanban_card_tags').insert(
+                    selectedTags.map(tagId => ({ card_id: card.id, tag_id: tagId }))
+                );
+            }
+
+            // Update entities
+            await supabase.from('kanban_card_entities').delete().eq('card_id', card.id);
+            if (selectedEntities.length > 0) {
+                await supabase.from('kanban_card_entities').insert(
+                    selectedEntities.map(entityId => ({ card_id: card.id, entity_id: entityId }))
+                );
+            }
+
+            onClose();
+        } catch (error) {
+            console.error('Error saving card:', error);
         }
-
-        // Update entities
-        await supabase.from('kanban_card_entities').delete().eq('card_id', card.id);
-        if (selectedEntities.length > 0) {
-            await supabase.from('kanban_card_entities').insert(
-                selectedEntities.map(entityId => ({ card_id: card.id, entity_id: entityId }))
-            );
-        }
-
-        onClose();
     };
 
     const toggleTag = (tagId) => {
@@ -173,6 +178,14 @@ export function CardEditModal({ card, isOpen, onClose, onUpdate, workspaceId }) 
                                 <span className="text-xs text-gray-500 dark:text-gray-400 italic">No entities available</span>
                             )}
                         </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <AttachmentManager
+                            workspaceId={workspaceId}
+                            parentId={card.id}
+                            parentType="card"
+                        />
                     </div>
                 </div>
                 <DialogFooter>

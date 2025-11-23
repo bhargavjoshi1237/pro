@@ -83,22 +83,22 @@ export function KanbanCard({ card, workspaceId, isOverlay }) {
                 </h4>
 
                 <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100 dark:border-[#2a2a2a]">
-                    {/* Bottom Left: PFP */}
+                    {/* Bottom Left: Creator PFP */}
                     <div className="flex items-center gap-2">
-                        {card.assignee ? (
-                            <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-[10px] text-white overflow-hidden shrink-0" title={card.assignee.email}>
-                                {card.assignee.avatar_url ? (
+                        {card.creator ? (
+                            <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-[10px] text-white overflow-hidden shrink-0" title={card.creator.email}>
+                                {card.creator.avatar_url ? (
                                     <img
-                                        src={card.assignee.avatar_url}
-                                        alt="Assignee"
+                                        src={card.creator.avatar_url}
+                                        alt="Creator"
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
                                             e.target.style.display = 'none';
-                                            e.target.parentElement.innerText = card.assignee.email[0].toUpperCase();
+                                            e.target.parentElement.innerText = card.creator.email[0].toUpperCase();
                                         }}
                                     />
                                 ) : (
-                                    card.assignee.email[0].toUpperCase()
+                                    card.creator.email[0].toUpperCase()
                                 )}
                             </div>
                         ) : (

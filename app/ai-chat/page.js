@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AIChatView } from '@/components/ai/AIChatView';
-import { 
+import {
   SparklesIcon,
   HomeIcon,
   ArrowLeftIcon
@@ -29,7 +29,7 @@ export default function AIChatPage() {
       setUser(session.user);
       setLoading(false);
     };
-    
+
     checkAuth();
   }, [router]);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
@@ -12,19 +12,18 @@ import HeroGeometric from '@/components/landing/HeroGeometric';
 function LandingContent() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
       if (!supabase) return;
 
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        router.push('/dashboard');
-      }
+      setIsLoggedIn(!!session);
     };
 
     checkUser();
-  }, [router]);
+  }, []);
 
   return (
     <div className="relative min-h-screen text-gray-900 dark:text-[#e7e7e7] overflow-hidden">
@@ -50,10 +49,10 @@ function LandingContent() {
               )}
             </button>
             <button
-              onClick={() => router.push('/login')}
+              onClick={() => router.push(isLoggedIn ? '/dashboard' : '/login')}
               className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-[#e7e7e7] hover:text-gray-900 dark:hover:text-white transition-colors"
             >
-              Sign In
+              {isLoggedIn ? 'Dashboard' : 'Sign In'}
             </button>
           </div>
         </nav>
@@ -143,81 +142,36 @@ function LandingContent() {
 
         {/* CTA Section */}
         <section className="relative z-10 py-32 px-6">
-          <div className="max-w-6xl mx-auto relative">
-            {/* Animated gradient orbs in background */}
-            <div className="absolute -top-24 -left-24 w-96 h-96 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-gradient-to-br from-pink-500/30 to-orange-500/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-
-            {/* Main CTA Card */}
-            <div className="relative bg-gradient-to-br from-white/60 via-white/40 to-white/30 dark:from-white/10 dark:via-white/5 dark:to-white/5 backdrop-blur-2xl rounded-3xl p-12 md:p-20 text-center border border-white/20 dark:border-white/10 shadow-2xl overflow-hidden">
-              {/* Animated gradient border effect */}
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500"></div>
-
-              {/* Noise texture overlay */}
-              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
-
-              {/* Floating particles */}
-              <div className="absolute top-10 left-10 w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
-              <div className="absolute top-20 right-20 w-3 h-3 bg-purple-400 rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
-              <div className="absolute bottom-20 left-20 w-2 h-2 bg-pink-400 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
-              <div className="absolute bottom-10 right-10 w-3 h-3 bg-orange-400 rounded-full animate-ping" style={{ animationDelay: '1.5s' }}></div>
-
-              <div className="relative z-10">
-                {/* Badge */}
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 mb-8">
-                  <SparklesIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-                    Join 10,000+ Writers
-                  </span>
-                </div>
-
-                <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 dark:from-white dark:via-gray-200 dark:to-white bg-clip-text text-transparent leading-tight">
-                  Ready to write your<br />best work?
-                </h2>
-
-                <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-                  Join thousands of writers who have found their flow with Prodigy.<br />
-                  <span className="font-semibold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-                    Start your free trial today — no credit card required.
-                  </span>
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                  <button className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <span className="relative flex items-center gap-2">
-                      Get Started Now
-                      <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </span>
-                  </button>
-
-                  <button className="px-8 py-4 bg-white/60 dark:bg-white/10 backdrop-blur-sm text-gray-900 dark:text-white rounded-xl font-semibold text-lg hover:bg-white/80 dark:hover:bg-white/20 transition-all duration-300 border border-gray-200/50 dark:border-white/20">
-                    Watch Demo
-                  </button>
-                </div>
-
-                {/* Trust indicators */}
-                <div className="mt-12 flex flex-wrap justify-center items-center gap-8 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex items-center gap-2">
-                    <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                    <span>Free 14-day trial</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                    <span>No credit card needed</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                    <span>Cancel anytime</span>
-                  </div>
-                </div>
-              </div>
+          <div className="max-w-4xl mx-auto text-center">
+            {/* CTA Label */}
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <span className="text-sm font-semibold tracking-widest uppercase text-gray-500 dark:text-gray-400">CTA</span>
             </div>
+
+            {/* Heading */}
+            <h2 className="text-5xl md:text-7xl font-bold mb-8 text-gray-900 dark:text-white leading-tight">
+              READY TO TRANSFORM <br />
+              <span className="text-gray-400 dark:text-gray-600">YOUR BUSINESS?</span>
+            </h2>
+
+            {/* Subtext */}
+            <p className="text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto">
+              Let's talk about how we can help you achieve your goals.
+            </p>
+
+            {/* Button */}
+            <button className="inline-flex items-center gap-3 px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-full font-semibold text-lg transition-all hover:scale-105 group">
+              Book A Consultation
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                <ArrowRightIcon className="w-4 h-4 text-white -rotate-45 group-hover:rotate-0 transition-transform" />
+              </div>
+            </button>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="relative z-10 px-6 py-16 border-t border-gray-200/50 dark:border-white/10">
+        <footer className="relative z-10 px-6 pt-16 pb-0 border-t border-gray-200/50 dark:border-white/10 overflow-hidden">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
               {/* Brand Column */}
@@ -287,6 +241,13 @@ function LandingContent() {
                 <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Contact</a>
               </div>
             </div>
+
+            {/* Large App Name Text */}
+            <div className="mt-10 -mb-10 flex justify-center">
+              <h1 className="text-[18vw] font-bold text-gray-900/5 dark:text-white/5 leading-none tracking-tighter select-none pointer-events-none">
+                PRODIGY
+              </h1>
+            </div>
           </div>
         </footer>
       </div>
@@ -294,34 +255,12 @@ function LandingContent() {
   );
 }
 
-function PricingFeature({ text, light = false }) {
+function PricingFeature({ text }) {
   return (
     <li className="flex items-center gap-3">
-      <CheckCircleIcon className={`w-5 h-5 flex-shrink-0 ${light ? 'text-white' : 'text-green-500'}`} />
-      <span className={light ? 'text-white' : 'text-gray-700 dark:text-gray-300'}>{text}</span>
+      <CheckCircleIcon className="w-5 h-5 flex-shrink-0 text-green-500" />
+      <span className="text-gray-700 dark:text-gray-300">{text}</span>
     </li>
-  );
-}
-
-function ComparisonRow({ feature, free, pro, premium }) {
-  const renderCell = (value) => {
-    if (typeof value === 'boolean') {
-      return value ? (
-        <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
-      ) : (
-        <span className="text-gray-400">—</span>
-      );
-    }
-    return <span className="text-sm">{value}</span>;
-  };
-
-  return (
-    <tr>
-      <td className="px-6 py-4 text-sm font-medium">{feature}</td>
-      <td className="px-6 py-4 text-center">{renderCell(free)}</td>
-      <td className="px-6 py-4 text-center">{renderCell(pro)}</td>
-      <td className="px-6 py-4 text-center">{renderCell(premium)}</td>
-    </tr>
   );
 }
 

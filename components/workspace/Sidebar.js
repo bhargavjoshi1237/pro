@@ -1,10 +1,22 @@
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
-  FolderIcon, DocumentTextIcon, PlusIcon, TrashIcon, MoonIcon, SunIcon,
-  ChevronDownIcon, ChevronRightIcon, MagnifyingGlassIcon, ExclamationTriangleIcon,
-  CheckCircleIcon, HomeIcon, UserIcon, MapPinIcon, CubeIcon, BookOpenIcon,
-  PuzzlePieceIcon, TagIcon, GlobeAltIcon
+  FolderIcon,
+  DocumentTextIcon,
+  PlusIcon,
+  TrashIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
+  MagnifyingGlassIcon,
+  TagIcon,
+  UserGroupIcon,
+  MapIcon,
+  CubeIcon,
+  BookmarkIcon,
+  SunIcon,
+  MoonIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  ChevronDoubleLeftIcon
 } from '@heroicons/react/24/outline';
 import { useTheme } from '@/context/ThemeContext';
 import WorkspaceMembers from './WorkspaceMembers';
@@ -13,8 +25,8 @@ export default function Sidebar({
   workspace,
   folders,
   snippets,
-  entities = [],
-  tags = [],
+  entities,
+  tags,
   openTabs,
   activeTabId,
   onCreateFolder,
@@ -28,35 +40,40 @@ export default function Sidebar({
   onDeleteTag,
   onReorderSnippets,
   onMoveSnippetToFolder,
-  onOpenKanban
+  onToggleSidebar
 }) {
-  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [activeSidebarTab, setActiveSidebarTab] = useState('files'); // 'files' | 'world'
-
-  // Files state
+  const [searchQuery, setSearchQuery] = useState('');
   const [expandedFolders, setExpandedFolders] = useState(new Set());
+  const [expandedCategories, setExpandedCategories] = useState(new Set(['tags']));
+
+  // Creation states
   const [showNewFolder, setShowNewFolder] = useState(false);
-  const [showNewSnippet, setShowNewSnippet] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [showNewSnippet, setShowNewSnippet] = useState(false);
   const [newSnippetTitle, setNewSnippetTitle] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState(null);
-
-  // World state
-  const [expandedCategories, setExpandedCategories] = useState(new Set(['character', 'location', 'item', 'lore', 'subplot', 'other', 'tags']));
   const [showNewEntity, setShowNewEntity] = useState(false);
-  const [showNewTag, setShowNewTag] = useState(false);
   const [newEntityName, setNewEntityName] = useState('');
   const [newEntityType, setNewEntityType] = useState('character');
+  const [showNewTag, setShowNewTag] = useState(false);
   const [newTagName, setNewTagName] = useState('');
-
-  const [searchQuery, setSearchQuery] = useState('');
   const [creating, setCreating] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  // Drag and drop state
+  // Drag and drop states
   const [draggedItem, setDraggedItem] = useState(null);
   const [draggedOverId, setDraggedOverId] = useState(null);
+
+  // Delete confirmation
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  const entityTypes = [
+    { id: 'character', name: 'Characters', icon: UserGroupIcon },
+    { id: 'location', name: 'Locations', icon: MapIcon },
+    { id: 'item', name: 'Items', icon: CubeIcon },
+    { id: 'lore', name: 'Lore', icon: BookmarkIcon },
+  ];
 
   const toggleFolder = (folderId) => {
     const newExpanded = new Set(expandedFolders);
@@ -68,12 +85,12 @@ export default function Sidebar({
     setExpandedFolders(newExpanded);
   };
 
-  const toggleCategory = (category) => {
+  const toggleCategory = (categoryId) => {
     const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(category)) {
-      newExpanded.delete(category);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
     } else {
-      newExpanded.add(category);
+      newExpanded.add(categoryId);
     }
     setExpandedCategories(newExpanded);
   };
@@ -98,7 +115,6 @@ export default function Sidebar({
       setCreating(false);
     }
   };
-
   const handleCreateEntity = async () => {
     if (newEntityName.trim() && !creating) {
       setCreating(true);
@@ -184,45 +200,47 @@ export default function Sidebar({
     setDraggedOverId(null);
   };
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e) => {
+    e.preventDefault();
     setDraggedOverId(null);
   };
 
-  const entityTypes = [
-    { id: 'character', name: 'Characters', icon: UserIcon },
-    { id: 'location', name: 'Locations', icon: MapPinIcon },
-    { id: 'item', name: 'Objects/Items', icon: CubeIcon },
-    { id: 'lore', name: 'Lore', icon: BookOpenIcon },
-    { id: 'subplot', name: 'Subplots', icon: PuzzlePieceIcon },
-    { id: 'other', name: 'Others', icon: GlobeAltIcon },
-  ];
-
   return (
-    <div className="w-full lg:w-64 bg-[#fafafa] dark:bg-[#191919] border-r border-gray-200 dark:border-[#2a2a2a] flex flex-col h-full">
-      {/* Header */}
+    <div className="w-full bg-[#fafafa] dark:bg-[#191919] border-r border-gray-200 dark:border-[#2a2a2a] flex flex-col h-full">
       <div className="px-3 py-2.5 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0"
-            title="Back to Dashboard"
+          <a
+            href="/dashboard"
+            className="w-6 h-6 flex items-center justify-center shrink-0 hover:bg-gray-200 dark:hover:bg-[#2a2a2a] rounded transition-colors"
+            title="Go to Dashboard"
           >
-            <HomeIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-          </button>
-          <h1 className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7] truncate">
-            {workspace?.name || 'Workspace'}
-          </h1>
+            <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </a>
+          <span className="font-semibold text-sm text-gray-900 dark:text-[#e7e7e7] truncate">
+            {workspace?.name || 'Prodigy'}
+          </span>
         </div>
-        <button
-          onClick={toggleTheme}
-          className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0"
-        >
-          {theme === 'light' ? (
-            <MoonIcon className="w-4 h-4 text-gray-600" />
-          ) : (
-            <SunIcon className="w-4 h-4 text-gray-400" />
-          )}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0"
+          >
+            {theme === 'light' ? (
+              <MoonIcon className="w-4 h-4 text-gray-600" />
+            ) : (
+              <SunIcon className="w-4 h-4 text-gray-400" />
+            )}
+          </button>
+          <button
+            onClick={onToggleSidebar}
+            className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0"
+            title="Collapse Sidebar"
+          >
+            <ChevronDoubleLeftIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          </button>
+        </div>
       </div>
 
       {/* Tab Switcher */}
@@ -481,193 +499,204 @@ export default function Sidebar({
       </div>
 
       {/* Modals */}
-      {showNewFolder && (
-        <Modal onClose={() => !creating && setShowNewFolder(false)}>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-3">New Folder</h3>
-          <input
-            type="text"
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !creating && handleCreateFolder()}
-            placeholder="Folder name"
-            disabled={creating}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none"
-            autoFocus
-          />
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={handleCreateFolder}
-              disabled={creating || !newFolderName.trim()}
-              className="flex-1 px-3 py-1.5 text-sm bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 text-gray-900 dark:text-[#e7e7e7] rounded transition-colors"
-            >
-              {creating ? 'Creating...' : 'Create'}
-            </button>
-            <button
-              onClick={() => setShowNewFolder(false)}
+      {
+        showNewFolder && (
+          <Modal onClose={() => !creating && setShowNewFolder(false)}>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-3">New Folder</h3>
+            <input
+              type="text"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !creating && handleCreateFolder()}
+              placeholder="Folder name"
               disabled={creating}
-              className="flex-1 px-3 py-1.5 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </Modal>
-      )}
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none"
+              autoFocus
+            />
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handleCreateFolder}
+                disabled={creating || !newFolderName.trim()}
+                className="flex-1 px-3 py-1.5 text-sm bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 text-gray-900 dark:text-[#e7e7e7] rounded transition-colors"
+              >
+                {creating ? 'Creating...' : 'Create'}
+              </button>
+              <button
+                onClick={() => setShowNewFolder(false)}
+                disabled={creating}
+                className="flex-1 px-3 py-1.5 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </Modal>
+        )
+      }
 
-      {showNewSnippet && (
-        <Modal onClose={() => !creating && setShowNewSnippet(false)}>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-3">New Snippet</h3>
-          <input
-            type="text"
-            value={newSnippetTitle}
-            onChange={(e) => setNewSnippetTitle(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !creating && handleCreateSnippet()}
-            placeholder="Snippet title"
-            disabled={creating}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none mb-2"
-            autoFocus
-          />
-          <select
-            value={selectedFolderId || ''}
-            onChange={(e) => setSelectedFolderId(e.target.value || null)}
-            disabled={creating}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none"
-          >
-            <option value="">No folder</option>
-            {folders.map(folder => (
-              <option key={folder.id} value={folder.id}>{folder.name}</option>
-            ))}
-          </select>
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={handleCreateSnippet}
-              disabled={creating || !newSnippetTitle.trim()}
-              className="flex-1 px-3 py-1.5 text-sm bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 text-gray-900 dark:text-[#e7e7e7] rounded transition-colors"
-            >
-              {creating ? 'Creating...' : 'Create'}
-            </button>
-            <button
-              onClick={() => setShowNewSnippet(false)}
+      {
+        showNewSnippet && (
+          <Modal onClose={() => !creating && setShowNewSnippet(false)}>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-3">New Snippet</h3>
+            <input
+              type="text"
+              value={newSnippetTitle}
+              onChange={(e) => setNewSnippetTitle(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !creating && handleCreateSnippet()}
+              placeholder="Snippet title"
               disabled={creating}
-              className="flex-1 px-3 py-1.5 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </Modal>
-      )}
-
-      {showNewEntity && (
-        <Modal onClose={() => !creating && setShowNewEntity(false)}>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-3">New Entity</h3>
-          <input
-            type="text"
-            value={newEntityName}
-            onChange={(e) => setNewEntityName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !creating && handleCreateEntity()}
-            placeholder="Entity name"
-            disabled={creating}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none mb-2"
-            autoFocus
-          />
-          <select
-            value={newEntityType}
-            onChange={(e) => setNewEntityType(e.target.value)}
-            disabled={creating}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none"
-          >
-            {entityTypes.map(type => (
-              <option key={type.id} value={type.id}>{type.name}</option>
-            ))}
-          </select>
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={handleCreateEntity}
-              disabled={creating || !newEntityName.trim()}
-              className="flex-1 px-3 py-1.5 text-sm bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 text-gray-900 dark:text-[#e7e7e7] rounded transition-colors"
-            >
-              {creating ? 'Creating...' : 'Create'}
-            </button>
-            <button
-              onClick={() => setShowNewEntity(false)}
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none mb-2"
+              autoFocus
+            />
+            <select
+              value={selectedFolderId || ''}
+              onChange={(e) => setSelectedFolderId(e.target.value || null)}
               disabled={creating}
-              className="flex-1 px-3 py-1.5 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none"
             >
-              Cancel
-            </button>
-          </div>
-        </Modal>
-      )}
+              <option value="">No folder</option>
+              {folders.map(folder => (
+                <option key={folder.id} value={folder.id}>{folder.name}</option>
+              ))}
+            </select>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handleCreateSnippet}
+                disabled={creating || !newSnippetTitle.trim()}
+                className="flex-1 px-3 py-1.5 text-sm bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 text-gray-900 dark:text-[#e7e7e7] rounded transition-colors"
+              >
+                {creating ? 'Creating...' : 'Create'}
+              </button>
+              <button
+                onClick={() => setShowNewSnippet(false)}
+                disabled={creating}
+                className="flex-1 px-3 py-1.5 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </Modal>
+        )
+      }
 
-      {showNewTag && (
-        <Modal onClose={() => !creating && setShowNewTag(false)}>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-3">New Tag</h3>
-          <input
-            type="text"
-            value={newTagName}
-            onChange={(e) => setNewTagName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !creating && handleCreateTag()}
-            placeholder="Tag name"
-            disabled={creating}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none"
-            autoFocus
-          />
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={handleCreateTag}
-              disabled={creating || !newTagName.trim()}
-              className="flex-1 px-3 py-1.5 text-sm bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 text-gray-900 dark:text-[#e7e7e7] rounded transition-colors"
-            >
-              {creating ? 'Creating...' : 'Create'}
-            </button>
-            <button
-              onClick={() => setShowNewTag(false)}
+      {
+        showNewEntity && (
+          <Modal onClose={() => !creating && setShowNewEntity(false)}>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-3">New Entity</h3>
+            <input
+              type="text"
+              value={newEntityName}
+              onChange={(e) => setNewEntityName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !creating && handleCreateEntity()}
+              placeholder="Entity name"
               disabled={creating}
-              className="flex-1 px-3 py-1.5 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none mb-2"
+              autoFocus
+            />
+            <select
+              value={newEntityType}
+              onChange={(e) => setNewEntityType(e.target.value)}
+              disabled={creating}
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none"
             >
-              Cancel
-            </button>
-          </div>
-        </Modal>
-      )}
+              {entityTypes.map(type => (
+                <option key={type.id} value={type.id}>{type.name}</option>
+              ))}
+            </select>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handleCreateEntity}
+                disabled={creating || !newEntityName.trim()}
+                className="flex-1 px-3 py-1.5 text-sm bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 text-gray-900 dark:text-[#e7e7e7] rounded transition-colors"
+              >
+                {creating ? 'Creating...' : 'Create'}
+              </button>
+              <button
+                onClick={() => setShowNewEntity(false)}
+                disabled={creating}
+                className="flex-1 px-3 py-1.5 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </Modal>
+        )
+      }
 
-      {deleteConfirm && (
-        <Modal onClose={() => setDeleteConfirm(null)}>
-          <div className="flex items-start gap-3">
-            <ExclamationTriangleIcon className="w-6 h-6 text-red-500 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-1">
-                Delete {deleteConfirm.type.charAt(0).toUpperCase() + deleteConfirm.type.slice(1)}?
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Are you sure you want to delete "{deleteConfirm.name}"? This action cannot be undone.
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    if (deleteConfirm.type === 'folder') onDeleteFolder(deleteConfirm.id);
-                    else if (deleteConfirm.type === 'snippet') onDeleteSnippet(deleteConfirm.id);
-                    else if (deleteConfirm.type === 'entity') onDeleteEntity(deleteConfirm.id);
-                    else if (deleteConfirm.type === 'tag') onDeleteTag(deleteConfirm.id);
-                    setDeleteConfirm(null);
-                  }}
-                  className="flex-1 px-3 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors font-medium"
-                >
-                  Delete
-                </button>
-                <button
-                  onClick={() => setDeleteConfirm(null)}
-                  className="flex-1 px-3 py-2 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors font-medium"
-                >
-                  Cancel
-                </button>
+      {
+        showNewTag && (
+          <Modal onClose={() => !creating && setShowNewTag(false)}>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-3">New Tag</h3>
+            <input
+              type="text"
+              value={newTagName}
+              onChange={(e) => setNewTagName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !creating && handleCreateTag()}
+              placeholder="Tag name"
+              disabled={creating}
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 outline-none"
+              autoFocus
+            />
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handleCreateTag}
+                disabled={creating || !newTagName.trim()}
+                className="flex-1 px-3 py-1.5 text-sm bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 text-gray-900 dark:text-[#e7e7e7] rounded transition-colors"
+              >
+                {creating ? 'Creating...' : 'Create'}
+              </button>
+              <button
+                onClick={() => setShowNewTag(false)}
+                disabled={creating}
+                className="flex-1 px-3 py-1.5 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </Modal>
+        )
+      }
+
+      {
+        deleteConfirm && (
+          <Modal onClose={() => setDeleteConfirm(null)}>
+            <div className="flex items-start gap-3">
+              <ExclamationTriangleIcon className="w-6 h-6 text-red-500 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-1">
+                  Delete {deleteConfirm.type.charAt(0).toUpperCase() + deleteConfirm.type.slice(1)}?
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Are you sure you want to delete "{deleteConfirm.name}"? This action cannot be undone.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (deleteConfirm.type === 'folder') onDeleteFolder(deleteConfirm.id);
+                      else if (deleteConfirm.type === 'snippet') onDeleteSnippet(deleteConfirm.id);
+                      else if (deleteConfirm.type === 'entity') onDeleteEntity(deleteConfirm.id);
+                      else if (deleteConfirm.type === 'tag') onDeleteTag(deleteConfirm.id);
+                      setDeleteConfirm(null);
+                    }}
+                    className="flex-1 px-3 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors font-medium"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => setDeleteConfirm(null)}
+                    className="flex-1 px-3 py-2 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </Modal>
-      )}
-    </div>
+          </Modal>
+        )
+      }
+    </div >
   );
 }
+
 
 function SnippetItem({ snippet, isActive, isOpen, onSelect, onDragStart, onDragOver, onDrop, onDragLeave, isDraggedOver, setDeleteConfirm, hasFinalVersion }) {
   return (
