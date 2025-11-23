@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import Sidebar from '@/components/workspace/Sidebar';
 import EditorTabs from '@/components/workspace/EditorTabs';
 import UserMenu from '@/components/workspace/UserMenu';
+import MobileUserMenu from '@/components/workspace/MobileUserMenu';
 import { useWorkspace } from '@/hooks/useWorkspace';
 import { useEntities } from '@/hooks/useEntities';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -36,6 +37,7 @@ export default function WorkspacePage() {
   const [activeBoard, setActiveBoard] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
     const panel = sidebarRef.current;
@@ -148,6 +150,107 @@ export default function WorkspacePage() {
 
   return (
     <div className="flex h-screen bg-white dark:bg-[#191919] overflow-hidden">
+      {/* Mobile Layout */}
+      <div className="lg:hidden flex flex-col flex-1 h-full w-full">
+        {/* Mobile Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919]">
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] truncate">
+            {workspace?.name || 'Workspace'}
+          </h1>
+          <MobileUserMenu user={user} onSettingsClick={() => setSettingsOpen(true)} />
+        </div>
+
+        {/* Mobile Main Content */}
+        <div className="flex-1 overflow-hidden">
+          {activeView === 'kanban' && activeBoard ? (
+            <KanbanBoard
+              board={activeBoard}
+              workspaceId={workspaceId}
+              onClose={() => setActiveView('editor')}
+            />
+          ) : (
+            <EditorTabs
+              tabs={openTabs}
+              activeTabId={activeTabId}
+              onSelectTab={setActiveTab}
+              onCloseTab={closeTab}
+              onUpdateSnippet={updateSnippet}
+              onCreateFinalVersion={createFinalVersion}
+              snippets={snippets}
+              onOpenSnippet={openSnippet}
+              onReorderTabs={reorderTabs}
+              user={user}
+              entities={entities}
+              tags={tags}
+            />
+          )}
+        </div>
+
+        {/* Mobile Bottom Navigation */}
+        <div className="flex items-center justify-around px-2 py-2 border-t border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919]">
+          <button
+            onClick={() => setMobileSidebarOpen(true)}
+            className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors tap-target"
+            title="Menu"
+          >
+            <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span className="text-xs mt-1 text-gray-600 dark:text-gray-400">Menu</span>
+          </button>
+
+          <button
+            onClick={() => togglePanel('ai')}
+            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors tap-target ${aiPanelOpen ? 'bg-purple-100 dark:bg-purple-900/20' : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
+              }`}
+            title="AI Assistant"
+          >
+            <SparklesIcon className={`w-6 h-6 ${aiPanelOpen ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-400'}`} />
+            <span className={`text-xs mt-1 ${aiPanelOpen ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-400'}`}>AI</span>
+          </button>
+
+          <button
+            onClick={() => togglePanel('chat')}
+            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors tap-target ${workspaceChatOpen ? 'bg-blue-100 dark:bg-blue-900/20' : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
+              }`}
+            title="Chat"
+          >
+            <ChatBubbleLeftRightIcon className={`w-6 h-6 ${workspaceChatOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`} />
+            <span className={`text-xs mt-1 ${workspaceChatOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>Chat</span>
+          </button>
+
+          <button
+            onClick={() => togglePanel('kanban')}
+            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors tap-target ${kanbanPanelOpen ? 'bg-blue-100 dark:bg-blue-900/20' : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
+              }`}
+            title="Projects"
+          >
+            <ViewColumnsIcon className={`w-6 h-6 ${kanbanPanelOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`} />
+            <span className={`text-xs mt-1 ${kanbanPanelOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>Projects</span>
+          </button>
+
+          <button
+            onClick={() => togglePanel('storage')}
+            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors tap-target ${storagePanelOpen ? 'bg-yellow-100 dark:bg-yellow-900/20' : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
+              }`}
+            title="Files"
+          >
+            <FolderIcon className={`w-6 h-6 ${storagePanelOpen ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'}`} />
+            <span className={`text-xs mt-1 ${storagePanelOpen ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'}`}>Files</span>
+          </button>
+
+          <button
+            onClick={() => togglePanel('people')}
+            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors tap-target ${peoplePanelOpen ? 'bg-gray-200 dark:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
+              }`}
+            title="People"
+          >
+            <UserGroupIcon className={`w-6 h-6 ${peoplePanelOpen ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`} />
+            <span className={`text-xs mt-1 ${peoplePanelOpen ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`}>People</span>
+          </button>
+        </div>
+      </div>
+
       {/* Desktop Resizable Layout */}
       <div className="hidden lg:flex flex-1 min-w-0 h-full">
         <ResizablePanelGroup direction="horizontal" className="h-full w-full">
@@ -395,6 +498,56 @@ export default function WorkspacePage() {
           </div>
           <div className="h-[calc(100vh-60px)]">
             <StoragePanel workspaceId={workspaceId} />
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Sidebar Modal */}
+      {mobileSidebarOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setMobileSidebarOpen(false)}>
+          <div
+            className="absolute left-0 top-0 bottom-0 w-4/5 max-w-sm bg-white dark:bg-[#191919] shadow-xl overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a]">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7]">Menu</h2>
+              <button
+                onClick={() => setMobileSidebarOpen(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+              >
+                <XMarkIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+              </button>
+            </div>
+            <div className="h-[calc(100vh-60px)]">
+              <Sidebar
+                workspace={workspace}
+                folders={folders}
+                snippets={snippets}
+                entities={entities}
+                tags={tags}
+                openTabs={openTabs}
+                activeTabId={activeTabId}
+                onCreateFolder={createFolder}
+                onCreateSnippet={createSnippet}
+                onCreateEntity={createEntity}
+                onCreateTag={createTag}
+                onOpenSnippet={(snippet) => {
+                  openSnippet(snippet);
+                  setMobileSidebarOpen(false);
+                }}
+                onDeleteSnippet={deleteSnippet}
+                onDeleteFolder={deleteFolder}
+                onDeleteEntity={deleteEntity}
+                onDeleteTag={deleteTag}
+                onReorderSnippets={reorderSnippets}
+                onMoveSnippetToFolder={moveSnippetToFolder}
+                onOpenKanban={(board) => {
+                  handleOpenKanban(board);
+                  setMobileSidebarOpen(false);
+                }}
+                onToggleSidebar={() => setMobileSidebarOpen(false)}
+              />
+            </div>
           </div>
         </div>
       )}
