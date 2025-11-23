@@ -31,7 +31,7 @@ export function NotificationCenter({ userId }) {
     if (!userId) return;
 
     loadNotifications();
-    
+
     // Subscribe to new notifications
     const channel = supabase
       .channel('notifications')
@@ -119,10 +119,10 @@ export function NotificationCenter({ userId }) {
         onClick={() => setIsOpen(!isOpen)}
         className="relative"
       >
-        <BellIcon className="w-5 h-5" />
+        <BellIcon className="w-5 h-5 dark:text-white" />
         {unreadCount > 0 && (
-          <Badge 
-            variant="destructive" 
+          <Badge
+            variant="destructive"
             className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
           >
             {unreadCount > 9 ? '9+' : unreadCount}

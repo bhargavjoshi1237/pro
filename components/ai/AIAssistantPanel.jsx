@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   SparklesIcon,
   ArrowPathIcon,
   ClipboardDocumentIcon,
@@ -57,10 +57,10 @@ export function AIAssistantPanel({ workspaceId, currentUserId }) {
     setOutput('');
 
     try {
-      const apiUrl = aiSettings.apiUrl?.endsWith('/') 
-        ? aiSettings.apiUrl.slice(0, -1) 
+      const apiUrl = aiSettings.apiUrl?.endsWith('/')
+        ? aiSettings.apiUrl.slice(0, -1)
         : (aiSettings.apiUrl || 'https://api.openai.com/v1');
-      
+
       const response = await fetch(`${apiUrl}/chat/completions`, {
         method: 'POST',
         headers: {

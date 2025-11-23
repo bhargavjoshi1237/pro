@@ -5,6 +5,7 @@ export function useWorkspace(workspaceId) {
   const [workspace, setWorkspace] = useState(null);
   const [folders, setFolders] = useState([]);
   const [snippets, setSnippets] = useState([]);
+  const [aiSessions, setAiSessions] = useState([]);
   const [openTabs, setOpenTabs] = useState([]);
   const [activeTabId, setActiveTabId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,15 +17,17 @@ export function useWorkspace(workspaceId) {
       try {
         setLoading(true);
 
-        const [workspaceRes, foldersRes, snippetsRes] = await Promise.all([
+        const [workspaceRes, foldersRes, snippetsRes, aiSessionsRes] = await Promise.all([
           supabase.from('workspaces').select('*').eq('id', workspaceId).single(),
           supabase.from('folders').select('*').eq('workspace_id', workspaceId).order('name'),
-          supabase.from('snippets').select('*').eq('workspace_id', workspaceId).order('updated_at', { ascending: false })
+          supabase.from('snippets').select('*').eq('workspace_id', workspaceId).order('updated_at', { ascending: false }),
+          supabase.from('workspace_ai_sessions').select('*').eq('workspace_id', workspaceId).order('updated_at', { ascending: false })
         ]);
 
         if (workspaceRes.data) setWorkspace(workspaceRes.data);
         if (foldersRes.data) setFolders(foldersRes.data);
-        if (snippetsRes.data) setSnippets(snippetsRes.data);
+        if (snippetsRes.data) setSnippets(snippetsRes.data.map(s => ({ ...s, type: 'snippet' })));
+        if (aiSessionsRes.data) setAiSessions(aiSessionsRes.data.map(s => ({ ...s, type: 'chat' })));
       } catch (error) {
         console.error('Error loading workspace:', error);
       } finally {
@@ -54,9 +57,8 @@ export function useWorkspace(workspaceId) {
         },
         (payload) => {
           setSnippets((prev) => {
-            // Check if snippet already exists
             if (prev.find(s => s.id === payload.new.id)) return prev;
-            return [payload.new, ...prev];
+            return [{ ...payload.new, type: 'snippet' }, ...prev];
           });
         }
       )
@@ -69,8 +71,9 @@ export function useWorkspace(workspaceId) {
           filter: `workspace_id=eq.${workspaceId}`,
         },
         (payload) => {
-          setSnippets((prev) => prev.map(s => s.id === payload.new.id ? payload.new : s));
-          setOpenTabs((prev) => prev.map(tab => tab.id === payload.new.id ? payload.new : tab));
+          const updatedSnippet = { ...payload.new, type: 'snippet' };
+          setSnippets((prev) => prev.map(s => s.id === payload.new.id ? updatedSnippet : s));
+          setOpenTabs((prev) => prev.map(tab => tab.id === payload.new.id ? updatedSnippet : tab));
         }
       )
       .on(
@@ -132,9 +135,57 @@ export function useWorkspace(workspaceId) {
       )
       .subscribe();
 
+    // Subscribe to AI sessions changes
+    const aiSessionsChannel = supabase
+      .channel(`workspace_ai_sessions:${workspaceId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'workspace_ai_sessions',
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        (payload) => {
+          setAiSessions((prev) => {
+            if (prev.find(s => s.id === payload.new.id)) return prev;
+            return [{ ...payload.new, type: 'chat' }, ...prev];
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'workspace_ai_sessions',
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        (payload) => {
+          const updatedSession = { ...payload.new, type: 'chat' };
+          setAiSessions((prev) => prev.map(s => s.id === payload.new.id ? updatedSession : s));
+          // We don't update openTabs for chats anymore as they are not tabs
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'workspace_ai_sessions',
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        (payload) => {
+          setAiSessions((prev) => prev.filter(s => s.id !== payload.old.id));
+          // We don't update openTabs for chats anymore as they are not tabs
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(snippetsChannel);
       supabase.removeChannel(foldersChannel);
+      supabase.removeChannel(aiSessionsChannel);
     };
   }, [workspaceId]);
 
@@ -169,16 +220,40 @@ export function useWorkspace(workspaceId) {
       .single();
 
     if (!error && data) {
-      setSnippets([data, ...snippets]);
-      openSnippet(data);
+      const newSnippet = { ...data, type: 'snippet' };
+      setSnippets([newSnippet, ...snippets]);
+      openSnippet(newSnippet);
+    }
+  };
+
+  const createAISession = async (name) => {
+    if (!supabase) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('workspace_ai_sessions')
+      .insert([{
+        name,
+        workspace_id: workspaceId,
+        created_by: user.id
+      }])
+      .select()
+      .single();
+
+    if (!error && data) {
+      const newSession = { ...data, type: 'chat' };
+      setAiSessions([newSession, ...aiSessions]);
+      // We don't automatically open chat in tabs anymore
     }
   };
 
   const updateSnippet = async (id, updates) => {
     if (!supabase) return;
 
-    const wordCount = updates.content 
-      ? updates.content.trim().split(/\s+/).filter(w => w.length > 0).length 
+    const wordCount = updates.content
+      ? updates.content.trim().split(/\s+/).filter(w => w.length > 0).length
       : 0;
 
     const { data, error } = await supabase
@@ -189,8 +264,9 @@ export function useWorkspace(workspaceId) {
       .single();
 
     if (!error && data) {
-      setSnippets(snippets.map(s => s.id === id ? data : s));
-      setOpenTabs(openTabs.map(tab => tab.id === id ? data : tab));
+      const updatedSnippet = { ...data, type: 'snippet' };
+      setSnippets(snippets.map(s => s.id === id ? updatedSnippet : s));
+      setOpenTabs(openTabs.map(tab => tab.id === id ? updatedSnippet : tab));
     }
   };
 
@@ -222,17 +298,36 @@ export function useWorkspace(workspaceId) {
     }
   };
 
+  const deleteAISession = async (id) => {
+    if (!supabase) return;
+
+    const { error } = await supabase
+      .from('workspace_ai_sessions')
+      .delete()
+      .eq('id', id);
+
+    if (!error) {
+      setAiSessions(aiSessions.filter(s => s.id !== id));
+      // No tab to close
+    }
+  };
+
   const openSnippet = useCallback((snippet) => {
+    const snippetWithType = { ...snippet, type: 'snippet' };
     if (!openTabs.find(tab => tab.id === snippet.id)) {
-      setOpenTabs([...openTabs, snippet]);
+      setOpenTabs([...openTabs, snippetWithType]);
     }
     setActiveTabId(snippet.id);
   }, [openTabs]);
 
+  const openChat = useCallback((session) => {
+    // No-op for now as chats are in panel
+  }, []);
+
   const closeTab = useCallback((tabId) => {
     const newTabs = openTabs.filter(tab => tab.id !== tabId);
     setOpenTabs(newTabs);
-    
+
     if (activeTabId === tabId && newTabs.length > 0) {
       setActiveTabId(newTabs[0].id);
     } else if (newTabs.length === 0) {
@@ -250,7 +345,7 @@ export function useWorkspace(workspaceId) {
 
   const reorderSnippets = useCallback((reorderedSnippets) => {
     // Update the snippets array with new order
-    const otherSnippets = snippets.filter(s => 
+    const otherSnippets = snippets.filter(s =>
       !reorderedSnippets.find(rs => rs.id === s.id)
     );
     setSnippets([...reorderedSnippets, ...otherSnippets]);
@@ -267,8 +362,9 @@ export function useWorkspace(workspaceId) {
       .single();
 
     if (!error && data) {
-      setSnippets(snippets.map(s => s.id === snippetId ? data : s));
-      setOpenTabs(openTabs.map(tab => tab.id === snippetId ? data : tab));
+      const updatedSnippet = { ...data, type: 'snippet' };
+      setSnippets(snippets.map(s => s.id === snippetId ? updatedSnippet : s));
+      setOpenTabs(openTabs.map(tab => tab.id === snippetId ? updatedSnippet : tab));
     }
   };
 
@@ -293,8 +389,9 @@ export function useWorkspace(workspaceId) {
       .single();
 
     if (!error && data) {
-      setSnippets([data, ...snippets]);
-      openSnippet(data);
+      const newSnippet = { ...data, type: 'snippet' };
+      setSnippets([newSnippet, ...snippets]);
+      openSnippet(newSnippet);
     }
   };
 
@@ -302,14 +399,18 @@ export function useWorkspace(workspaceId) {
     workspace,
     folders,
     snippets,
+    aiSessions,
     openTabs,
     activeTabId,
     createFolder,
     createSnippet,
+    createAISession,
     updateSnippet,
     deleteSnippet,
     deleteFolder,
+    deleteAISession,
     openSnippet,
+    openChat,
     closeTab,
     setActiveTab,
     reorderTabs,

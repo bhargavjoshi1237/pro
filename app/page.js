@@ -4,7 +4,10 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
-import { SparklesIcon, FolderIcon, DocumentTextIcon, UsersIcon, BoltIcon, CheckCircleIcon, ArrowRightIcon, MoonIcon, SunIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, CheckCircleIcon, ArrowRightIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline';
+import { WaveBackground } from '@/components/landing/wave/WaveBackground';
+import { FeatureShowcase } from '@/components/landing/FeatureShowcase';
+import HeroGeometric from '@/components/landing/HeroGeometric';
 
 function LandingContent() {
   const router = useRouter();
@@ -13,31 +16,27 @@ function LandingContent() {
   useEffect(() => {
     const checkUser = async () => {
       if (!supabase) return;
-      
+
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         router.push('/dashboard');
       }
     };
-    
+
     checkUser();
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#191919] text-gray-900 dark:text-[#e7e7e7] overflow-hidden">
+    <div className="relative min-h-screen text-gray-900 dark:text-[#e7e7e7] overflow-hidden">
       <div>
         {/* Animated background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 dark:bg-blue-500/5 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute top-1/2 -left-40 w-96 h-96 bg-purple-500/10 dark:bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-          <div className="absolute -bottom-40 right-1/3 w-80 h-80 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl animate-pulse delay-2000"></div>
-        </div>
+        <WaveBackground />
 
         {/* Navigation */}
         <nav className="relative z-10 px-6 py-4 flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-2">
             <SparklesIcon className="w-8 h-8 text-blue-600 dark:text-blue-500" />
-            <span className="text-xl font-bold">Prodigys</span>
+            <span className="text-xl font-bold">Prodigy</span>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -60,299 +59,237 @@ function LandingContent() {
         </nav>
 
         {/* Hero Section */}
-        <section className="relative z-10 px-6 pt-20 pb-32 max-w-7xl mx-auto">
-          <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-full text-sm font-medium text-blue-700 dark:text-blue-400 mb-8 animate-fade-in">
-              <SparklesIcon className="w-4 h-4" />
-              Your creative writing companion
-            </div>
-            
-            <h1 className="text-6xl md:text-7xl font-bold mb-6 bg-linear-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-[#e7e7e7] dark:via-white dark:to-[#e7e7e7] bg-clip-text text-transparent animate-fade-in-up">
-              Write, Organize,
-              <br />
-              Create Masterpieces
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto animate-fade-in-up delay-100">
-              The modern workspace for novelists. Organize your ideas, manage drafts, and collaborate seamlessly.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up delay-200">
-              <button
-                onClick={() => router.push('/login')}
-                className="group px-8 py-4 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-xl font-semibold transition-all hover:scale-105 hover:shadow-xl flex items-center gap-2"
-              >
-                Get Started Free
-                <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-              <button
-                onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
-                className="px-8 py-4 bg-gray-100 dark:bg-[#212121] hover:bg-gray-200 dark:hover:bg-[#2a2a2a] text-gray-900 dark:text-[#e7e7e7] rounded-xl font-semibold transition-all hover:scale-105"
-              >
-                Learn More
-              </button>
-            </div>
-
-            <div className="mt-12 flex items-center justify-center gap-8 text-sm text-gray-500 dark:text-gray-500">
-              <div className="flex items-center gap-2">
-                <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                No credit card required
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                Free forever
-              </div>
-            </div>
-          </div>
-
-          {/* Floating Cards Preview */}
-          <div className="mt-20 relative h-96 animate-fade-in-up delay-300">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl">
-              <div className="relative">
-                {/* Main card */}
-                <div className="bg-white dark:bg-[#212121] rounded-2xl shadow-2xl border border-gray-200 dark:border-[#2a2a2a] p-8 animate-float">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded w-full"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded w-5/6"></div>
-                  </div>
-                </div>
-                
-                {/* Floating elements */}
-                <div className="absolute -top-8 -left-8 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium animate-float delay-100">
-                  Auto-save ✓
-                </div>
-                <div className="absolute -bottom-8 -right-8 bg-purple-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium animate-float delay-200">
-                  Multi-tab editing
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <HeroGeometric title1="Write, Organize," title2="Create Masterpieces" badge="Your creative writing companion" />
 
         {/* Features Section */}
-        <section id="features" className="relative z-10 px-6 py-32 bg-gray-50 dark:bg-[#212121]">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4">Everything you need to write</h2>
-              <p className="text-xl text-gray-600 dark:text-gray-400">Powerful features designed for creative writers</p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <FeatureCard
-                icon={<FolderIcon className="w-8 h-8" />}
-                title="Organized Workspaces"
-                description="Create separate workspaces for each project. Organize novels, short stories, and ideas with folders and snippets."
-                color="blue"
-              />
-              <FeatureCard
-                icon={<DocumentTextIcon className="w-8 h-8" />}
-                title="Multi-Tab Editor"
-                description="Work on multiple snippets at once with VS Code-style tabs. Switch between chapters and scenes seamlessly."
-                color="purple"
-              />
-              <FeatureCard
-                icon={<UsersIcon className="w-8 h-8" />}
-                title="Real-Time Collaboration"
-                description="Share workspaces with co-authors and editors. Assign roles and collaborate in real-time on your stories."
-                color="green"
-              />
-              <FeatureCard
-                icon={<BoltIcon className="w-8 h-8" />}
-                title="Auto-Save & Sync"
-                description="Never lose your work. Changes are automatically saved every second and synced across all your devices."
-                color="yellow"
-              />
-              <FeatureCard
-                icon={<CheckCircleIcon className="w-8 h-8" />}
-                title="Draft Management"
-                description="Create finalized versions of your drafts. Mark snippets as final and track your progress effortlessly."
-                color="indigo"
-              />
-              <FeatureCard
-                icon={<ShieldCheckIcon className="w-8 h-8" />}
-                title="Secure & Private"
-                description="Your work is encrypted and secure. Control who can view and edit your content with granular permissions."
-                color="pink"
-              />
-            </div>
-          </div>
-        </section>
+        <div id="features" className="relative z-10">
+          <FeatureShowcase />
+        </div>
 
         {/* Pricing Section */}
-        <section id="pricing" className="relative z-10 px-6 py-32 bg-white dark:bg-[#191919]">
+        <section id="pricing" className="relative z-10 py-32 px-6">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4">Simple, transparent pricing</h2>
-              <p className="text-xl text-gray-600 dark:text-gray-400">Choose the plan that fits your writing needs</p>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-[#e7e7e7] dark:via-white dark:to-[#e7e7e7]">
+                Simple, transparent pricing
+              </h2>
+              <p className="text-xl text-gray-600 dark:text-gray-400">Start for free, upgrade when you need more power</p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {/* Free Plan */}
-              <div className="bg-white dark:bg-[#212121] rounded-2xl border-2 border-gray-200 dark:border-[#2a2a2a] p-8 hover:border-gray-300 dark:hover:border-[#3a3a3a] transition-all">
-                <h3 className="text-2xl font-bold mb-2">Free</h3>
-                <div className="mb-6">
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {/* Free Tier */}
+              <div className="bg-white/80 dark:bg-[#191919]/80 backdrop-blur-sm p-8 rounded-2xl border border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#3a3a3a] transition-all hover:shadow-xl relative group">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <h3 className="text-xl font-semibold mb-2">Starter</h3>
+                <div className="flex items-baseline gap-1 mb-6">
                   <span className="text-4xl font-bold">$0</span>
-                  <span className="text-gray-600 dark:text-gray-400">/month</span>
+                  <span className="text-gray-500">/month</span>
                 </div>
                 <ul className="space-y-4 mb-8">
-                  <PricingFeature text="3 workspaces" />
-                  <PricingFeature text="50 snippets per workspace" />
-                  <PricingFeature text="Basic editor" />
-                  <PricingFeature text="Folder organization" />
-                  <PricingFeature text="Auto-save" />
-                  <PricingFeature text="Share with 2 collaborators" />
-                  <PricingFeature text="Basic export (JSON)" />
+                  <PricingFeature text="Up to 3 workspaces" />
+                  <PricingFeature text="Basic AI assistance" />
+                  <PricingFeature text="5GB storage" />
+                  <PricingFeature text="Community support" />
                 </ul>
-                <button
-                  onClick={() => router.push('/login')}
-                  className="w-full px-6 py-3 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#3a3a3a] text-gray-900 dark:text-[#e7e7e7] rounded-xl font-semibold transition-all"
-                >
+                <button className="w-full py-3 px-4 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#333] text-gray-900 dark:text-[#e7e7e7] rounded-xl font-semibold transition-colors">
                   Get Started
                 </button>
               </div>
 
-              {/* Pro Plan */}
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl border-2 border-blue-500 p-8 relative transform scale-105 shadow-2xl">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-yellow-400 text-gray-900 text-sm font-bold rounded-full">
-                  POPULAR
+              {/* Pro Tier */}
+              <div className="bg-gray-900 dark:bg-[#e7e7e7] p-8 rounded-2xl shadow-2xl scale-105 relative">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                  Most Popular
                 </div>
-                <h3 className="text-2xl font-bold mb-2 text-white">Pro</h3>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">$5</span>
-                  <span className="text-blue-100">/month</span>
+                <h3 className="text-xl font-semibold mb-2 text-white dark:text-gray-900">Pro</h3>
+                <div className="flex items-baseline gap-1 mb-6 text-white dark:text-gray-900">
+                  <span className="text-4xl font-bold">$12</span>
+                  <span className="text-gray-400 dark:text-gray-600">/month</span>
                 </div>
-                <ul className="space-y-4 mb-8">
-                  <PricingFeature text="Unlimited workspaces" light />
-                  <PricingFeature text="Unlimited snippets" light />
-                  <PricingFeature text="Rich text editor" light />
-                  <PricingFeature text="Tags & categories" light />
-                  <PricingFeature text="Advanced search" light />
-                  <PricingFeature text="Unlimited collaborators" light />
-                  <PricingFeature text="Version history (30 days)" light />
-                  <PricingFeature text="Export to PDF, DOCX, MD" light />
-                  <PricingFeature text="Real-time collaboration" light />
-                  <PricingFeature text="Priority support" light />
+                <ul className="space-y-4 mb-8 text-gray-300 dark:text-gray-700">
+                  <PricingFeature text="Unlimited workspaces" />
+                  <PricingFeature text="Advanced AI co-author" />
+                  <PricingFeature text="Unlimited storage" />
+                  <PricingFeature text="Priority support" />
+                  <PricingFeature text="Advanced analytics" />
                 </ul>
-                <button
-                  onClick={() => router.push('/login')}
-                  className="w-full px-6 py-3 bg-white hover:bg-gray-100 text-blue-600 rounded-xl font-semibold transition-all"
-                >
-                  Start Pro Trial
+                <button className="w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-blue-500/25">
+                  Start Free Trial
                 </button>
               </div>
 
-              {/* Premium Plan */}
-              <div className="bg-white dark:bg-[#212121] rounded-2xl border-2 border-gray-200 dark:border-[#2a2a2a] p-8 hover:border-gray-300 dark:hover:border-[#3a3a3a] transition-all">
-                <h3 className="text-2xl font-bold mb-2">Premium</h3>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">$10</span>
-                  <span className="text-gray-600 dark:text-gray-400">/month</span>
+              {/* Team Tier */}
+              <div className="bg-white/80 dark:bg-[#191919]/80 backdrop-blur-sm p-8 rounded-2xl border border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#3a3a3a] transition-all hover:shadow-xl relative group">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <h3 className="text-xl font-semibold mb-2">Team</h3>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="text-4xl font-bold">$29</span>
+                  <span className="text-gray-500">/month</span>
                 </div>
                 <ul className="space-y-4 mb-8">
                   <PricingFeature text="Everything in Pro" />
-                  <PricingFeature text="AI writing assistant" />
-                  <PricingFeature text="Advanced analytics" />
-                  <PricingFeature text="Custom templates" />
-                  <PricingFeature text="Offline mode" />
+                  <PricingFeature text="Team collaboration" />
+                  <PricingFeature text="Admin controls" />
                   <PricingFeature text="API access" />
-                  <PricingFeature text="Version history (unlimited)" />
-                  <PricingFeature text="Custom branding" />
-                  <PricingFeature text="Team management" />
-                  <PricingFeature text="Priority support + SLA" />
+                  <PricingFeature text="SSO integration" />
                 </ul>
-                <button
-                  onClick={() => router.push('/login')}
-                  className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-semibold transition-all"
-                >
-                  Start Premium Trial
+                <button className="w-full py-3 px-4 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#333] text-gray-900 dark:text-[#e7e7e7] rounded-xl font-semibold transition-colors">
+                  Contact Sales
                 </button>
-              </div>
-            </div>
-
-            {/* Feature Comparison */}
-            <div className="mt-16 max-w-4xl mx-auto">
-              <h3 className="text-2xl font-bold text-center mb-8">Feature Comparison</h3>
-              <div className="bg-white dark:bg-[#212121] rounded-2xl border border-gray-200 dark:border-[#2a2a2a] overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-[#2a2a2a]">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-semibold">Feature</th>
-                      <th className="px-6 py-4 text-center text-sm font-semibold">Free</th>
-                      <th className="px-6 py-4 text-center text-sm font-semibold">Pro</th>
-                      <th className="px-6 py-4 text-center text-sm font-semibold">Premium</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-[#2a2a2a]">
-                    <ComparisonRow feature="Workspaces" free="3" pro="Unlimited" premium="Unlimited" />
-                    <ComparisonRow feature="Snippets per workspace" free="50" pro="Unlimited" premium="Unlimited" />
-                    <ComparisonRow feature="Collaborators" free="2" pro="Unlimited" premium="Unlimited" />
-                    <ComparisonRow feature="Real-time collaboration" free={false} pro={true} premium={true} />
-                    <ComparisonRow feature="Tags & categories" free={false} pro={true} premium={true} />
-                    <ComparisonRow feature="Version history" free={false} pro="30 days" premium="Unlimited" />
-                    <ComparisonRow feature="Export formats" free="JSON" pro="PDF, DOCX, MD" premium="All + EPUB" />
-                    <ComparisonRow feature="AI writing assistant" free={false} pro={false} premium={true} />
-                    <ComparisonRow feature="API access" free={false} pro={false} premium={true} />
-                    <ComparisonRow feature="Priority support" free={false} pro={true} premium={true} />
-                  </tbody>
-                </table>
               </div>
             </div>
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="relative z-10 px-6 py-32 bg-gray-50 dark:bg-[#212121]">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Ready to start writing?
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 mb-12">
-              Join thousands of writers who trust Prodigys for their creative work.
-            </p>
-            <button
-              onClick={() => router.push('/login')}
-              className="group px-10 py-5 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 text-lg rounded-xl font-semibold transition-all hover:scale-105 hover:shadow-2xl inline-flex items-center gap-2"
-            >
-              Get Started Now
-              <ArrowRightIcon className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-            </button>
+        <section className="relative z-10 py-32 px-6">
+          <div className="max-w-6xl mx-auto relative">
+            {/* Animated gradient orbs in background */}
+            <div className="absolute -top-24 -left-24 w-96 h-96 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-gradient-to-br from-pink-500/30 to-orange-500/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+
+            {/* Main CTA Card */}
+            <div className="relative bg-gradient-to-br from-white/60 via-white/40 to-white/30 dark:from-white/10 dark:via-white/5 dark:to-white/5 backdrop-blur-2xl rounded-3xl p-12 md:p-20 text-center border border-white/20 dark:border-white/10 shadow-2xl overflow-hidden">
+              {/* Animated gradient border effect */}
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500"></div>
+
+              {/* Noise texture overlay */}
+              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
+
+              {/* Floating particles */}
+              <div className="absolute top-10 left-10 w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
+              <div className="absolute top-20 right-20 w-3 h-3 bg-purple-400 rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
+              <div className="absolute bottom-20 left-20 w-2 h-2 bg-pink-400 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
+              <div className="absolute bottom-10 right-10 w-3 h-3 bg-orange-400 rounded-full animate-ping" style={{ animationDelay: '1.5s' }}></div>
+
+              <div className="relative z-10">
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 mb-8">
+                  <SparklesIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                    Join 10,000+ Writers
+                  </span>
+                </div>
+
+                <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 dark:from-white dark:via-gray-200 dark:to-white bg-clip-text text-transparent leading-tight">
+                  Ready to write your<br />best work?
+                </h2>
+
+                <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+                  Join thousands of writers who have found their flow with Prodigy.<br />
+                  <span className="font-semibold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                    Start your free trial today — no credit card required.
+                  </span>
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                  <button className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <span className="relative flex items-center gap-2">
+                      Get Started Now
+                      <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </button>
+
+                  <button className="px-8 py-4 bg-white/60 dark:bg-white/10 backdrop-blur-sm text-gray-900 dark:text-white rounded-xl font-semibold text-lg hover:bg-white/80 dark:hover:bg-white/20 transition-all duration-300 border border-gray-200/50 dark:border-white/20">
+                    Watch Demo
+                  </button>
+                </div>
+
+                {/* Trust indicators */}
+                <div className="mt-12 flex flex-wrap justify-center items-center gap-8 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                    <span>Free 14-day trial</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                    <span>No credit card needed</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                    <span>Cancel anytime</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="relative z-10 px-6 py-8 border-t border-gray-200 dark:border-[#2a2a2a]">
-          <div className="max-w-7xl mx-auto text-center text-gray-600 dark:text-gray-500 text-sm">
-            <p>© 2024 Prodigys. Built for writers, by writers.</p>
+        <footer className="relative z-10 px-6 py-16 border-t border-gray-200/50 dark:border-white/10">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+              {/* Brand Column */}
+              <div className="md:col-span-1">
+                <div className="flex items-center gap-2 mb-4">
+                  <SparklesIcon className="w-8 h-8 text-blue-600 dark:text-blue-500" />
+                  <span className="text-xl font-bold text-gray-900 dark:text-white">Prodigy</span>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Your creative writing companion. Built for writers, by writers.
+                </p>
+                <div className="flex gap-3">
+                  <a href="#" className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 flex items-center justify-center transition-colors">
+                    <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" /></svg>
+                  </a>
+                  <a href="#" className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 flex items-center justify-center transition-colors">
+                    <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" /></svg>
+                  </a>
+                  <a href="#" className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 flex items-center justify-center transition-colors">
+                    <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
+                  </a>
+                </div>
+              </div>
+
+              {/* Product Column */}
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Product</h4>
+                <ul className="space-y-3 text-sm">
+                  <li><a href="#features" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Features</a></li>
+                  <li><a href="#pricing" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Pricing</a></li>
+                  <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Roadmap</a></li>
+                  <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Changelog</a></li>
+                </ul>
+              </div>
+
+              {/* Resources Column */}
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Resources</h4>
+                <ul className="space-y-3 text-sm">
+                  <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Documentation</a></li>
+                  <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Blog</a></li>
+                  <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Community</a></li>
+                  <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Support</a></li>
+                </ul>
+              </div>
+
+              {/* Company Column */}
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Company</h4>
+                <ul className="space-y-3 text-sm">
+                  <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">About</a></li>
+                  <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Careers</a></li>
+                  <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Privacy</a></li>
+                  <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Terms</a></li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Bottom Bar */}
+            <div className="pt-8 border-t border-gray-200/50 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-sm text-gray-600 dark:text-gray-500">
+                © 2024 Prodigy. All rights reserved.
+              </p>
+              <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-500">
+                <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Status</a>
+                <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Security</a>
+                <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Contact</a>
+              </div>
+            </div>
           </div>
         </footer>
       </div>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, description, color }) {
-  const colorClasses = {
-    blue: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-    purple: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-    green: 'bg-green-500/10 text-green-600 dark:text-green-400',
-    yellow: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
-    indigo: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
-    pink: 'bg-pink-500/10 text-pink-600 dark:text-pink-400',
-  };
-
-  return (
-    <div className="group bg-white dark:bg-[#191919] p-8 rounded-2xl border border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#3a3a3a] transition-all hover:shadow-xl hover:-translate-y-1">
-      <div className={`inline-flex p-3 rounded-xl mb-4 ${colorClasses[color]}`}>
-        {icon}
-      </div>
-      <h3 className="text-xl font-semibold mb-3">{title}</h3>
-      <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{description}</p>
     </div>
   );
 }

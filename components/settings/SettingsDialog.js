@@ -1,63 +1,95 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useTheme } from '@/context/ThemeContext';
 import ProfileSettings from './ProfileSettings';
-import SecuritySettings from './SecuritySettings';
 import PreferencesSettings from './PreferencesSettings';
 import AISettings from './AISettings';
+import { useState } from 'react';
+import { UserIcon, Cog6ToothIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { cn } from '@/lib/utils';
 
 export default function SettingsDialog({ isOpen, onClose, user }) {
   const { theme } = useTheme();
+  const [activeTab, setActiveTab] = useState('profile');
+
+  const tabs = [
+    { id: 'profile', label: 'Profile', icon: UserIcon, component: ProfileSettings },
+    { id: 'preferences', label: 'Preferences', icon: Cog6ToothIcon, component: PreferencesSettings },
+    { id: 'ai', label: 'AI Assistant', icon: SparklesIcon, component: AISettings },
+  ];
+
+  const ActiveComponent = tabs.find(t => t.id === activeTab)?.component || ProfileSettings;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden bg-white dark:bg-[#181818] border-gray-200 dark:border-[#2a2a2a]">
-        <DialogHeader className="border-b pb-4 border-gray-200 dark:border-[#2a2a2a]">
-          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-[#e7e7e7]">
-            Settings
-          </DialogTitle>
-        </DialogHeader>
-        
-        <Tabs defaultValue="profile" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="w-full justify-start h-auto p-0 rounded-none bg-transparent overflow-x-auto">
-            <TabsTrigger 
-              value="profile"
-              className="rounded-none border-0 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-[#e7e7e7] data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-[#2a2a2a] hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1c1c1c] whitespace-nowrap"
-            >
-              Profile
-            </TabsTrigger>
-            
-            <TabsTrigger 
-              value="preferences"
-              className="rounded-none border-0 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-[#e7e7e7] data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-[#2a2a2a] hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1c1c1c] whitespace-nowrap"
-            >
-              Preferences
-            </TabsTrigger>
-            
-            <TabsTrigger 
-              value="ai"
-              className="rounded-none border-0 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-[#e7e7e7] data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-[#2a2a2a] hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1c1c1c] whitespace-nowrap"
-            >
-              AI Assistant
-            </TabsTrigger>
-          </TabsList>
-          
-          <div className="flex-1 overflow-y-auto">
-            <TabsContent value="profile" className="mt-0 p-4 sm:p-6 focus-visible:outline-none focus-visible:ring-0">
-              <ProfileSettings user={user} />
-            </TabsContent>
-           
-            <TabsContent value="preferences" className="mt-0 p-4 sm:p-6 focus-visible:outline-none focus-visible:ring-0">
-              <PreferencesSettings userId={user?.id} />
-            </TabsContent>
-            
-            <TabsContent value="ai" className="mt-0 p-4 sm:p-6 focus-visible:outline-none focus-visible:ring-0">
-              <AISettings user={user} />
-            </TabsContent>
+      <DialogContent showCloseButton={false} className="!max-w-5xl w-[90vw] h-[80vh] p-0 gap-0 bg-white dark:bg-[#121212] border-gray-200 dark:border-[#2a2a2a] overflow-hidden flex shadow-2xl rounded-2xl outline-none">
+        <DialogTitle className="sr-only">Settings</DialogTitle>
+
+        {/* Sidebar */}
+        <div className="w-64 bg-gray-50/50 dark:bg-[#181818] border-r border-gray-200 dark:border-[#2a2a2a] flex flex-col shrink-0">
+          <div className="p-6 pb-4">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Settings</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage your workspace</p>
           </div>
-        </Tabs>
+
+          <nav className="flex-1 px-3 space-y-1 overflow-y-auto py-2">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+                  activeTab === tab.id
+                    ? "bg-white dark:bg-[#2a2a2a] text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-gray-200 dark:ring-[#333]"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#212121] hover:text-gray-900 dark:hover:text-gray-200"
+                )}
+              >
+                <tab.icon className={cn("w-5 h-5", activeTab === tab.id ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500")} />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="p-4 border-t border-gray-200 dark:border-[#2a2a2a]">
+            <div className="flex items-center gap-3 px-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                {user?.email?.[0].toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {user?.user_metadata?.full_name || 'First Name'}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {user?.email}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#121212]">
+          <div className="h-16 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between px-8 shrink-0">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {tabs.find(t => t.id === activeTab)?.label}
+              </h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#2a2a2a] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            >
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-8">
+            <div className="max-w-2xl mx-auto">
+              <ActiveComponent user={user} userId={user?.id} />
+            </div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

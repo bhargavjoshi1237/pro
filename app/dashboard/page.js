@@ -3,11 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { 
-  PlusIcon, 
-  FolderIcon, 
-  UsersIcon, 
-  SparklesIcon, 
+import {
+  PlusIcon,
+  FolderIcon,
+  UsersIcon,
+  SparklesIcon,
   HomeIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
@@ -22,45 +22,23 @@ import ShareWorkspaceDialog from '@/components/workspace/ShareWorkspaceDialog';
 import MemberAvatars from '@/components/workspace/MemberAvatars';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
-import { CommandPalette } from '@/components/CommandPalette';
+import CommandPalette from '@/components/CommandPalette';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
 
+import { motion, useSpring, useTransform } from 'framer-motion';
+
 // Counter animation component
-function AnimatedCounter({ value, duration = 1000 }) {
-  const [count, setCount] = useState(0);
-  const countRef = useRef(0);
-  const startTimeRef = useRef(null);
+function AnimatedCounter({ value }) {
+  const spring = useSpring(0, { bounce: 0, duration: 2000 });
+  const display = useTransform(spring, (current) => Math.round(current));
 
   useEffect(() => {
-    if (value === 0) {
-      setCount(0);
-      return;
-    }
+    spring.set(value);
+  }, [spring, value]);
 
-    const animate = (timestamp) => {
-      if (!startTimeRef.current) startTimeRef.current = timestamp;
-      const progress = timestamp - startTimeRef.current;
-      const percentage = Math.min(progress / duration, 1);
-      
-      // Easing function for smooth animation
-      const easeOutQuart = 1 - Math.pow(1 - percentage, 4);
-      const current = Math.floor(easeOutQuart * value);
-      
-      setCount(current);
-      
-      if (percentage < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        setCount(value);
-      }
-    };
-
-    requestAnimationFrame(animate);
-  }, [value, duration]);
-
-  return <span>{count}</span>;
+  return <motion.span>{display}</motion.span>;
 }
 
 function DashboardContent() {
@@ -107,7 +85,7 @@ function DashboardContent() {
 
         // Load all members for each workspace
         loadAllWorkspaceMembers(enrichedWorkspaces.map(w => w.id), userId);
-        
+
         // Load total snippets count
         loadTotalSnippets(enrichedWorkspaces.map(w => w.id));
       }
@@ -139,7 +117,7 @@ function DashboardContent() {
         // Group members by workspace_id
         const membersMap = {};
         const uniqueCollaborators = new Set();
-        
+
         data.forEach(member => {
           if (!membersMap[member.workspace_id]) {
             membersMap[member.workspace_id] = [];
@@ -151,13 +129,13 @@ function DashboardContent() {
             email: member.profiles?.email,
             avatar_url: member.profiles?.avatar_url
           });
-          
+
           // Count unique collaborators (excluding current user)
           if (member.user_id !== userId) {
             uniqueCollaborators.add(member.user_id);
           }
         });
-        
+
         setWorkspaceMembersMap(membersMap);
         setTotalCollaborators(uniqueCollaborators.size);
       }
@@ -173,21 +151,21 @@ function DashboardContent() {
       }
 
       setUser(session.user);
-      
+
       // Load user profile with avatar
       const { data: profile } = await supabase
         .from('profiles')
         .select('avatar_url, display_name')
         .eq('id', session.user.id)
         .single();
-      
+
       if (profile) {
         setUserProfile(profile);
       }
-      
+
       loadWorkspaces(session.user.id);
     };
-    
+
     checkAuth();
   }, [router]);
 
@@ -211,7 +189,7 @@ function DashboardContent() {
         // Add userRole to the new workspace
         const newWorkspace = { ...data, userRole: 'owner' };
         setWorkspaces([newWorkspace, ...workspaces]);
-        
+
         // Add to members map
         setWorkspaceMembersMap({
           ...workspaceMembersMap,
@@ -275,7 +253,7 @@ function DashboardContent() {
   const handleMembersUpdate = async () => {
     if (selectedWorkspace) {
       await loadWorkspaceMembers(selectedWorkspace.id);
-      
+
       // Also refresh the members map for the workspace list
       const { data, error } = await supabase
         .from('workspace_members')
@@ -290,7 +268,7 @@ function DashboardContent() {
           email: m.profiles?.email,
           avatar_url: m.profiles?.avatar_url
         }));
-        
+
         setWorkspaceMembersMap({
           ...workspaceMembersMap,
           [selectedWorkspace.id]: members
@@ -313,8 +291,8 @@ function DashboardContent() {
         .eq('id', selectedWorkspace.id);
 
       if (!error) {
-        setWorkspaces(workspaces.map(w => 
-          w.id === selectedWorkspace.id 
+        setWorkspaces(workspaces.map(w =>
+          w.id === selectedWorkspace.id
             ? { ...w, name: renameWorkspaceName.trim() }
             : w
         ));
@@ -368,7 +346,7 @@ function DashboardContent() {
             <div className="w-48 h-8 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse mb-2" />
             <div className="w-64 h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
           </div>
-          
+
           <div className="p-4 sm:p-6 lg:p-8">
             {/* Stats Skeleton */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -413,469 +391,469 @@ function DashboardContent() {
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-[#f8f9fa] dark:bg-[#1c1c1c] relative overflow-hidden">
-        {/* Command Palette */}
-        <CommandPalette workspaces={workspaces} />
-        
-        {/* Chat Drawer */}
-        {user && <ChatDrawer userId={user.id} />}
-        
-        {/* Sidebar */}
-        <div className="hidden lg:flex lg:w-64 bg-white dark:bg-[#181818] border-r border-gray-200 dark:border-[#2a2a2a] flex-col">
-          {/* Logo with Theme Toggle */}
-          <div className="px-3 py-2.5 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <SparklesIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7]">Prodigy</span>
-            </div>
-            <button
-              onClick={toggleTheme}
-              className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
-            >
-              {theme === 'light' ? (
-                <MoonIcon className="w-4 h-4 text-gray-600" />
-              ) : (
-                <SunIcon className="w-4 h-4 text-gray-400" />
-              )}
-            </button>
+      {/* Command Palette */}
+      <CommandPalette workspaces={workspaces} />
+
+      {/* Chat Drawer */}
+      {user && <ChatDrawer userId={user.id} />}
+
+      {/* Sidebar */}
+      <div className="hidden lg:flex lg:w-64 bg-white dark:bg-[#181818] border-r border-gray-200 dark:border-[#2a2a2a] flex-col">
+        {/* Logo with Theme Toggle */}
+        <div className="px-3 py-2.5 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <SparklesIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+            <span className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7]">Prodigy</span>
           </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-3 space-y-1">
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-900 dark:text-[#e7e7e7] bg-gray-100 dark:bg-[#2a2a2a] rounded-lg">
-              <HomeIcon className="w-5 h-5" />
-              Home
-            </button>
-            <button
-              onClick={() => router.push('/ai-chat')}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
-            >
-              <SparklesIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              AI Chat
-            </button>
-          </nav>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto">
-          {/* Header */}
-          <div className="bg-white dark:bg-[#181818] border-b border-gray-200 dark:border-[#2a2a2a] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-[#e7e7e7]">All Workspaces</h1>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
-                  Manage and organize your writing projects
-                  <span className="hidden md:flex items-center gap-1 text-xs text-gray-500 dark:text-gray-500">
-                    • Press <KbdGroup><Kbd>⌘</Kbd><Kbd>K</Kbd></KbdGroup> for quick actions
-                  </span>
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {user && <NotificationCenter userId={user.id} />}
-                <button
-                  onClick={() => setShowNewWorkspace(true)}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#212121] dark:bg-[#e7e7e7] hover:bg-gray-300 dark:hover:bg-[#a5a5a5] border border-gray-300 dark:border-[#383838] text-[#e7e7e7] dark:text-gray-900 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-                >
-                  <PlusIcon className="w-4 h-4" />
-                  <span className="hidden sm:inline">New Workspace</span>
-                  <span className="sm:hidden">New</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="p-4 sm:p-6 lg:p-8">
-            {workspaces.length > 0 ? (
-              <>
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                  <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Workspaces</p>
-                        <p className="text-3xl font-semibold text-gray-900 dark:text-[#e7e7e7] mt-2">
-                          <AnimatedCounter value={workspaces.length} />
-                        </p>
-                      </div>
-                      <div className="p-3 bg-blue-500/10 rounded-lg">
-                        <FolderIcon className="w-6 h-6 text-blue-600 dark:text-blue-500" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Collaborators</p>
-                        <p className="text-3xl font-semibold text-gray-900 dark:text-[#e7e7e7] mt-2">
-                          <AnimatedCounter value={totalCollaborators} />
-                        </p>
-                      </div>
-                      <div className="p-3 bg-green-500/10 rounded-lg">
-                        <UsersIcon className="w-6 h-6 text-green-600 dark:text-green-500" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Snippets</p>
-                        <p className="text-3xl font-semibold text-gray-900 dark:text-[#e7e7e7] mt-2">
-                          <AnimatedCounter value={totalSnippets} />
-                        </p>
-                      </div>
-                      <div className="p-3 bg-purple-500/10 rounded-lg">
-                        <SparklesIcon className="w-6 h-6 text-purple-600 dark:text-purple-500" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Workspaces Table */}
-                     <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg overflow-visible">
-                  <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-[#2a2a2a]">
-                    <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-[#e7e7e7]">Your Workspaces</h2>
-                  </div>
-                  <div className="divide-y divide-gray-200 dark:divide-[#2a2a2a] overflow-visible">
-                    {workspaces.map((workspace) => (
-                      <div
-                        key={workspace.id}
-                        className="relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 dark:hover:bg-[#1c1c1c] transition-colors group"
-                      >
-                        <button
-                          onClick={() => openWorkspace(workspace.id)}
-                          className="flex-1 flex items-center gap-4 text-left"
-                        >
-                          <div className="p-2 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg">
-                            <FolderIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
-                                {workspace.name}
-                              </h3>
-                              {workspace.userRole && workspace.userRole !== 'owner' && (
-                                <span className="px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">
-                                  Shared
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
-                              Created {new Date(workspace.created_at).toLocaleDateString('en-US', { 
-                                month: 'short', 
-                                day: 'numeric', 
-                                year: 'numeric' 
-                              })}
-                            </p>
-                          </div>
-                        </button>
-                        
-                        <div className="flex items-center gap-3">
-                          {/* Member Avatars */}
-                          {workspaceMembersMap[workspace.id] && workspaceMembersMap[workspace.id].length > 0 && (
-                            <MemberAvatars members={workspaceMembersMap[workspace.id]} max={3} />
-                          )}
-                          <div className="relative">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuId(openMenuId === workspace.id ? null : workspace.id);
-                              }}
-                              className="p-2 hover:bg-gray-200 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
-                            >
-                              <EllipsisVerticalIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                            </button>
-
-                            {openMenuId === workspace.id && (
-                              <>
-                                <div
-                                  className="fixed inset-0 z-30"
-                                  onClick={() => setOpenMenuId(null)}
-                                />
-                                <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#212121] rounded-lg shadow-xl border border-gray-200 dark:border-[#2a2a2a] z-50 py-1">
-                                  <button
-                                    onClick={() => handleShareWorkspace(workspace)}
-                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
-                                  >
-                                    <UsersIcon className="w-4 h-4" />
-                                    Share Workspace
-                                  </button>
-                                  <button
-                                    onClick={async () => {
-                                      setOpenMenuId(null);
-                                      const { exportWorkspace } = await import('@/lib/workspaceExport');
-                                      await exportWorkspace(workspace.id);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                    </svg>
-                                    Export Workspace
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setSelectedWorkspace(workspace);
-                                      setRenameWorkspaceName(workspace.name);
-                                      setShowRenameDialog(true);
-                                      setOpenMenuId(null);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                    Rename
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setSelectedWorkspace(workspace);
-                                      setShowDeleteConfirm(true);
-                                      setOpenMenuId(null);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
-                                  >
-                                    <TrashIcon className="w-4 h-4" />
-                                    Delete
-                                  </button>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                          <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            ) : (
-              /* Empty State */
-              <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-12 text-center">
-                <div className="inline-flex p-4 bg-gray-100 dark:bg-[#2a2a2a] rounded-full mb-4">
-                  <FolderIcon className="w-12 h-12 text-gray-400 dark:text-gray-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">No workspaces yet</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-sm mx-auto">
-                  Create your first workspace to start organizing your writing projects
-                </p>
-                <button
-                  onClick={() => setShowNewWorkspace(true)}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
-                >
-                  <PlusIcon className="w-4 h-4" />
-                  Create Your First Workspace
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* User Menu - Bottom Left */}
-        <div className="absolute bottom-4 left-4 z-10">
           <button
-            onClick={() => setShowUserMenu(!showUserMenu)}
-            className="w-10 h-10 rounded-full bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] flex items-center justify-center font-semibold shadow-lg transition-colors overflow-hidden"
+            onClick={toggleTheme}
+            className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
           >
-            {userProfile?.avatar_url ? (
-              <img 
-                src={userProfile.avatar_url} 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-              />
+            {theme === 'light' ? (
+              <MoonIcon className="w-4 h-4 text-gray-600" />
             ) : (
-              user?.email?.charAt(0).toUpperCase()
+              <SunIcon className="w-4 h-4 text-gray-400" />
             )}
           </button>
+        </div>
 
-          {showUserMenu && (
+        {/* Navigation */}
+        <nav className="flex-1 p-3 space-y-1">
+          <button className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-900 dark:text-[#e7e7e7] bg-gray-100 dark:bg-[#2a2a2a] rounded-lg">
+            <HomeIcon className="w-5 h-5" />
+            Home
+          </button>
+          <button
+            onClick={() => router.push('/ai-chat')}
+            className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
+          >
+            <SparklesIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            AI Chat
+          </button>
+        </nav>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        {/* Header */}
+        <div className="bg-white dark:bg-[#181818] border-b border-gray-200 dark:border-[#2a2a2a] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-[#e7e7e7]">All Workspaces</h1>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
+                Manage and organize your writing projects
+                <span className="hidden md:flex items-center gap-1 text-xs text-gray-500 dark:text-gray-500">
+                  • Press <KbdGroup><Kbd>⌘</Kbd><Kbd>K</Kbd></KbdGroup> for quick actions
+                </span>
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {user && <NotificationCenter userId={user.id} />}
+              <button
+                onClick={() => setShowNewWorkspace(true)}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#212121] dark:bg-[#e7e7e7] hover:bg-gray-300 dark:hover:bg-[#a5a5a5] border border-gray-300 dark:border-[#383838] text-[#e7e7e7] dark:text-gray-900 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+              >
+                <PlusIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">New Workspace</span>
+                <span className="sm:hidden">New</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-4 sm:p-6 lg:p-8">
+          {workspaces.length > 0 ? (
             <>
-              <div
-                className="fixed inset-0 z-20"
-                onClick={() => setShowUserMenu(false)}
-              />
-              <div className="absolute bottom-12 left-0 w-56 bg-white dark:bg-[#212121] rounded-lg shadow-xl border border-gray-200 dark:border-[#2a2a2a] z-30">
-                <div className="p-3 border-b border-gray-200 dark:border-[#2a2a2a]">
-                  <p className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] truncate">
-                    {user?.email}
-                  </p>
+              {/* Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Workspaces</p>
+                      <p className="text-3xl font-semibold text-gray-900 dark:text-[#e7e7e7] mt-2">
+                        <AnimatedCounter value={workspaces.length} />
+                      </p>
+                    </div>
+                    <div className="p-3 bg-blue-500/10 rounded-lg">
+                      <FolderIcon className="w-6 h-6 text-blue-600 dark:text-blue-500" />
+                    </div>
+                  </div>
                 </div>
-                <div className="py-1">
-                  <button
-                    onClick={() => {
-                      setShowSettings(true);
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
-                  >
-                    <Cog6ToothIcon className="w-4 h-4" />
-                    Settings
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    disabled={loggingOut}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loggingOut ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        Logging out...
-                      </>
-                    ) : (
-                      <>
-                        <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                        Logout
-                      </>
-                    )}
-                  </button>
+                <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Collaborators</p>
+                      <p className="text-3xl font-semibold text-gray-900 dark:text-[#e7e7e7] mt-2">
+                        <AnimatedCounter value={totalCollaborators} />
+                      </p>
+                    </div>
+                    <div className="p-3 bg-green-500/10 rounded-lg">
+                      <UsersIcon className="w-6 h-6 text-green-600 dark:text-green-500" />
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Snippets</p>
+                      <p className="text-3xl font-semibold text-gray-900 dark:text-[#e7e7e7] mt-2">
+                        <AnimatedCounter value={totalSnippets} />
+                      </p>
+                    </div>
+                    <div className="p-3 bg-purple-500/10 rounded-lg">
+                      <SparklesIcon className="w-6 h-6 text-purple-600 dark:text-purple-500" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Workspaces Table */}
+              <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg overflow-visible">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-[#2a2a2a]">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-[#e7e7e7]">Your Workspaces</h2>
+                </div>
+                <div className="divide-y divide-gray-200 dark:divide-[#2a2a2a] overflow-visible">
+                  {workspaces.map((workspace) => (
+                    <div
+                      key={workspace.id}
+                      className="relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 dark:hover:bg-[#1c1c1c] transition-colors group"
+                    >
+                      <button
+                        onClick={() => openWorkspace(workspace.id)}
+                        className="flex-1 flex items-center gap-4 text-left"
+                      >
+                        <div className="p-2 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg">
+                          <FolderIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
+                              {workspace.name}
+                            </h3>
+                            {workspace.userRole && workspace.userRole !== 'owner' && (
+                              <span className="px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">
+                                Shared
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                            Created {new Date(workspace.created_at).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                      </button>
+
+                      <div className="flex items-center gap-3">
+                        {/* Member Avatars */}
+                        {workspaceMembersMap[workspace.id] && workspaceMembersMap[workspace.id].length > 0 && (
+                          <MemberAvatars members={workspaceMembersMap[workspace.id]} max={3} />
+                        )}
+                        <div className="relative">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(openMenuId === workspace.id ? null : workspace.id);
+                            }}
+                            className="p-2 hover:bg-gray-200 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                          >
+                            <EllipsisVerticalIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                          </button>
+
+                          {openMenuId === workspace.id && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-30"
+                                onClick={() => setOpenMenuId(null)}
+                              />
+                              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#212121] rounded-lg shadow-xl border border-gray-200 dark:border-[#2a2a2a] z-50 py-1">
+                                <button
+                                  onClick={() => handleShareWorkspace(workspace)}
+                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
+                                >
+                                  <UsersIcon className="w-4 h-4" />
+                                  Share Workspace
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    setOpenMenuId(null);
+                                    const { exportWorkspace } = await import('@/lib/workspaceExport');
+                                    await exportWorkspace(workspace.id);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                  </svg>
+                                  Export Workspace
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedWorkspace(workspace);
+                                    setRenameWorkspaceName(workspace.name);
+                                    setShowRenameDialog(true);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                  Rename
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedWorkspace(workspace);
+                                    setShowDeleteConfirm(true);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
+                                >
+                                  <TrashIcon className="w-4 h-4" />
+                                  Delete
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </>
+          ) : (
+            /* Empty State */
+            <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-12 text-center">
+              <div className="inline-flex p-4 bg-gray-100 dark:bg-[#2a2a2a] rounded-full mb-4">
+                <FolderIcon className="w-12 h-12 text-gray-400 dark:text-gray-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">No workspaces yet</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-sm mx-auto">
+                Create your first workspace to start organizing your writing projects
+              </p>
+              <button
+                onClick={() => setShowNewWorkspace(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
+              >
+                <PlusIcon className="w-4 h-4" />
+                Create Your First Workspace
+              </button>
+            </div>
           )}
         </div>
+      </div>
 
-        {/* Settings Dialog */}
-        <SettingsDialog 
-          isOpen={showSettings} 
-          onClose={() => setShowSettings(false)} 
-          user={user} 
-        />
+      {/* User Menu - Bottom Left */}
+      <div className="absolute bottom-4 left-4 z-10">
+        <button
+          onClick={() => setShowUserMenu(!showUserMenu)}
+          className="w-10 h-10 rounded-full bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] flex items-center justify-center font-semibold shadow-lg transition-colors overflow-hidden"
+        >
+          {userProfile?.avatar_url ? (
+            <img
+              src={userProfile.avatar_url}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            user?.email?.charAt(0).toUpperCase()
+          )}
+        </button>
 
-        {/* Share Workspace Dialog */}
-        <ShareWorkspaceDialog
-          isOpen={showShareDialog}
-          onClose={() => {
-            setShowShareDialog(false);
-            setSelectedWorkspace(null);
-          }}
-          workspace={selectedWorkspace}
-          members={workspaceMembers}
-          onMembersUpdate={handleMembersUpdate}
-        />
-
-        {/* Rename Workspace Dialog */}
-        {showRenameDialog && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowRenameDialog(false)}>
-            <div 
-              className="bg-white dark:bg-[#181818] rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-200 dark:border-[#2a2a2a]" 
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-4">Rename Workspace</h3>
-              <input
-                type="text"
-                value={renameWorkspaceName}
-                onChange={(e) => setRenameWorkspaceName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleRenameWorkspace()}
-                placeholder="Workspace name"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] placeholder-gray-400 dark:placeholder-gray-600 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent outline-none text-sm mb-4"
-                autoFocus
-              />
-              <div className="flex gap-3">
+        {showUserMenu && (
+          <>
+            <div
+              className="fixed inset-0 z-20"
+              onClick={() => setShowUserMenu(false)}
+            />
+            <div className="absolute bottom-12 left-0 w-56 bg-white dark:bg-[#212121] rounded-lg shadow-xl border border-gray-200 dark:border-[#2a2a2a] z-30">
+              <div className="p-3 border-b border-gray-200 dark:border-[#2a2a2a]">
+                <p className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] truncate">
+                  {user?.email}
+                </p>
+              </div>
+              <div className="py-1">
                 <button
-                  onClick={handleRenameWorkspace}
-                  disabled={!renameWorkspaceName.trim()}
-                  className="flex-1 px-4 py-2 bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
+                  onClick={() => {
+                    setShowSettings(true);
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
                 >
-                  Rename
+                  <Cog6ToothIcon className="w-4 h-4" />
+                  Settings
                 </button>
                 <button
-                  onClick={() => setShowRenameDialog(false)}
-                  className="px-4 py-2 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Delete Confirmation Dialog */}
-        {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowDeleteConfirm(false)}>
-            <div 
-              className="bg-white dark:bg-[#181818] rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-200 dark:border-[#2a2a2a]" 
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-                  <TrashIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">Delete Workspace</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Are you sure you want to delete &ldquo;{selectedWorkspace?.name}&rdquo;? This action cannot be undone and will delete all snippets in this workspace.
-                  </p>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleDeleteWorkspace}
-                      className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => setShowDeleteConfirm(false)}
-                      className="px-4 py-2 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Create Workspace Modal */}
-        {showNewWorkspace && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => !creating && setShowNewWorkspace(false)}>
-            <div className="bg-white dark:bg-[#181818] rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-200 dark:border-[#2a2a2a]" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-4">Create New Workspace</h3>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Workspace Name
-                </label>
-                <input
-                  type="text"
-                  value={newWorkspaceName}
-                  onChange={(e) => setNewWorkspaceName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !creating && createWorkspace()}
-                  placeholder="My Novel Project"
-                  disabled={creating}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] placeholder-gray-400 dark:placeholder-gray-600 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent outline-none transition-all disabled:opacity-50 text-sm"
-                  autoFocus
-                />
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={createWorkspace}
-                  disabled={creating || !newWorkspaceName.trim()}
-                  className="flex-1 px-4 py-2 bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  {creating ? (
+                  {loggingOut ? (
                     <>
                       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      Creating...
+                      Logging out...
                     </>
                   ) : (
-                    'Create Workspace'
+                    <>
+                      <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                      Logout
+                    </>
                   )}
-                </button>
-                <button
-                  onClick={() => setShowNewWorkspace(false)}
-                  disabled={creating}
-                  className="px-4 py-2 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#303030] disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
-                >
-                  Cancel
                 </button>
               </div>
             </div>
-          </div>
+          </>
         )}
+      </div>
+
+      {/* Settings Dialog */}
+      <SettingsDialog
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        user={user}
+      />
+
+      {/* Share Workspace Dialog */}
+      <ShareWorkspaceDialog
+        isOpen={showShareDialog}
+        onClose={() => {
+          setShowShareDialog(false);
+          setSelectedWorkspace(null);
+        }}
+        workspace={selectedWorkspace}
+        members={workspaceMembers}
+        onMembersUpdate={handleMembersUpdate}
+      />
+
+      {/* Rename Workspace Dialog */}
+      {showRenameDialog && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowRenameDialog(false)}>
+          <div
+            className="bg-white dark:bg-[#181818] rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-200 dark:border-[#2a2a2a]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-4">Rename Workspace</h3>
+            <input
+              type="text"
+              value={renameWorkspaceName}
+              onChange={(e) => setRenameWorkspaceName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleRenameWorkspace()}
+              placeholder="Workspace name"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] placeholder-gray-400 dark:placeholder-gray-600 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent outline-none text-sm mb-4"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleRenameWorkspace}
+                disabled={!renameWorkspaceName.trim()}
+                className="flex-1 px-4 py-2 bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
+              >
+                Rename
+              </button>
+              <button
+                onClick={() => setShowRenameDialog(false)}
+                className="px-4 py-2 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowDeleteConfirm(false)}>
+          <div
+            className="bg-white dark:bg-[#181818] rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-200 dark:border-[#2a2a2a]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                <TrashIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">Delete Workspace</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Are you sure you want to delete &ldquo;{selectedWorkspace?.name}&rdquo;? This action cannot be undone and will delete all snippets in this workspace.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDeleteWorkspace}
+                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="px-4 py-2 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Workspace Modal */}
+      {showNewWorkspace && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => !creating && setShowNewWorkspace(false)}>
+          <div className="bg-white dark:bg-[#181818] rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-200 dark:border-[#2a2a2a]" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-4">Create New Workspace</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Workspace Name
+              </label>
+              <input
+                type="text"
+                value={newWorkspaceName}
+                onChange={(e) => setNewWorkspaceName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !creating && createWorkspace()}
+                placeholder="My Novel Project"
+                disabled={creating}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] placeholder-gray-400 dark:placeholder-gray-600 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent outline-none transition-all disabled:opacity-50 text-sm"
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={createWorkspace}
+                disabled={creating || !newWorkspaceName.trim()}
+                className="flex-1 px-4 py-2 bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                {creating ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Creating...
+                  </>
+                ) : (
+                  'Create Workspace'
+                )}
+              </button>
+              <button
+                onClick={() => setShowNewWorkspace(false)}
+                disabled={creating}
+                className="px-4 py-2 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#303030] disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
