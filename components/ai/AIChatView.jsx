@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   SparklesIcon,
   PaperAirplaneIcon,
   TrashIcon,
@@ -102,6 +102,7 @@ export function AIChatView({ userId }) {
       // Call our secure API route instead of directly calling the AI provider
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -113,6 +114,7 @@ export function AIChatView({ userId }) {
             },
           ],
           conversationHistory,
+          userId, // Pass userId for API to use if auth check is skipped
         }),
       });
 
@@ -169,7 +171,7 @@ export function AIChatView({ userId }) {
     if (!lastUserMessage) return;
 
     // Remove last AI response
-    const newMessages = messages.filter(m => 
+    const newMessages = messages.filter(m =>
       !(m.role === 'assistant' && new Date(m.created_at) > new Date(lastUserMessage.created_at))
     );
     setMessages(newMessages);
@@ -231,107 +233,106 @@ export function AIChatView({ userId }) {
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full" ref={scrollRef}>
           <div className="p-6 min-h-full">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="p-4 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 rounded-full mb-4">
-              <SparklesIcon className="w-12 h-12 text-purple-600 dark:text-purple-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">
-              Start a conversation
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mb-6">
-              Ask me anything about writing, storytelling, character development, or get feedback on your work.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
-              <Button
-                variant="outline"
-                className="text-left justify-start h-auto py-3 px-4 bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
-                onClick={() => setInput('Help me develop a compelling protagonist for my novel')}
-              >
-                <div>
-                  <div className="font-medium text-sm mb-1 text-gray-900 dark:text-[#e7e7e7]">Character Development</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Create compelling characters</div>
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="p-4 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 rounded-full mb-4">
+                  <SparklesIcon className="w-12 h-12 text-purple-600 dark:text-purple-400" />
                 </div>
-              </Button>
-              <Button
-                variant="outline"
-                className="text-left justify-start h-auto py-3 px-4 bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
-                onClick={() => setInput('What are some techniques to build tension in a thriller?')}
-              >
-                <div>
-                  <div className="font-medium text-sm mb-1 text-gray-900 dark:text-[#e7e7e7]">Plot Structure</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Learn storytelling techniques</div>
-                </div>
-              </Button>
-              <Button
-                variant="outline"
-                className="text-left justify-start h-auto py-3 px-4 bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
-                onClick={() => setInput('Review this paragraph and suggest improvements')}
-              >
-                <div>
-                  <div className="font-medium text-sm mb-1 text-gray-900 dark:text-[#e7e7e7]">Get Feedback</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Improve your writing</div>
-                </div>
-              </Button>
-              <Button
-                variant="outline"
-                className="text-left justify-start h-auto py-3 px-4 bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
-                onClick={() => setInput('Help me overcome writer&apos;s block')}
-              >
-                <div>
-                  <div className="font-medium text-sm mb-1 text-gray-900 dark:text-[#e7e7e7]">Writer&apos;s Block</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Get unstuck and inspired</div>
-                </div>
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6 max-w-4xl mx-auto">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-4 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
-              >
-                <Avatar className="h-10 w-10 flex-shrink-0">
-                  <AvatarFallback className={message.role === 'user' ? 'bg-gray-700 dark:bg-gray-600 text-white' : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white'}>
-                    {message.role === 'user' ? 'U' : <SparklesIcon className="w-5 h-5" />}
-                  </AvatarFallback>
-                </Avatar>
-                <div className={`flex-1 ${message.role === 'user' ? 'flex justify-end' : ''}`}>
-                  <div
-                    className={`inline-block max-w-[85%] px-4 py-3 rounded-lg ${
-                      message.role === 'user'
-                        ? 'bg-gray-900 dark:bg-gray-700 text-white'
-                        : 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-[#e7e7e7]'
-                    }`}
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">
+                  Start a conversation
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mb-6">
+                  Ask me anything about writing, storytelling, character development, or get feedback on your work.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
+                  <Button
+                    variant="outline"
+                    className="text-left justify-start h-auto py-3 px-4 bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+                    onClick={() => setInput('Help me develop a compelling protagonist for my novel')}
                   >
-                    <p className="text-sm whitespace-pre-wrap break-words">
-                      {message.content}
-                    </p>
-                  </div>
+                    <div>
+                      <div className="font-medium text-sm mb-1 text-gray-900 dark:text-[#e7e7e7]">Character Development</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Create compelling characters</div>
+                    </div>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="text-left justify-start h-auto py-3 px-4 bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+                    onClick={() => setInput('What are some techniques to build tension in a thriller?')}
+                  >
+                    <div>
+                      <div className="font-medium text-sm mb-1 text-gray-900 dark:text-[#e7e7e7]">Plot Structure</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Learn storytelling techniques</div>
+                    </div>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="text-left justify-start h-auto py-3 px-4 bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+                    onClick={() => setInput('Review this paragraph and suggest improvements')}
+                  >
+                    <div>
+                      <div className="font-medium text-sm mb-1 text-gray-900 dark:text-[#e7e7e7]">Get Feedback</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Improve your writing</div>
+                    </div>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="text-left justify-start h-auto py-3 px-4 bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+                    onClick={() => setInput('Help me overcome writer&apos;s block')}
+                  >
+                    <div>
+                      <div className="font-medium text-sm mb-1 text-gray-900 dark:text-[#e7e7e7]">Writer&apos;s Block</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Get unstuck and inspired</div>
+                    </div>
+                  </Button>
                 </div>
               </div>
-            ))}
-            {loading && (
-              <div className="flex gap-4">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-                    <SparklesIcon className="w-5 h-5" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="inline-block px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#2a2a2a]">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            ) : (
+              <div className="space-y-6 max-w-4xl mx-auto">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex gap-4 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
+                  >
+                    <Avatar className="h-10 w-10 flex-shrink-0">
+                      <AvatarFallback className={message.role === 'user' ? 'bg-gray-700 dark:bg-gray-600 text-white' : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white'}>
+                        {message.role === 'user' ? 'U' : <SparklesIcon className="w-5 h-5" />}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className={`flex-1 ${message.role === 'user' ? 'flex justify-end' : ''}`}>
+                      <div
+                        className={`inline-block max-w-[85%] px-4 py-3 rounded-lg ${message.role === 'user'
+                          ? 'bg-gray-900 dark:bg-gray-700 text-white'
+                          : 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-[#e7e7e7]'
+                          }`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {message.content}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
+                {loading && (
+                  <div className="flex gap-4">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+                        <SparklesIcon className="w-5 h-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="inline-block px-4 py-3 rounded-lg bg-gray-100 dark:bg-[#2a2a2a]">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
           </div>
         </ScrollArea>
       </div>

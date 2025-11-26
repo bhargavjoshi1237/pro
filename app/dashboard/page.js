@@ -15,6 +15,7 @@ import {
   SunIcon,
   ChevronRightIcon,
   TrashIcon,
+  EnvelopeIcon,
 } from '@heroicons/react/24/outline';
 import { LoadingPage } from '@/components/LoadingSpinner';
 import SettingsDialog from '@/components/settings/SettingsDialog';
@@ -429,6 +430,13 @@ function DashboardContent() {
           >
             <SparklesIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             AI Chat
+          </button>
+          <button
+            onClick={() => router.push('/emails')}
+            className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
+          >
+            <EnvelopeIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            Emails
           </button>
         </nav>
       </div>

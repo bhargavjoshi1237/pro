@@ -1,25 +1,46 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    
-    // Verify user is authenticated
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
-    const { messages, conversationHistory } = await request.json();
+    // Create Supabase client with SSR package (Next.js 15 compatible)
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const { messages, conversationHistory, userId } = await request.json();
+
+    // Verify user is authenticated - SKIPPED as per user request
+    // const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (!userId) {
+      return NextResponse.json({
+        error: 'Unauthorized',
+        message: 'User ID is missing'
+      }, { status: 401 });
+    }
 
     // Get user's AI settings from database
     const { data: profile } = await supabase
       .from('profiles')
       .select('ai_settings')
-      .eq('id', session.user.id)
+      .eq('id', userId)
       .single();
 
     if (!profile?.ai_settings?.apiKey) {
@@ -30,8 +51,8 @@ export async function POST(request) {
     }
 
     const settings = profile.ai_settings;
-    const apiUrl = settings.apiUrl?.endsWith('/') 
-      ? settings.apiUrl.slice(0, -1) 
+    const apiUrl = settings.apiUrl?.endsWith('/')
+      ? settings.apiUrl.slice(0, -1)
       : (settings.apiUrl || 'https://api.openai.com/v1');
 
     // Call AI provider

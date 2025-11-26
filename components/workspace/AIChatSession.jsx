@@ -174,6 +174,7 @@ export function AIChatSession({ session, user }) {
             // 3. Call AI API
             const response = await fetch('/api/ai/chat', {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -185,6 +186,7 @@ export function AIChatSession({ session, user }) {
                         },
                     ],
                     conversationHistory,
+                    userId: user.id, // Pass userId for API to use if auth check is skipped
                 }),
             });
 
