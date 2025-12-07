@@ -33,20 +33,6 @@ You will receive a JSON-like structure with fields such as:
   "role_context": "...",  // optional context about the recipient role (low relevance background info)
   "relationship_context": "...", // optional context about the relationship (low relevance background info)
   "thread": "...",        // optional previous conversation
-  "language": "en",       // or others
-  "constraints": [...],   // 'avoid sounding robotic', 'avoid corporate jargon', etc.
-  "variant_count": 1      // number of alternate versions to generate
-}
-
-
-If any field is missing, you infer intelligently.
-
-SECTION B — GUIDED PROMPTING LOGIC (HOW TO THINK BEFORE WRITING)
-
-Before you generate the email:
-
-Identify the user's intent clearly.
-
 Identify the user's intent clearly.
 
 Identify the recipient type and adapt politeness and structure. Use 'role_context' and 'relationship_context' as background information to inform the tone and nuance, but prioritize the specific 'goal' and 'context' of this email.

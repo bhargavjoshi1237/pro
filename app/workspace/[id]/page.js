@@ -18,7 +18,8 @@ import KanbanBoard from '@/components/kanban/KanbanBoard';
 import StoragePanel from '@/components/workspace/StoragePanel';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { UserGroupIcon, XMarkIcon, SparklesIcon, ChatBubbleLeftRightIcon, ViewColumnsIcon, FolderIcon, ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
+import { UserGroupIcon, XMarkIcon, SparklesIcon, ChatBubbleLeftRightIcon, ViewColumnsIcon, FolderIcon, ChevronDoubleRightIcon, PresentationChartBarIcon } from '@heroicons/react/24/outline';
+import WhiteboardPanel from '@/components/whiteboard/WhiteboardPanel';
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -33,7 +34,8 @@ export default function WorkspacePage() {
   const [workspaceChatOpen, setWorkspaceChatOpen] = useState(false);
   const [kanbanPanelOpen, setKanbanPanelOpen] = useState(false);
   const [storagePanelOpen, setStoragePanelOpen] = useState(false);
-  const [activeView, setActiveView] = useState('editor'); // 'editor' | 'kanban'
+
+  const [activeView, setActiveView] = useState('editor'); // 'editor' | 'kanban' | 'whiteboard'
   const [activeBoard, setActiveBoard] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -240,6 +242,16 @@ export default function WorkspacePage() {
           </button>
 
           <button
+            onClick={() => setActiveView(activeView === 'whiteboard' ? 'editor' : 'whiteboard')}
+            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors tap-target ${activeView === 'whiteboard' ? 'bg-orange-100 dark:bg-orange-900/20' : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
+              }`}
+            title="Board"
+          >
+            <PresentationChartBarIcon className={`w-6 h-6 ${activeView === 'whiteboard' ? 'text-orange-600 dark:text-orange-400' : 'text-gray-600 dark:text-gray-400'}`} />
+            <span className={`text-xs mt-1 ${activeView === 'whiteboard' ? 'text-orange-600 dark:text-orange-400' : 'text-gray-600 dark:text-gray-400'}`}>Board</span>
+          </button>
+
+          <button
             onClick={() => togglePanel('people')}
             className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors tap-target ${peoplePanelOpen ? 'bg-gray-200 dark:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
               }`}
@@ -309,6 +321,12 @@ export default function WorkspacePage() {
                       <KanbanBoard
                         board={activeBoard}
                         workspaceId={workspaceId}
+                        onClose={() => setActiveView('editor')}
+                      />
+                    ) : activeView === 'whiteboard' ? (
+                      <WhiteboardPanel
+                        workspaceId={workspaceId}
+                        userId={user?.id}
                         onClose={() => setActiveView('editor')}
                       />
                     ) : (
@@ -408,6 +426,17 @@ export default function WorkspacePage() {
             <XMarkIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
           ) : (
             <FolderIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveView(activeView === 'whiteboard' ? 'editor' : 'whiteboard')}
+          className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+          title={activeView === 'whiteboard' ? 'Hide Board' : 'Show Board'}
+        >
+          {activeView === 'whiteboard' ? (
+            <XMarkIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+          ) : (
+            <PresentationChartBarIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
           )}
         </button>
       </div>

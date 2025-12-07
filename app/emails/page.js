@@ -16,6 +16,11 @@ import { toast } from 'sonner';
 import { useEntities } from '@/hooks/useEntities';
 import { EntitySelector } from '@/components/emails/EntitySelector';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { TemplateSelector } from '@/components/emails/TemplateSelector';
+import { HistoryPanel } from '@/components/emails/HistoryPanel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 export default function EmailsPage() {
     const router = useRouter();
@@ -33,12 +38,19 @@ export default function EmailsPage() {
         goal: '',
         tone: 'neutral',
         length: 'medium',
+        language: 'English',
         deadline: '',
         additional_points: '',
         style_samples: '',
         constraints: '',
         variant_count: 1
     });
+
+    // New State
+    const [templates, setTemplates] = useState([]);
+    const [history, setHistory] = useState([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [showHistory, setShowHistory] = useState(false);
 
     // Entity Hook
     const { entities, createEntity } = useEntities(workspaceId);
@@ -69,10 +81,109 @@ export default function EmailsPage() {
             }
 
             setLoading(false);
+            fetchTemplates();
+            fetchHistory();
         };
 
         checkAuth();
     }, [router]);
+
+    const fetchTemplates = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+            .from('email_templates')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (!error) setTemplates(data || []);
+    };
+
+    const fetchHistory = async () => {
+        setHistoryLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+            .from('email_history')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (!error) setHistory(data || []);
+        setHistoryLoading(false);
+    };
+
+    const handleSaveTemplate = async (name) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+            .from('email_templates')
+            .insert({
+                user_id: user.id,
+                name,
+                ...formData
+            })
+            .select()
+            .single();
+
+        if (error) {
+            toast.error('Failed to save template');
+        } else {
+            setTemplates([data, ...templates]);
+            toast.success('Template saved');
+        }
+    };
+
+    const handleDeleteTemplate = async (id) => {
+        const { error } = await supabase
+            .from('email_templates')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            toast.error('Failed to delete template');
+        } else {
+            setTemplates(templates.filter(t => t.id !== id));
+            toast.success('Template deleted');
+        }
+    };
+
+    const handleLoadTemplate = (template) => {
+        const { id, user_id, created_at, updated_at, name, ...data } = template;
+        setFormData(prev => ({ ...prev, ...data }));
+        toast.success(`Loaded template: ${name}`);
+    };
+
+    const handleLoadHistory = (item) => {
+        setFormData(item.input_data);
+        setGeneratedResult(item.generated_output);
+        toast.success('Loaded from history');
+        setShowHistory(false);
+    };
+
+    const saveToHistory = async (input, output) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data } = await supabase
+            .from('email_history')
+            .insert({
+                user_id: user.id,
+                input_data: input,
+                generated_output: output
+            })
+            .select()
+            .single();
+
+        if (data) {
+            setHistory([data, ...history]);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -132,6 +243,7 @@ export default function EmailsPage() {
 
             const data = await response.json();
             setGeneratedResult(data);
+            saveToHistory(apiData, data);
             toast.success('Email generated successfully!');
 
         } catch (error) {
@@ -145,6 +257,11 @@ export default function EmailsPage() {
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text);
         toast.success('Copied to clipboard');
+    };
+
+    const openInMailApp = (subject, body) => {
+        const mailtoLink = `mailto:?subject=${encodeURIComponent(subject || 'Draft Email')}&body=${encodeURIComponent(body)}`;
+        window.open(mailtoLink, '_blank');
     };
 
     if (loading) {
@@ -215,11 +332,33 @@ export default function EmailsPage() {
 
                     <div className="flex-1 overflow-hidden p-4 sm:p-6 lg:p-8">
                         <div className="max-w-7xl mx-auto h-full flex flex-col">
-                            <div className="mb-6 flex-shrink-0">
-                                <h1 className="text-2xl font-semibold text-gray-900 dark:text-[#e7e7e7]">Email Creation Engine</h1>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                    Turn brief ideas into professional, context-aware emails instantly.
-                                </p>
+                            <div className="mb-6 flex-shrink-0 flex justify-between items-start">
+                                <div>
+                                    <h1 className="text-2xl font-semibold text-gray-900 dark:text-[#e7e7e7]">Email Creation Engine</h1>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        Turn brief ideas into professional, context-aware emails instantly.
+                                    </p>
+                                </div>
+                                <Sheet open={showHistory} onOpenChange={setShowHistory}>
+                                    <SheetTrigger asChild>
+                                        <Button variant="outline" className="gap-2">
+                                            <ArrowPathIcon className="w-4 h-4" />
+                                            History
+                                        </Button>
+                                    </SheetTrigger>
+                                    <SheetContent className="bg-white dark:bg-[#1c1c1c] border-gray-200 dark:border-[#2a2a2a]">
+                                        <SheetHeader>
+                                            <SheetTitle>Email History</SheetTitle>
+                                        </SheetHeader>
+                                        <div className="mt-4 h-[calc(100vh-100px)]">
+                                            <HistoryPanel
+                                                history={history}
+                                                loading={historyLoading}
+                                                onLoad={handleLoadHistory}
+                                            />
+                                        </div>
+                                    </SheetContent>
+                                </Sheet>
                             </div>
 
                             <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-0">
@@ -228,7 +367,18 @@ export default function EmailsPage() {
                                     <ScrollArea className="h-full pr-4">
                                         <div className="space-y-6 pb-6">
                                             <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
-                                                <h2 className="text-lg font-medium text-gray-900 dark:text-[#e7e7e7] mb-4">Email Details</h2>
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <h2 className="text-lg font-medium text-gray-900 dark:text-[#e7e7e7]">Email Details</h2>
+                                                    <div className="w-[200px]">
+                                                        <TemplateSelector
+                                                            templates={templates}
+                                                            onSelect={handleLoadTemplate}
+                                                            onSave={handleSaveTemplate}
+                                                            onDelete={handleDeleteTemplate}
+                                                            disabled={!user}
+                                                        />
+                                                    </div>
+                                                </div>
 
                                                 <div className="space-y-4">
                                                     <div>
@@ -241,7 +391,7 @@ export default function EmailsPage() {
                                                             onChange={handleInputChange}
                                                             placeholder="e.g., I need to ask for a sick leave for 2 days due to fever..."
                                                             rows={4}
-                                                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                                                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none resize-none"
                                                         />
                                                     </div>
 
@@ -286,7 +436,7 @@ export default function EmailsPage() {
                                                             value={formData.goal}
                                                             onChange={handleInputChange}
                                                             placeholder="e.g., Request leave, Apologize for delay"
-                                                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-purple-500 outline-none"
+                                                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
                                                         />
                                                     </div>
 
@@ -299,7 +449,7 @@ export default function EmailsPage() {
                                                                 name="tone"
                                                                 value={formData.tone}
                                                                 onChange={handleInputChange}
-                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-purple-500 outline-none"
+                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
                                                             >
                                                                 <option value="formal">Formal</option>
                                                                 <option value="neutral">Neutral</option>
@@ -316,7 +466,7 @@ export default function EmailsPage() {
                                                                 name="length"
                                                                 value={formData.length}
                                                                 onChange={handleInputChange}
-                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-purple-500 outline-none"
+                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
                                                             >
                                                                 <option value="short">Short</option>
                                                                 <option value="medium">Medium</option>
@@ -328,16 +478,24 @@ export default function EmailsPage() {
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                         <div>
                                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                                Deadline (Optional)
+                                                                Language
                                                             </label>
-                                                            <input
-                                                                type="text"
-                                                                name="deadline"
-                                                                value={formData.deadline}
+                                                            <select
+                                                                name="language"
+                                                                value={formData.language}
                                                                 onChange={handleInputChange}
-                                                                placeholder="e.g., By Friday 5 PM"
-                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-purple-500 outline-none"
-                                                            />
+                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
+                                                            >
+                                                                <option value="English">English</option>
+                                                                <option value="Spanish">Spanish</option>
+                                                                <option value="French">French</option>
+                                                                <option value="German">German</option>
+                                                                <option value="Italian">Italian</option>
+                                                                <option value="Portuguese">Portuguese</option>
+                                                                <option value="Chinese">Chinese</option>
+                                                                <option value="Japanese">Japanese</option>
+                                                                <option value="Hindi">Hindi</option>
+                                                            </select>
                                                         </div>
                                                         <div>
                                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -347,13 +505,27 @@ export default function EmailsPage() {
                                                                 name="variant_count"
                                                                 value={formData.variant_count}
                                                                 onChange={handleInputChange}
-                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-purple-500 outline-none"
+                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
                                                             >
                                                                 <option value={1}>1 Variant</option>
                                                                 <option value={2}>2 Variants</option>
                                                                 <option value={3}>3 Variants</option>
                                                             </select>
                                                         </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                            Deadline (Optional)
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            name="deadline"
+                                                            value={formData.deadline}
+                                                            onChange={handleInputChange}
+                                                            placeholder="e.g., By Friday 5 PM"
+                                                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
+                                                        />
                                                     </div>
 
                                                     <div>
@@ -366,7 +538,7 @@ export default function EmailsPage() {
                                                             onChange={handleInputChange}
                                                             placeholder="- Mention the attached report&#10;- Ask for a meeting"
                                                             rows={3}
-                                                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                                                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none resize-none"
                                                         />
                                                     </div>
 
@@ -381,7 +553,7 @@ export default function EmailsPage() {
                                                                 onChange={handleInputChange}
                                                                 placeholder="Paste a previous email you wrote to match your style..."
                                                                 rows={3}
-                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none resize-none"
                                                             />
                                                         </div>
                                                     )}
@@ -456,13 +628,22 @@ export default function EmailsPage() {
                                                                         </span>
                                                                     </div>
                                                                 </div>
-                                                                <button
-                                                                    onClick={() => copyToClipboard(variant.email)}
-                                                                    className="p-2 hover:bg-gray-200 dark:hover:bg-[#333] rounded-lg transition-colors text-gray-500 dark:text-gray-400"
-                                                                    title="Copy to clipboard"
-                                                                >
-                                                                    <ClipboardDocumentIcon className="w-5 h-5" />
-                                                                </button>
+                                                                <div className="flex gap-2">
+                                                                    <button
+                                                                        onClick={() => openInMailApp(generatedResult.tldr, variant.email)}
+                                                                        className="p-2 hover:bg-gray-200 dark:hover:bg-[#333] rounded-lg transition-colors text-gray-500 dark:text-gray-400"
+                                                                        title="Open in Mail App"
+                                                                    >
+                                                                        <EnvelopeIcon className="w-5 h-5" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => copyToClipboard(variant.email)}
+                                                                        className="p-2 hover:bg-gray-200 dark:hover:bg-[#333] rounded-lg transition-colors text-gray-500 dark:text-gray-400"
+                                                                        title="Copy to clipboard"
+                                                                    >
+                                                                        <ClipboardDocumentIcon className="w-5 h-5" />
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                             <div className="p-6">
                                                                 <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 font-sans leading-relaxed">
@@ -492,7 +673,7 @@ export default function EmailsPage() {
                         </div>
                     </div>
                 </div>
-            </div>
-        </ThemeProvider>
+            </div >
+        </ThemeProvider >
     );
 }

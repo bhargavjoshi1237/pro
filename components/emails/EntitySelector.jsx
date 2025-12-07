@@ -76,7 +76,7 @@ export function EntitySelector({
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className="w-full justify-between bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a]"
+                        className="w-full justify-between bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700"
                         disabled={disabled}
                     >
                         {value || placeholder}
