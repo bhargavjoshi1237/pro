@@ -61,6 +61,7 @@ function DashboardContent() {
   const { theme, toggleTheme } = useTheme();
   const [totalCollaborators, setTotalCollaborators] = useState(0);
   const [totalSnippets, setTotalSnippets] = useState(0);
+  const [openingWorkspaceId, setOpeningWorkspaceId] = useState(null);
 
   useEffect(() => {
     const loadWorkspaces = async (userId) => {
@@ -212,8 +213,15 @@ function DashboardContent() {
   };
 
   const openWorkspace = (workspaceId) => {
+    setOpeningWorkspaceId(workspaceId);
     router.push(`/workspace/${workspaceId}`);
   };
+
+  useEffect(() => {
+    if (!openingWorkspaceId) return;
+    const timeout = setTimeout(() => setOpeningWorkspaceId(null), 10000);
+    return () => clearTimeout(timeout);
+  }, [openingWorkspaceId]);
 
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -336,6 +344,28 @@ function DashboardContent() {
               <div className="w-24 h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
             </div>
           </div>
+          {/* Elegant centered loader when opening a workspace */}
+          {openingWorkspaceId && (
+            (() => {
+              const workspace = workspaces.find(w => w.id === openingWorkspaceId);
+              return (
+                <div className="fixed inset-0 z-50 flex items-start justify-center pointer-events-none">
+                  <div className="mt-24 pointer-events-auto">
+                    <div className="flex items-center gap-4 px-5 py-3 bg-white/90 dark:bg-[#071124]/90 backdrop-blur-md rounded-full shadow-xl border border-gray-200 dark:border-[#0b1220]">
+                      <svg className="animate-spin h-6 w-6 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                      </svg>
+                      <div className="leading-tight">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Opening{workspace ? ` ${workspace.name}` : ''}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Preparing your workspace — just a moment</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()
+          )}
           <nav className="flex-1 p-3 space-y-1">
             <div className="w-full h-10 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg animate-pulse" />
           </nav>
@@ -525,42 +555,44 @@ function DashboardContent() {
                   {workspaces.map((workspace) => (
                     <div
                       key={workspace.id}
-                      className="relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 dark:hover:bg-[#1c1c1c] transition-colors group"
+                      className="relative px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 dark:hover:bg-[#1c1c1c] transition-colors group"
                     >
-                      <button
-                        onClick={() => openWorkspace(workspace.id)}
-                        className="flex-1 flex items-center gap-4 text-left"
-                      >
-                        <div className="p-2 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg">
-                          <FolderIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
-                              {workspace.name}
-                            </h3>
-                            {workspace.userRole && workspace.userRole !== 'owner' && (
-                              <span className="px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">
-                                Shared
-                              </span>
+                      <div className="flex items-center justify-between gap-4">
+                        <div
+                          onClick={() => openWorkspace(workspace.id)}
+                          className="flex flex-1 items-center gap-4 text-left cursor-pointer"
+                        >
+                          <div className="p-2 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg">
+                            <FolderIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
+                                {workspace.name}
+                              </h3>
+                              {workspace.userRole && workspace.userRole !== 'owner' && (
+                                <span className="px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">
+                                  Shared
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                              Created {new Date(workspace.created_at).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {workspaceMembersMap[workspace.id] && workspaceMembersMap[workspace.id].length > 0 && (
+                              <MemberAvatars members={workspaceMembersMap[workspace.id]} max={3} />
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
-                            Created {new Date(workspace.created_at).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </p>
+                          <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
                         </div>
-                      </button>
 
-                      <div className="flex items-center gap-3">
-                        {/* Member Avatars */}
-                        {workspaceMembersMap[workspace.id] && workspaceMembersMap[workspace.id].length > 0 && (
-                          <MemberAvatars members={workspaceMembersMap[workspace.id]} max={3} />
-                        )}
-                        <div className="relative">
+                        <div className="relative flex items-center">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -627,8 +659,9 @@ function DashboardContent() {
                             </>
                           )}
                         </div>
-                        <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
                       </div>
+
+                      {/* per-row loader removed in favor of a single elegant centered loader */}
                     </div>
                   ))}
                 </div>

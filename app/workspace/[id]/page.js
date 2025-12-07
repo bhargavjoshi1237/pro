@@ -38,6 +38,7 @@ export default function WorkspacePage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [showMobileUI, setShowMobileUI] = useState(true); // Toggle header/footer visibility
 
   const toggleSidebar = () => {
     const panel = sidebarRef.current;
@@ -53,7 +54,7 @@ export default function WorkspacePage() {
   const handleOpenKanban = (board) => {
     setActiveBoard(board);
     setActiveView('kanban');
-    setKanbanPanelOpen(false); // Close the panel on mobile/desktop when opening board
+    setKanbanPanelOpen(false);
   };
 
   const {
@@ -152,16 +153,29 @@ export default function WorkspacePage() {
     <div className="flex h-screen bg-white dark:bg-[#191919] overflow-hidden">
       {/* Mobile Layout */}
       <div className="lg:hidden flex flex-col flex-1 h-full w-full">
-        {/* Mobile Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919]">
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] truncate">
-            {workspace?.name || 'Workspace'}
-          </h1>
-          <MobileUserMenu user={user} onSettingsClick={() => setSettingsOpen(true)} />
-        </div>
+        {/* Mobile Header - Sticky */}
+        {showMobileUI && (
+          <div className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919]">
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] truncate flex-1">
+              {workspace?.name || 'Workspace'}
+            </h1>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowMobileUI(false)}
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                title="Hide UI for full screen"
+              >
+                <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <MobileUserMenu user={user} onSettingsClick={() => setSettingsOpen(true)} />
+            </div>
+          </div>
+        )}
 
-        {/* Mobile Main Content */}
-        <div className="flex-1 overflow-hidden">
+        {/* Mobile Main Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
           {activeView === 'kanban' && activeBoard ? (
             <KanbanBoard
               board={activeBoard}
@@ -186,8 +200,9 @@ export default function WorkspacePage() {
           )}
         </div>
 
-        {/* Mobile Bottom Navigation */}
-        <div className="flex items-center justify-around px-2 py-2 border-t border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919]">
+        {/* Mobile Bottom Navigation - Sticky + Full Screen Toggle */}
+        {showMobileUI && (
+          <div className="sticky  bottom-0 z-40 flex items-center justify-around px-2 py-2 border-t border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919]">
           <button
             onClick={() => setMobileSidebarOpen(true)}
             className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors tap-target"
@@ -223,7 +238,7 @@ export default function WorkspacePage() {
             onClick={() => togglePanel('kanban')}
             className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors tap-target ${kanbanPanelOpen ? 'bg-blue-100 dark:bg-blue-900/20' : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
               }`}
-            title="Projects"
+            title="Boards"
           >
             <ViewColumnsIcon className={`w-6 h-6 ${kanbanPanelOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`} />
             <span className={`text-xs mt-1 ${kanbanPanelOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>Projects</span>
@@ -249,6 +264,20 @@ export default function WorkspacePage() {
             <span className={`text-xs mt-1 ${peoplePanelOpen ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`}>People</span>
           </button>
         </div>
+        )}
+
+        {/* Full Screen Toggle - Visible when UI is hidden */}
+        {!showMobileUI && (
+          <button
+            onClick={() => setShowMobileUI(true)}
+            className="fixed top-4 right-4 z-50 p-2 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#3a3a3a] rounded-lg shadow-lg hover:shadow-xl transition-all"
+            title="Show UI"
+          >
+            <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Desktop Resizable Layout */}

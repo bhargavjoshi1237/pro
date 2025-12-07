@@ -2,6 +2,43 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
+// Helper function to enrich cards with creator and assignee user data
+async function enrichCardsWithUserData(cards) {
+    if (!cards || cards.length === 0) return cards;
+
+    const userIds = new Set();
+    cards.forEach(card => {
+        if (card.created_by) userIds.add(card.created_by);
+        if (card.assignee_id) userIds.add(card.assignee_id);
+    });
+
+    if (userIds.size === 0) return cards;
+
+    // Fetch user profiles
+    const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, email, avatar_url')
+        .in('id', Array.from(userIds));
+
+    if (error || !profiles) {
+        console.warn('Could not fetch user profiles:', error);
+        return cards;
+    }
+
+    // Create a map of user id to profile
+    const profileMap = {};
+    profiles.forEach(profile => {
+        profileMap[profile.id] = profile;
+    });
+
+    // Enrich cards with creator and assignee data
+    return cards.map(card => ({
+        ...card,
+        creator: card.created_by ? profileMap[card.created_by] : null,
+        assignee: card.assignee_id ? profileMap[card.assignee_id] : null
+    }));
+}
+
 export function useKanban(workspaceId) {
     const [boards, setBoards] = useState([]);
     const [activeBoard, setActiveBoard] = useState(null);
@@ -125,9 +162,7 @@ export function useKanban(workspaceId) {
                 .select(`
                   *,
                   tags:kanban_card_tags(tag_id),
-                  entities:kanban_card_entities(entity_id),
-                  creator:created_by(id, email, avatar_url),
-                  assignee:assignee_id(id, email, avatar_url)
+                  entities:kanban_card_entities(entity_id)
                 `)
                 .in('column_id', columnIds)
                 .order('position', { ascending: true });
@@ -138,7 +173,10 @@ export function useKanban(workspaceId) {
             }
 
             if (!isMounted) return;
-            setCards(cardsData);
+            
+            // Enrich cards with creator and assignee user data
+            const enrichedCards = await enrichCardsWithUserData(cardsData);
+            setCards(enrichedCards);
         };
 
         fetchBoardData();
@@ -184,17 +222,17 @@ export function useKanban(workspaceId) {
                             .select(`
                                 *,
                                 tags:kanban_card_tags(tag_id),
-                                entities:kanban_card_entities(entity_id),
-                                creator:created_by(id, email, avatar_url),
-                                assignee:assignee_id(id, email, avatar_url)
+                                entities:kanban_card_entities(entity_id)
                             `)
                             .eq('id', payload.new.id)
                             .single();
 
                         if (!error && newCard) {
-                            setCards(prev => {
-                                if (prev.some(c => c.id === newCard.id)) return prev;
-                                return [...prev, newCard].sort((a, b) => a.position - b.position);
+                            enrichCardsWithUserData([newCard]).then(enrichedCards => {
+                                setCards(prev => {
+                                    if (prev.some(c => c.id === enrichedCards[0].id)) return prev;
+                                    return [...prev, enrichedCards[0]].sort((a, b) => a.position - b.position);
+                                });
                             });
                         }
                     }
@@ -231,15 +269,15 @@ export function useKanban(workspaceId) {
                             .select(`
                                 *,
                                 tags:kanban_card_tags(tag_id),
-                                entities:kanban_card_entities(entity_id),
-                                creator:created_by(id, email, avatar_url),
-                                assignee:assignee_id(id, email, avatar_url)
+                                entities:kanban_card_entities(entity_id)
                             `)
                             .eq('id', payload.new.id)
                             .single();
 
                         if (!error && newCard) {
-                            setCards(prev => [...prev, newCard].sort((a, b) => a.position - b.position));
+                            enrichCardsWithUserData([newCard]).then(enrichedCards => {
+                                setCards(prev => [...prev, enrichedCards[0]].sort((a, b) => a.position - b.position));
+                            });
                         }
                     }
                 }
@@ -386,29 +424,84 @@ export function useKanban(workspaceId) {
     };
 
     const createCard = async (columnId, title) => {
-        // Get current max position
-        const columnCards = cards.filter(c => c.column_id === columnId);
-        const maxPos = columnCards.length > 0 ? Math.max(...columnCards.map(c => c.position)) : -1;
+        try {
+            if (!supabase) {
+                const msg = 'Supabase client not initialized';
+                toast.error(msg);
+                throw new Error(msg);
+            }
 
-        const { data, error } = await supabase
-            .from('kanban_cards')
-            .insert([{ column_id: columnId, title, position: maxPos + 1 }])
-            .select(`
-                *,
-                tags:kanban_card_tags(tag_id),
-                entities:kanban_card_entities(entity_id),
-                creator:created_by(id, email, avatar_url),
-                assignee:assignee_id(id, email, avatar_url)
-            `)
-            .single();
+            // Get current user
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError) {
+                const msg = `Auth error: ${userError.message}`;
+                console.error(msg, userError);
+                toast.error('Authentication failed');
+                throw new Error(msg);
+            }
+            if (!user) {
+                const msg = 'User not authenticated';
+                toast.error('You must be logged in to create a card');
+                throw new Error(msg);
+            }
 
-        if (error) {
-            toast.error('Failed to create card');
+            // Get current max position
+            const columnCards = cards.filter(c => c.column_id === columnId);
+            const maxPos = columnCards.length > 0 ? Math.max(...columnCards.map(c => c.position)) : -1;
+
+            // First insert the card without selecting related data (simpler, fewer RLS checks)
+            const { data: insertedCard, error: insertError } = await supabase
+                .from('kanban_cards')
+                .insert([{ 
+                    column_id: columnId, 
+                    title, 
+                    position: maxPos + 1,
+                    created_by: user.id
+                }])
+                .select('*')
+                .single();
+
+            if (insertError) {
+                const errorMsg = insertError.message || JSON.stringify(insertError);
+                console.error('Card insertion error:', errorMsg, insertError);
+                toast.error(`Failed to create card: ${insertError.message || 'Unknown error'}`);
+                throw new Error(errorMsg);
+            }
+
+            if (!insertedCard) {
+                const msg = 'No data returned from card creation';
+                console.error(msg);
+                toast.error('Card created but no data returned');
+                throw new Error(msg);
+            }
+
+            // Now fetch the full card with relations
+            const { data: fullCard, error: selectError } = await supabase
+                .from('kanban_cards')
+                .select(`
+                    *,
+                    tags:kanban_card_tags(tag_id),
+                    entities:kanban_card_entities(entity_id)
+                `)
+                .eq('id', insertedCard.id)
+                .single();
+
+            if (selectError) {
+                console.warn('Could not fetch full card data:', selectError);
+                // Enrich with user data before returning
+                const enrichedCards = await enrichCardsWithUserData([insertedCard]);
+                return enrichedCards[0];
+            }
+
+            // Enrich with user data before returning
+            const enrichedCards = await enrichCardsWithUserData([fullCard || insertedCard]);
+            return enrichedCards[0];
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+            console.error('Error in createCard:', errorMsg, error);
+            // Don't show toast here since we show it above
             throw error;
         }
-
-        // Don't manually update state - let the subscription handle it to avoid duplicates
-        return data;
     };
 
     const updateCard = async (cardId, updates) => {
