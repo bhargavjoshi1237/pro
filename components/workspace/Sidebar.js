@@ -16,10 +16,12 @@ import {
   MoonIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
-  ChevronDoubleLeftIcon
+  ChevronDoubleLeftIcon,
+  ShareIcon
 } from '@heroicons/react/24/outline';
 import { useTheme } from '@/context/ThemeContext';
 import WorkspaceMembers from './WorkspaceMembers';
+import { ShareDialog } from '@/components/ShareDialog';
 
 export default function Sidebar({
   workspace,
@@ -64,9 +66,15 @@ export default function Sidebar({
   // Drag and drop states
   const [draggedItem, setDraggedItem] = useState(null);
   const [draggedOverId, setDraggedOverId] = useState(null);
+  const [pendingMove, setPendingMove] = useState(null);
+  const [pendingMoveProcessing, setPendingMoveProcessing] = useState(false);
 
   // Delete confirmation
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  // Share dialog
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareItem, setShareItem] = useState(null);
 
   const entityTypes = [
     { id: 'character', name: 'Characters', icon: UserGroupIcon },
@@ -192,7 +200,8 @@ export default function Sidebar({
       }
     } else if (draggedType === 'snippet' && targetType === 'folder' && onMoveSnippetToFolder) {
       if (draggedSnippet.folder_id !== targetId) {
-        onMoveSnippetToFolder(draggedSnippet.id, targetId);
+        // Ask for confirmation before moving the snippet to another folder
+        setPendingMove({ snippetId: draggedSnippet.id, fromFolderId: draggedSnippet.folder_id, toFolderId: targetId, title: draggedSnippet.title });
       }
     }
 
@@ -341,6 +350,10 @@ export default function Sidebar({
                     isDraggedOver={draggedOverId === snippet.id}
                     setDeleteConfirm={setDeleteConfirm}
                     hasFinalVersion={snippets.some(s => s.draft_id === snippet.id && s.is_final)}
+                    onShare={(snippet) => {
+                      setShareItem({ id: snippet.id, type: 'snippet', title: snippet.title });
+                      setShareDialogOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -375,6 +388,16 @@ export default function Sidebar({
                       <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto">{folderSnippets.length}</span>
                     </button>
                     <button
+                      onClick={() => {
+                        setShareItem({ id: folder.id, type: 'folder', title: folder.name });
+                        setShareDialogOpen(true);
+                      }}
+                      className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-all shrink-0"
+                      title="Share folder"
+                    >
+                      <ShareIcon className="w-3.5 h-3.5 text-blue-500" />
+                    </button>
+                    <button
                       onClick={() => setDeleteConfirm({ type: 'folder', id: folder.id, name: folder.name })}
                       className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-all shrink-0"
                     >
@@ -398,6 +421,10 @@ export default function Sidebar({
                           isDraggedOver={draggedOverId === snippet.id}
                           setDeleteConfirm={setDeleteConfirm}
                           hasFinalVersion={snippets.some(s => s.draft_id === snippet.id && s.is_final)}
+                          onShare={(snippet) => {
+                            setShareItem({ id: snippet.id, type: 'snippet', title: snippet.title });
+                            setShareDialogOpen(true);
+                          }}
                         />
                       ))}
                     </div>
@@ -528,6 +555,48 @@ export default function Sidebar({
               >
                 Cancel
               </button>
+            </div>
+          </Modal>
+        )
+      }
+      {
+        pendingMove && (
+          <Modal onClose={() => !pendingMoveProcessing && setPendingMove(null)}>
+            <div className="flex items-start gap-3">
+              <FolderIcon className="w-6 h-6 text-yellow-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-1">Move Snippet?</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Move "{pendingMove.title}" to "{(folders.find(f => f.id === pendingMove.toFolderId) || {}).name || 'Folder'}"?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      try {
+                        setPendingMoveProcessing(true);
+                        await onMoveSnippetToFolder(pendingMove.snippetId, pendingMove.toFolderId);
+                        setPendingMove(null);
+                      } catch (err) {
+                        console.error('Error moving snippet:', err);
+                      } finally {
+                        setPendingMoveProcessing(false);
+                        setDraggedItem(null);
+                        setDraggedOverId(null);
+                      }
+                    }}
+                    disabled={pendingMoveProcessing}
+                    className="flex-1 px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors font-medium"
+                  >
+                    {pendingMoveProcessing ? 'Moving...' : 'Move'}
+                  </button>
+                  <button
+                    onClick={() => !pendingMoveProcessing && setPendingMove(null)}
+                    className="flex-1 px-3 py-2 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </div>
           </Modal>
         )
@@ -693,12 +762,27 @@ export default function Sidebar({
           </Modal>
         )
       }
+
+      {/* Share Dialog */}
+      {shareItem && (
+        <ShareDialog
+          isOpen={shareDialogOpen}
+          onClose={() => {
+            setShareDialogOpen(false);
+            setShareItem(null);
+          }}
+          itemId={shareItem.id}
+          itemType={shareItem.type}
+          itemTitle={shareItem.title}
+          workspaceId={workspace?.id}
+        />
+      )}
     </div >
   );
 }
 
 
-function SnippetItem({ snippet, isActive, isOpen, onSelect, onDragStart, onDragOver, onDrop, onDragLeave, isDraggedOver, setDeleteConfirm, hasFinalVersion }) {
+function SnippetItem({ snippet, isActive, isOpen, onSelect, onDragStart, onDragOver, onDrop, onDragLeave, isDraggedOver, setDeleteConfirm, hasFinalVersion, onShare }) {
   return (
     <div
       className={`flex items-center gap-1 group px-2 py-1 rounded transition-colors cursor-move ${isDraggedOver ? 'bg-gray-200 dark:bg-[#2a2a2a] border-l-2 border-gray-400 dark:border-gray-600' :
@@ -728,6 +812,13 @@ function SnippetItem({ snippet, isActive, isOpen, onSelect, onDragStart, onDragO
         {isOpen && !isActive && !hasFinalVersion && (
           <div className="w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-gray-400 shrink-0" />
         )}
+      </button>
+      <button
+        onClick={() => onShare?.(snippet)}
+        className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-all shrink-0"
+        title="Share snippet"
+      >
+        <ShareIcon className="w-3.5 h-3.5 text-blue-500" />
       </button>
       <button
         onClick={() => setDeleteConfirm({ type: 'snippet', id: snippet.id, name: snippet.title })}
