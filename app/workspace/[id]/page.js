@@ -19,7 +19,7 @@ import StoragePanel from '@/components/workspace/StoragePanel';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { UserGroupIcon, XMarkIcon, SparklesIcon, ChatBubbleLeftRightIcon, ViewColumnsIcon, FolderIcon, ChevronDoubleRightIcon, ChevronDoubleLeftIcon, PresentationChartBarIcon } from '@heroicons/react/24/outline';
-import { WhiteboardPanel } from '@/components/whiteboard/WhiteboardPanel';
+import WhiteboardPanel from '@/components/whiteboard/WhiteboardPanel';
 
 export default function WorkspacePage() {
   const router = useRouter();
