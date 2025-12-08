@@ -14,7 +14,8 @@ export default function EditorTabs({
   onReorderTabs,
   user,
   entities,
-  tags
+  tags,
+  workspace
 }) {
   const activeTab = tabs.find(tab => tab.id === activeTabId);
   const [draggedTabId, setDraggedTabId] = useState(null);

@@ -408,3 +408,22 @@ body {
 .ProseMirror p {
   margin: 0.5em 0;
 }
+
+/* Comment highlight animation */
+@keyframes highlight-blink {
+  0%, 100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+}
+
+.highlight-line {
+  animation: highlight-blink 0.5s ease-in-out 3;
+}
+
+/* Smooth scrolling for comment navigation */
+textarea {
+  scroll-behavior: smooth;
+}

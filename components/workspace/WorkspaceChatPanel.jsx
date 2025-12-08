@@ -20,6 +20,7 @@ import {
     DialogFooter,
     DialogClose
 } from "@/components/ui/dialog";
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 export function WorkspaceChatPanel({ workspaceId, currentUserId }) {
     const {
@@ -31,6 +32,7 @@ export function WorkspaceChatPanel({ workspaceId, currentUserId }) {
     const [selectedSession, setSelectedSession] = useState(null);
     const [newChatName, setNewChatName] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
 
     const handleCreateChat = async () => {
         if (newChatName.trim()) {
@@ -69,6 +71,7 @@ export function WorkspaceChatPanel({ workspaceId, currentUserId }) {
     }
 
     return (
+        <>
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1e1e] border-l border-gray-200 dark:border-[#2a2a2a]">
             <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between shrink-0">
                 <h2 className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7]">Workspace Chats</h2>
@@ -144,9 +147,7 @@ export function WorkspaceChatPanel({ workspaceId, currentUserId }) {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    if (confirm('Are you sure you want to delete this chat?')) {
-                                        deleteAISession(session.id);
-                                    }
+                                    setDeleteConfirm(session.id);
                                 }}
                                 className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#333] text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
@@ -157,5 +158,20 @@ export function WorkspaceChatPanel({ workspaceId, currentUserId }) {
                 )}
             </div>
         </div>
+
+        <ConfirmDialog
+            isOpen={!!deleteConfirm}
+            onClose={() => setDeleteConfirm(null)}
+            onConfirm={() => {
+                deleteAISession(deleteConfirm);
+                setDeleteConfirm(null);
+            }}
+            title="Confirm to delete chat"
+            message="This is permanent! Are you sure you want to delete this chat?"
+            confirmText="Delete"
+            cancelText="Cancel"
+            variant="danger"
+        />
+    </>
     );
 }

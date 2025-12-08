@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,21 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { LinkIcon, TrashIcon, CheckIcon, ClipboardIcon, GlobeAltIcon, EnvelopeIcon, LockClosedIcon, PencilSquareIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { 
+  LinkIcon, 
+  TrashIcon, 
+  CheckIcon, 
+  ClipboardIcon, 
+  GlobeAltIcon, 
+  EnvelopeIcon, 
+  LockClosedIcon, 
+  PencilSquareIcon, 
+  XMarkIcon,
+  PlusIcon,
+  EyeIcon,
+  PencilIcon,
+  CalendarIcon
+} from '@heroicons/react/24/outline';
 
 export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, workspaceId }) {
   const [shareType, setShareType] = useState('public');
@@ -21,6 +35,7 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('create');
 
   useEffect(() => {
     const getUser = async () => {
@@ -30,19 +45,14 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
     getUser();
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadShares();
-    }
-  }, [isOpen, itemId, itemType]);
-
-  const loadShares = async () => {
+  const loadShares = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('shares')
         .select('*')
-        .eq(itemType === 'snippet' ? 'snippet_id' : 'folder_id', itemId);
+        .eq(itemType === 'snippet' ? 'snippet_id' : 'folder_id', itemId)
+        .order('created_at', { ascending: false });
 
       if (!error && data) {
         setShares(data);
@@ -52,12 +62,23 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
     } finally {
       setLoading(false);
     }
-  };
+  }, [itemId, itemType]);
+
+  useEffect(() => {
+    if (isOpen && itemId) {
+      loadShares();
+    }
+  }, [isOpen, itemId, loadShares]);
 
   const handleAddEmail = () => {
-    if (emailInput.trim() && !allowedEmails.includes(emailInput.trim())) {
-      setAllowedEmails([...allowedEmails, emailInput.trim()]);
+    const email = emailInput.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (email && emailRegex.test(email) && !allowedEmails.includes(email)) {
+      setAllowedEmails([...allowedEmails, email]);
       setEmailInput('');
+    } else if (!emailRegex.test(email)) {
+      alert('Please enter a valid email address');
     }
   };
 
@@ -87,7 +108,8 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
 
       if (response.ok) {
         const newShare = await response.json();
-        setShares([...shares, newShare]);
+        setShares([newShare, ...shares]);
+        setActiveTab('links');
         setEmailInput('');
         setAllowedEmails([]);
       }
@@ -149,163 +171,224 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-gradient-to-b from-gray-50 to-white dark:from-[#1a1a1a] dark:to-[#0f0f0f] border border-gray-200 dark:border-[#2a2a2a] shadow-xl">
-        <DialogHeader className="pb-4 border-b border-gray-200 dark:border-[#2a2a2a]">
-          <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-[#e7e7e7] flex items-center gap-2">
-            <LinkIcon className="w-6 h-6 text-blue-500" />
-            Share "{itemTitle}"
-          </DialogTitle>
-          <DialogDescription className="text-gray-600 dark:text-gray-400 mt-1">
-            Control how this {itemType} is shared with others
-          </DialogDescription>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-white dark:bg-[#191919] border border-gray-200 dark:border-[#2a2a2a] shadow-2xl rounded-xl">
+        <DialogHeader className="pb-3 border-b border-gray-200 dark:border-[#2a2a2a]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-md bg-gray-100 dark:bg-[#2a2a2a]">
+                <LinkIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7]">
+                  Share {itemTitle}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                  Share this {itemType} with others via link or email
+                </DialogDescription>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-7 w-7 text-gray-500 hover:text-gray-900 dark:text-gray-500 dark:hover:text-[#e7e7e7] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+            >
+              <XMarkIcon className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </DialogHeader>
 
-        <Tabs defaultValue="create" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-[#1a1a1a] p-1 rounded-lg">
-            <TabsTrigger value="create" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#2a2a2a] rounded-md transition-all">
-              <span className="flex items-center gap-2">
-                <LinkIcon className="w-4 h-4" />
-                Create Share
+        <Tabs defaultValue="create" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-[#2a2a2a] p-0.5 rounded-lg">
+            <TabsTrigger 
+              value="create" 
+              className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#191919] data-[state=active]:shadow-sm rounded-md transition-all text-gray-700 dark:text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-[#e7e7e7]"
+            >
+              <span className="flex items-center gap-1.5 text-xs font-medium">
+                <PlusIcon className="w-3.5 h-3.5" />
+                New Share
               </span>
             </TabsTrigger>
-            <TabsTrigger value="links" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#2a2a2a] rounded-md transition-all">
-              <span className="flex items-center gap-2">
-                <GlobeAltIcon className="w-4 h-4" />
-                Shared Links ({shares.length})
+            <TabsTrigger 
+              value="links" 
+              className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#191919] data-[state=active]:shadow-sm rounded-md transition-all text-gray-700 dark:text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-[#e7e7e7]"
+            >
+              <span className="flex items-center gap-1.5 text-xs font-medium">
+                <LinkIcon className="w-3.5 h-3.5" />
+                Active Shares ({shares.length})
               </span>
             </TabsTrigger>
           </TabsList>
 
           {/* Create Share Tab */}
-          <TabsContent value="create" className="space-y-6 mt-6">
+          <TabsContent value="create" className="space-y-4 mt-4">
             {/* Share Type Selection */}
             <div className="space-y-3">
-              <Label className="text-sm font-bold text-gray-900 dark:text-[#e7e7e7] flex items-center gap-2">
-                <GlobeAltIcon className="w-4 h-4 text-blue-500" />
-                Sharing Method
+              <Label className="text-xs font-semibold text-gray-600 dark:text-gray-500 uppercase tracking-wide">
+                Share Type
               </Label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5">
                 <button
                   onClick={() => setShareType('public')}
-                  className={`p-4 border-2 rounded-xl transition-all duration-200 ${
+                  className={`p-3 border rounded-lg transition-all duration-200 text-left ${
                     shareType === 'public'
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md'
-                      : 'border-gray-200 dark:border-[#2a2a2a] hover:border-blue-300 dark:hover:border-[#3a3a3a] bg-white dark:bg-[#1a1a1a]'
+                      ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-[#212121]'
+                      : 'border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#333] bg-white dark:bg-[#191919]'
                   }`}
                 >
-                  <GlobeAltIcon className={`w-5 h-5 mb-2 ${shareType === 'public' ? 'text-blue-500' : 'text-gray-400'}`} />
-                  <div className={`font-semibold text-sm ${shareType === 'public' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-[#e7e7e7]'}`}>
-                    Public Link
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-1.5 rounded-md ${shareType === 'public' ? 'bg-gray-200 dark:bg-[#2a2a2a]' : 'bg-gray-100 dark:bg-[#212121]'}`}>
+                      <GlobeAltIcon className={`w-4 h-4 ${shareType === 'public' ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-500'}`} />
+                    </div>
+                    <div>
+                      <div className={`font-medium text-xs ${shareType === 'public' ? 'text-gray-900 dark:text-[#e7e7e7]' : 'text-gray-700 dark:text-gray-400'}`}>
+                        Public Link
+                      </div>
+                      <div className="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">Anyone with the link</div>
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Anyone with link</div>
                 </button>
                 <button
                   onClick={() => setShareType('email')}
-                  className={`p-4 border-2 rounded-xl transition-all duration-200 ${
+                  className={`p-3 border rounded-lg transition-all duration-200 text-left ${
                     shareType === 'email'
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-md'
-                      : 'border-gray-200 dark:border-[#2a2a2a] hover:border-purple-300 dark:hover:border-[#3a3a3a] bg-white dark:bg-[#1a1a1a]'
+                      ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-[#212121]'
+                      : 'border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#333] bg-white dark:bg-[#191919]'
                   }`}
                 >
-                  <EnvelopeIcon className={`w-5 h-5 mb-2 ${shareType === 'email' ? 'text-purple-500' : 'text-gray-400'}`} />
-                  <div className={`font-semibold text-sm ${shareType === 'email' ? 'text-purple-700 dark:text-purple-300' : 'text-gray-900 dark:text-[#e7e7e7]'}`}>
-                    Email Only
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-1.5 rounded-md ${shareType === 'email' ? 'bg-gray-200 dark:bg-[#2a2a2a]' : 'bg-gray-100 dark:bg-[#212121]'}`}>
+                      <EnvelopeIcon className={`w-4 h-4 ${shareType === 'email' ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-500'}`} />
+                    </div>
+                    <div>
+                      <div className={`font-medium text-xs ${shareType === 'email' ? 'text-gray-900 dark:text-[#e7e7e7]' : 'text-gray-700 dark:text-gray-400'}`}>
+                        Email Restricted
+                      </div>
+                      <div className="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">Specific emails only</div>
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Specific emails</div>
                 </button>
               </div>
             </div>
 
-            <Separator className="dark:bg-[#2a2a2a]" />
+            <Separator className="bg-gray-200 dark:bg-[#2a2a2a]" />
 
             {/* Email Addresses (for email share type) */}
             {shareType === 'email' && (
-              <div className="space-y-3 bg-purple-50 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-200 dark:border-purple-900/30">
-                <Label htmlFor="email-input" className="text-sm font-bold text-gray-900 dark:text-[#e7e7e7] flex items-center gap-2">
-                  <EnvelopeIcon className="w-4 h-4 text-purple-500" />
+              <div className="space-y-3">
+                <Label className="text-xs font-semibold text-gray-600 dark:text-gray-500 uppercase tracking-wide">
                   Allowed Email Addresses
                 </Label>
                 <div className="flex gap-2">
                   <Input
-                    id="email-input"
                     type="email"
                     placeholder="user@example.com"
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddEmail()}
-                    className="flex-1 bg-white dark:bg-[#0f0f0f] border-gray-300 dark:border-[#3a3a3a] focus:ring-2 focus:ring-purple-500"
+                    className="flex-1 text-sm bg-white dark:bg-[#191919] border-gray-300 dark:border-[#2a2a2a] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 text-gray-900 dark:text-[#e7e7e7]"
                   />
                   <Button 
                     onClick={handleAddEmail} 
-                    variant="outline"
-                    className="border-purple-200 dark:border-[#3a3a3a] hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                    variant="secondary"
+                    className="bg-gray-200 hover:bg-gray-300 dark:bg-[#2a2a2a] dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] text-xs"
                   >
+                    <PlusIcon className="w-3.5 h-3.5 mr-1.5" />
                     Add
                   </Button>
                 </div>
 
                 {/* Email Tags */}
                 {allowedEmails.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-2">
+                  <div className="flex flex-wrap gap-1.5 pt-1">
                     {allowedEmails.map(email => (
-                      <Badge key={email} variant="secondary" className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-200 dark:bg-purple-900/40 text-purple-900 dark:text-purple-200">
-                        {email}
+                      <div
+                        key={email}
+                        className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 rounded-md border border-gray-200 dark:border-[#333]"
+                      >
+                        <span className="text-xs">{email}</span>
                         <button
                           onClick={() => handleRemoveEmail(email)}
-                          className="ml-1 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                          className="hover:text-gray-900 dark:hover:text-[#e7e7e7] transition-colors"
                         >
-                          <XMarkIcon className="w-3.5 h-3.5" />
+                          <XMarkIcon className="w-3 h-3" />
                         </button>
-                      </Badge>
+                      </div>
                     ))}
                   </div>
                 )}
+                <p className="text-[10px] text-gray-500 dark:text-gray-500">
+                  Add email addresses of people you want to share with
+                </p>
               </div>
             )}
 
-            <Separator className="dark:bg-[#2a2a2a]" />
+            <Separator className="bg-gray-200 dark:bg-[#2a2a2a]" />
 
             {/* Access Level */}
             <div className="space-y-3">
-              <Label htmlFor="access-level" className="text-sm font-bold text-gray-900 dark:text-[#e7e7e7] flex items-center gap-2">
-                <LockClosedIcon className="w-4 h-4 text-green-500" />
-                Access Permissions
+              <Label className="text-xs font-semibold text-gray-600 dark:text-gray-500 uppercase tracking-wide">
+                Access Level
               </Label>
-              <Select value={accessLevel} onValueChange={setAccessLevel}>
-                <SelectTrigger id="access-level" className="bg-white dark:bg-[#1a1a1a] border-gray-300 dark:border-[#2a2a2a]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-[#1a1a1a] border-gray-200 dark:border-[#2a2a2a]">
-                  <SelectItem value="view" className="flex items-center gap-2">
-                    <span>👁️ View Only</span>
-                  </SelectItem>
-                  <SelectItem value="edit">
-                    <span>✏️ Can Edit</span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {accessLevel === 'view' ? 'Recipients can view but not modify content' : 'Recipients can view and edit content'}
-              </p>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  onClick={() => setAccessLevel('view')}
+                  className={`p-3 border rounded-lg transition-all duration-200 text-left ${
+                    accessLevel === 'view'
+                      ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-[#212121]'
+                      : 'border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#333] bg-white dark:bg-[#191919]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-1.5 rounded-md ${accessLevel === 'view' ? 'bg-gray-200 dark:bg-[#2a2a2a]' : 'bg-gray-100 dark:bg-[#212121]'}`}>
+                      <EyeIcon className={`w-4 h-4 ${accessLevel === 'view' ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-500'}`} />
+                    </div>
+                    <div>
+                      <div className={`font-medium text-xs ${accessLevel === 'view' ? 'text-gray-900 dark:text-[#e7e7e7]' : 'text-gray-700 dark:text-gray-400'}`}>
+                        View Only
+                      </div>
+                      <div className="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">Can view only</div>
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setAccessLevel('edit')}
+                  className={`p-3 border rounded-lg transition-all duration-200 text-left ${
+                    accessLevel === 'edit'
+                      ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-[#212121]'
+                      : 'border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#333] bg-white dark:bg-[#191919]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-1.5 rounded-md ${accessLevel === 'edit' ? 'bg-gray-200 dark:bg-[#2a2a2a]' : 'bg-gray-100 dark:bg-[#212121]'}`}>
+                      <PencilIcon className={`w-4 h-4 ${accessLevel === 'edit' ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-500'}`} />
+                    </div>
+                    <div>
+                      <div className={`font-medium text-xs ${accessLevel === 'edit' ? 'text-gray-900 dark:text-[#e7e7e7]' : 'text-gray-700 dark:text-gray-400'}`}>
+                        Can Edit
+                      </div>
+                      <div className="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">View and edit</div>
+                    </div>
+                  </div>
+                </button>
+              </div>
             </div>
 
-            <Separator className="dark:bg-[#2a2a2a]" />
-
             {/* Create Button */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-2 pt-2">
               <Button
                 onClick={handleCreateShare}
-                disabled={loading}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                disabled={loading || (shareType === 'email' && allowedEmails.length === 0)}
+                className="flex-1 bg-[#e7e7e7] hover:bg-gray-300 dark:bg-[#282828] dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] font-medium text-xs rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
-                    <span className="animate-spin inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"></span>
+                    <span className="animate-spin inline-block w-3.5 h-3.5 mr-1.5 border-2 border-gray-900 dark:border-[#e7e7e7] border-t-transparent rounded-full"></span>
                     Creating...
                   </>
                 ) : (
                   <>
-                    <LinkIcon className="w-4 h-4 mr-2" />
+                    <LinkIcon className="w-3.5 h-3.5 mr-1.5" />
                     Create Share Link
                   </>
                 )}
@@ -313,7 +396,7 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
               <Button
                 onClick={onClose}
                 variant="outline"
-                className="flex-1 border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-50 dark:hover:bg-[#1a1a1a] rounded-lg"
+                className="flex-1 border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#212121] rounded-lg text-gray-700 dark:text-gray-400 text-xs"
               >
                 Cancel
               </Button>
@@ -321,46 +404,88 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
           </TabsContent>
 
           {/* Shared Links Tab */}
-          <TabsContent value="links" className="space-y-4 mt-6">
-            {shares.length === 0 ? (
-              <div className="py-12 text-center bg-gradient-to-b from-gray-50 to-white dark:from-[#1a1a1a] dark:to-[#0f0f0f] rounded-xl border border-gray-200 dark:border-[#2a2a2a]">
-                <LinkIcon className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
-                <p className="text-gray-600 dark:text-gray-400 font-medium">No shares created yet</p>
-                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">Create one above to share this {itemType}</p>
+          <TabsContent value="links" className="space-y-3 mt-4">
+            {loading ? (
+              <div className="py-12 text-center">
+                <div className="animate-spin inline-block w-6 h-6 border-2 border-gray-400 dark:border-gray-600 border-t-transparent rounded-full mb-3"></div>
+                <p className="text-xs text-gray-600 dark:text-gray-500">Loading shares...</p>
+              </div>
+            ) : shares.length === 0 ? (
+              <div className="py-12 text-center bg-gray-50 dark:bg-[#212121] rounded-lg border border-dashed border-gray-300 dark:border-[#2a2a2a]">
+                <div className="w-10 h-10 mx-auto mb-2.5 rounded-full bg-gray-100 dark:bg-[#2a2a2a] flex items-center justify-center">
+                  <LinkIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">No active shares</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Create your first share to get started</p>
+                <Button
+                  variant="outline"
+                  onClick={() => setActiveTab('create')}
+                  className="mt-3 text-xs border-gray-300 dark:border-[#2a2a2a] text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+                >
+                  <PlusIcon className="w-3.5 h-3.5 mr-1.5" />
+                  Create Share
+                </Button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
                 {shares.map(share => (
                   <div
                     key={share.id}
-                    className="p-4 border border-gray-200 dark:border-[#2a2a2a] rounded-xl bg-white dark:bg-[#1a1a1a] hover:shadow-md transition-all duration-200 space-y-3"
+                    className="group p-3 border border-gray-200 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#191919] hover:border-gray-300 dark:hover:border-[#333] transition-all duration-200 space-y-3"
                   >
                     {/* Share Info Header */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <Badge className={`${
-                            share.share_type === 'public' 
-                              ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' 
-                              : 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
-                          }`}>
-                            {share.share_type === 'public' ? '🔗 Public' : '📧 Email Only'}
+                        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                          <Badge variant={share.share_type === 'public' ? 'default' : 'secondary'} 
+                            className={`text-[10px] font-medium px-2 py-0.5 ${
+                              share.share_type === 'public' 
+                                ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-[#333]' 
+                                : 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-[#333]'
+                            }`}
+                          >
+                            {share.share_type === 'public' ? (
+                              <>
+                                <GlobeAltIcon className="w-2.5 h-2.5 mr-1" />
+                                Public
+                              </>
+                            ) : (
+                              <>
+                                <EnvelopeIcon className="w-2.5 h-2.5 mr-1" />
+                                Email Only
+                              </>
+                            )}
                           </Badge>
-                          <Badge className={`${
-                            share.access_level === 'view'
-                              ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
-                              : 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300'
-                          }`}>
-                            {share.access_level === 'view' ? '👁️ View' : '✏️ Edit'}
+                          <Badge variant="outline" 
+                            className="text-[10px] border px-2 py-0.5 border-gray-200 dark:border-[#2a2a2a] text-gray-600 dark:text-gray-400 bg-white dark:bg-[#191919]"
+                          >
+                            {share.access_level === 'view' ? (
+                              <>
+                                <EyeIcon className="w-2.5 h-2.5 mr-1" />
+                                View Only
+                              </>
+                            ) : (
+                              <>
+                                <PencilIcon className="w-2.5 h-2.5 mr-1" />
+                                Can Edit
+                              </>
+                            )}
                           </Badge>
                         </div>
+                        
                         {share.share_type === 'email' && share.allowed_emails?.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {share.allowed_emails.map(email => (
-                              <Badge key={email} variant="outline" className="text-xs bg-gray-50 dark:bg-[#0f0f0f]">
-                                {email}
-                              </Badge>
-                            ))}
+                          <div className="mb-1.5">
+                            <p className="text-[10px] text-gray-500 dark:text-gray-500 mb-1 font-medium">Allowed emails:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {share.allowed_emails.map(email => (
+                                <span 
+                                  key={email} 
+                                  className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 rounded"
+                                >
+                                  {email}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -368,76 +493,79 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
                         onClick={() => handleDeleteShare(share.share_token)}
                         variant="ghost"
                         size="sm"
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 shrink-0"
+                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
-                        <TrashIcon className="w-4 h-4" />
+                        <TrashIcon className="w-3.5 h-3.5" />
                       </Button>
                     </div>
 
                     {/* Share Link */}
-                    <div className="space-y-2 bg-gray-50 dark:bg-[#0f0f0f] p-3 rounded-lg border border-gray-200 dark:border-[#2a2a2a]">
-                      <Label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Share Link</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          readOnly
-                          value={getShareUrl(share.share_token)}
-                          className="text-xs bg-white dark:bg-[#1a1a1a] border-gray-300 dark:border-[#3a3a3a] font-mono"
-                        />
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide">Share Link</Label>
                         <Button
                           onClick={() => copyToClipboard(getShareUrl(share.share_token))}
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          className="shrink-0 border-gray-300 dark:border-[#2a2a2a] hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          className="h-5 px-1.5 text-[10px] text-gray-500 hover:text-gray-900 dark:hover:text-[#e7e7e7] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
                         >
                           {copied ? (
-                            <CheckIcon className="w-4 h-4 text-green-500" />
+                            <>
+                              <CheckIcon className="w-3 h-3 mr-1 text-green-600" />
+                              Copied
+                            </>
                           ) : (
-                            <ClipboardIcon className="w-4 h-4" />
+                            <>
+                              <ClipboardIcon className="w-3 h-3 mr-1" />
+                              Copy
+                            </>
                           )}
                         </Button>
+                      </div>
+                      <div className="p-2 bg-gray-50 dark:bg-[#212121] rounded border border-gray-200 dark:border-[#2a2a2a]">
+                        <p className="text-[10px] font-mono text-gray-700 dark:text-gray-400 truncate">
+                          {getShareUrl(share.share_token)}
+                        </p>
                       </div>
                     </div>
 
                     {/* Edit Access Level and Type */}
                     {currentUser?.id === share.shared_by && (
-                      <div className="pt-3 border-t border-gray-200 dark:border-[#2a2a2a] space-y-3">
-                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                          <PencilSquareIcon className="w-3.5 h-3.5" />
-                          Manage Share
-                        </p>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-2">
-                            <Label htmlFor={`access-${share.id}`} className="text-xs font-semibold">Access</Label>
+                      <div className="pt-2.5 border-t border-gray-200 dark:border-[#2a2a2a] space-y-2">
+                        <Label className="text-[10px] font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide">Manage Share</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-medium text-gray-600 dark:text-gray-500">Access Level</Label>
                             <Select
                               value={share.access_level}
                               onValueChange={(value) =>
                                 handleUpdateShare(share.share_token, { access_level: value })
                               }
                             >
-                              <SelectTrigger id={`access-${share.id}`} className="text-xs bg-white dark:bg-[#1a1a1a] border-gray-300 dark:border-[#2a2a2a]">
+                              <SelectTrigger className="text-xs h-7 bg-white dark:bg-[#191919] border-gray-300 dark:border-[#2a2a2a] text-gray-900 dark:text-[#e7e7e7]">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent className="bg-white dark:bg-[#1a1a1a] border-gray-200 dark:border-[#2a2a2a]">
-                                <SelectItem value="view">View Only</SelectItem>
-                                <SelectItem value="edit">Can Edit</SelectItem>
+                              <SelectContent className="bg-white dark:bg-[#191919] border-gray-200 dark:border-[#2a2a2a]">
+                                <SelectItem value="view" className="text-xs">View Only</SelectItem>
+                                <SelectItem value="edit" className="text-xs">Can Edit</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
 
-                          <div className="space-y-2">
-                            <Label htmlFor={`type-${share.id}`} className="text-xs font-semibold">Type</Label>
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-medium text-gray-600 dark:text-gray-500">Share Type</Label>
                             <Select
                               value={share.share_type}
                               onValueChange={(value) =>
                                 handleUpdateShare(share.share_token, { share_type: value })
                               }
                             >
-                              <SelectTrigger id={`type-${share.id}`} className="text-xs bg-white dark:bg-[#1a1a1a] border-gray-300 dark:border-[#2a2a2a]">
+                              <SelectTrigger className="text-xs h-7 bg-white dark:bg-[#191919] border-gray-300 dark:border-[#2a2a2a] text-gray-900 dark:text-[#e7e7e7]">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent className="bg-white dark:bg-[#1a1a1a] border-gray-200 dark:border-[#2a2a2a]">
-                                <SelectItem value="public">Public</SelectItem>
-                                <SelectItem value="email">Email Only</SelectItem>
+                              <SelectContent className="bg-white dark:bg-[#191919] border-gray-200 dark:border-[#2a2a2a]">
+                                <SelectItem value="public" className="text-xs">Public Link</SelectItem>
+                                <SelectItem value="email" className="text-xs">Email Restricted</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -446,10 +574,20 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
                     )}
 
                     {/* Created info */}
-                    <div className="pt-3 border-t border-gray-200 dark:border-[#2a2a2a]">
-                      <p className="text-xs text-gray-500 dark:text-gray-500">
-                        Created {new Date(share.created_at).toLocaleDateString()} at {new Date(share.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                    <div className="pt-2.5 border-t border-gray-200 dark:border-[#2a2a2a]">
+                      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-500">
+                        <CalendarIcon className="w-3 h-3" />
+                        <span>Created {new Date(share.created_at).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}</span>
+                        <span className="text-gray-300 dark:text-gray-600">•</span>
+                        <span>{new Date(share.created_at).toLocaleTimeString([], { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}</span>
+                      </div>
                     </div>
                   </div>
                 ))}

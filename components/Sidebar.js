@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { FolderIcon, DocumentTextIcon, PlusIcon, TrashIcon, MoonIcon, SunIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { FolderIcon, DocumentTextIcon, PlusIcon, TrashIcon, MoonIcon, SunIcon, ChevronDownIcon, ChevronRightIcon, EllipsisVerticalIcon, ShareIcon } from '@heroicons/react/24/outline';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 export default function Sidebar({
   folders,
@@ -10,6 +11,7 @@ export default function Sidebar({
   onSelectSnippet,
   onDeleteSnippet,
   onDeleteFolder,
+  onShareSnippet,
   theme,
   onToggleTheme,
   loading
@@ -20,6 +22,9 @@ export default function Sidebar({
   const [newFolderName, setNewFolderName] = useState('');
   const [newSnippetTitle, setNewSnippetTitle] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [openFolderMenuId, setOpenFolderMenuId] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const toggleFolder = (folderId) => {
     const newExpanded = new Set(expandedFolders);
@@ -98,38 +103,90 @@ export default function Sidebar({
                     isActive={activeSnippet?.id === snippet.id}
                     onSelect={onSelectSnippet}
                     onDelete={onDeleteSnippet}
+                    onShare={onShareSnippet}
+                    openMenuId={openMenuId}
+                    setOpenMenuId={setOpenMenuId}
+                    setDeleteConfirm={setDeleteConfirm}
                   />
                 ))}
               </div>
             )}
 
-            {folders.map(folder => {
+           {folders.map(folder => {
               const folderSnippets = snippets.filter(s => s.folder_id === folder.id);
               const isExpanded = expandedFolders.has(folder.id);
+              const isMenuOpen = openFolderMenuId === folder.id;
 
               return (
                 <div key={folder.id} className="mb-1">
-                  <div className="flex items-center gap-0.5 group">
+                  <div className="group relative rounded overflow-hidden">
                     <button
                       onClick={() => toggleFolder(folder.id)}
-                      className="flex-1 flex items-center gap-1.5 px-2 py-1 hover:bg-gray-200 dark:hover:bg-[#2a2a2a] rounded transition-colors"
+                      className="w-full flex items-center gap-1.5 pl-2 pr-16 py-1 hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors relative"
                     >
                       {isExpanded ? (
-                        <ChevronDownIcon className="w-3 h-3 text-gray-500 dark:text-gray-500" />
+                        <ChevronDownIcon className="w-3 h-3 text-gray-500 dark:text-gray-500 shrink-0" />
                       ) : (
-                        <ChevronRightIcon className="w-3 h-3 text-gray-500 dark:text-gray-500" />
+                        <ChevronRightIcon className="w-3 h-3 text-gray-500 dark:text-gray-500 shrink-0" />
                       )}
-                      <FolderIcon className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-500" />
-                      <span className="text-xs font-medium text-gray-700 dark:text-[#e7e7e7]">{folder.name}</span>
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto">{folderSnippets.length}</span>
+                      <FolderIcon className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-500 shrink-0" />
+                      <span className="text-xs font-medium text-gray-700 dark:text-[#e7e7e7] truncate flex-1 text-left">
+                        {folder.name}
+                      </span>
                     </button>
+                    
+                    {/* Count badge - always visible on mobile, hidden on desktop hover */}
+                    <div className="absolute right-8 top-0 bottom-0 flex items-center justify-center pointer-events-none md:transition-transform md:duration-200 md:group-hover:translate-x-full">
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-[#212121] px-1.5 py-0.5 rounded">
+                        {folderSnippets.length}
+                      </span>
+                    </div>
+                    
+                    {/* Mobile menu button - always visible */}
                     <button
-                      onClick={() => onDeleteFolder(folder.id)}
-                      className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenFolderMenuId(isMenuOpen ? null : folder.id);
+                      }}
+                      className="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-[#2a2a2a] md:hidden z-10"
+                    >
+                      <EllipsisVerticalIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    </button>
+                    
+                    {/* Desktop delete button - slides in on hover */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteConfirm({ type: 'folder', id: folder.id, name: folder.name });
+                      }}
+                      className="hidden md:flex absolute right-0 top-0 bottom-0 w-9 items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/30 transition-transform duration-200 translate-x-full group-hover:translate-x-0 bg-transparent z-10"
                     >
                       <TrashIcon className="w-3.5 h-3.5 text-red-500" />
                     </button>
-                  </div>
+                    
+                    {/* Mobile dropdown menu */}
+                    {isMenuOpen && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-20 md:hidden" 
+                          onClick={() => setOpenFolderMenuId(null)}
+                        />
+                        <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#383838] rounded-lg shadow-lg z-30 md:hidden">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteConfirm({ type: 'folder', id: folder.id, name: folder.name });
+                              setOpenFolderMenuId(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                            Delete Folder
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>  
 
                   {isExpanded && (
                     <div className="ml-5 mt-0.5 space-y-0.5">
@@ -140,6 +197,10 @@ export default function Sidebar({
                           isActive={activeSnippet?.id === snippet.id}
                           onSelect={onSelectSnippet}
                           onDelete={onDeleteSnippet}
+                          onShare={onShareSnippet}
+                          openMenuId={openMenuId}
+                          setOpenMenuId={setOpenMenuId}
+                          setDeleteConfirm={setDeleteConfirm}
                         />
                       ))}
                     </div>
@@ -222,9 +283,11 @@ export default function Sidebar({
   );
 }
 
-function SnippetItem({ snippet, isActive, onSelect, onDelete }) {
+function SnippetItem({ snippet, isActive, onSelect, onDelete, onShare, openMenuId, setOpenMenuId, setDeleteConfirm }) {
+  const isMenuOpen = openMenuId === snippet.id;
+  
   return (
-    <div className={`flex items-center gap-1 group px-2 py-1 rounded transition-colors cursor-pointer ${
+    <div className={`relative flex items-center gap-1 group px-2 py-1 rounded transition-colors cursor-pointer ${
       isActive ? 'bg-gray-100 dark:bg-[#2a2a2a]' : 'hover:bg-gray-200 dark:hover:bg-[#212121]'
     }`}>
       <button
@@ -241,12 +304,77 @@ function SnippetItem({ snippet, isActive, onSelect, onDelete }) {
           <p className="text-[10px] text-gray-400 dark:text-gray-500">{snippet.word_count || 0} words</p>
         </div>
       </button>
+      
+      {/* Mobile menu button - always visible */}
       <button
-        onClick={() => onDelete(snippet.id)}
-        className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-all shrink-0"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpenMenuId(isMenuOpen ? null : snippet.id);
+        }}
+        className="p-1 md:hidden hover:bg-gray-300 dark:hover:bg-[#383838] rounded transition-colors shrink-0"
       >
-        <TrashIcon className="w-3.5 h-3.5 text-red-500" />
+        <EllipsisVerticalIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
       </button>
+      
+      {/* Desktop buttons - show on hover */}
+      <div className="hidden md:flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        {onShare && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onShare(snippet);
+            }}
+            className="p-0.5 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-all"
+          >
+            <ShareIcon className="w-3.5 h-3.5 text-blue-500" />
+          </button>
+        )}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setDeleteConfirm({ type: 'snippet', id: snippet.id, name: snippet.title });
+          }}
+          className="p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-all"
+        >
+          <TrashIcon className="w-3.5 h-3.5 text-red-500" />
+        </button>
+      </div>
+      
+      {/* Mobile dropdown menu */}
+      {isMenuOpen && (
+        <>
+          <div 
+            className="fixed inset-0 z-20 md:hidden" 
+            onClick={() => setOpenMenuId(null)}
+          />
+          <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#383838] rounded-lg shadow-lg z-30 md:hidden overflow-hidden">
+            {onShare && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShare(snippet);
+                  setOpenMenuId(null);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              >
+                <ShareIcon className="w-4 h-4" />
+                Share Snippet
+              </button>
+            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteConfirm({ type: 'snippet', id: snippet.id, name: snippet.title });
+                setOpenMenuId(null);
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
+              <TrashIcon className="w-4 h-4" />
+              Delete Snippet
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

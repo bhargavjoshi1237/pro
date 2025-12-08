@@ -31,9 +31,13 @@ export function ChatDrawer({ userId }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [messageOffset, setMessageOffset] = useState(0);
 
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const previousScrollHeight = useRef(0);
 
   const scrollToBottom = (smooth = true) => {
     // Prefer a direct DOM scroll on the scroll container if present
@@ -151,15 +155,17 @@ export function ChatDrawer({ userId }) {
     }
   }, [userId]);
 
-  const loadMessages = useCallback(async (roomId) => {
+  const loadMessages = useCallback(async (roomId, offset = 0, append = false) => {
     if (!supabase || !roomId) return;
 
-    const { data } = await supabase
+    const MESSAGES_PER_PAGE = 20;
+
+    const { data, count } = await supabase
       .from('chat_messages')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('room_id', roomId)
-      .order('created_at', { ascending: true })
-      .limit(100);
+      .order('created_at', { ascending: false })
+      .range(offset, offset + MESSAGES_PER_PAGE - 1);
 
     if (data) {
       // Fetch user profiles for all messages
@@ -174,15 +180,24 @@ export function ChatDrawer({ userId }) {
         profileMap[p.id] = p;
       });
 
-      const messagesWithUsers = data.map((msg) => ({
+      const messagesWithUsers = data.reverse().map((msg) => ({
         ...msg,
         user: profileMap[msg.user_id],
       }));
 
-      setMessages(messagesWithUsers);
+      if (append) {
+        setMessages(prev => [...messagesWithUsers, ...prev]);
+      } else {
+        setMessages(messagesWithUsers);
+      }
 
-      // small timeout to allow DOM to render then scroll
-      setTimeout(() => scrollToBottom(false), 50);
+      setHasMoreMessages(count > offset + MESSAGES_PER_PAGE);
+      setMessageOffset(offset + MESSAGES_PER_PAGE);
+
+      // Scroll to bottom only on initial load
+      if (!append) {
+        setTimeout(() => scrollToBottom(false), 50);
+      }
     }
   }, []);
 
@@ -194,11 +209,35 @@ export function ChatDrawer({ userId }) {
     }
   }, [userId, open, loadChatRooms]);
 
+  const loadMoreMessages = useCallback(async () => {
+    if (!selectedRoom || loadingMore || !hasMoreMessages) return;
+
+    setLoadingMore(true);
+    const container = messagesContainerRef.current;
+    if (container) {
+      previousScrollHeight.current = container.scrollHeight;
+    }
+
+    await loadMessages(selectedRoom.id, messageOffset, true);
+
+    // Maintain scroll position after loading older messages
+    if (container) {
+      requestAnimationFrame(() => {
+        const newScrollHeight = container.scrollHeight;
+        container.scrollTop = newScrollHeight - previousScrollHeight.current;
+      });
+    }
+
+    setLoadingMore(false);
+  }, [selectedRoom, loadingMore, hasMoreMessages, messageOffset, loadMessages]);
+
   const openChat = useCallback(
     (room) => {
       setSelectedRoom(room);
       setView('chat');
-      loadMessages(room.id);
+      setMessageOffset(0);
+      setHasMoreMessages(false);
+      loadMessages(room.id, 0, false);
 
       // Mark as read
       supabase
@@ -210,6 +249,21 @@ export function ChatDrawer({ userId }) {
     },
     [userId, loadMessages, loadChatRooms]
   );
+
+  // Handle scroll to load more messages
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container || !selectedRoom) return;
+
+    const handleScroll = () => {
+      if (container.scrollTop < 100 && hasMoreMessages && !loadingMore) {
+        loadMoreMessages();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [selectedRoom, hasMoreMessages, loadingMore, loadMoreMessages]);
 
   useEffect(() => {
     if (!userId || !open) return;
@@ -298,12 +352,24 @@ const sendMessage = async () => {
   ]);
 
   if (!error) {
-    await loadMessages(selectedRoom.id);
+    // Optimistically add message to UI
+    const optimisticMessage = {
+      id: Date.now(),
+      room_id: selectedRoom.id,
+      user_id: userId,
+      content: messageText,
+      created_at: new Date().toISOString(),
+      user: { id: userId, email: 'You' }
+    };
+    setMessages(prev => [...prev, optimisticMessage]);
 
-    // 🔥 ensure DOM renders then scroll bottom
+    // Scroll to bottom
     requestAnimationFrame(() => {
       scrollToBottom(true);
     });
+
+    // Reload to get actual message from server
+    setTimeout(() => loadMessages(selectedRoom.id, 0, false), 500);
   } else {
     console.error('Send message error:', error);
     setNewMessage(messageText);
@@ -351,44 +417,45 @@ const sendMessage = async () => {
         </Button>
       </DrawerTrigger>
 
-      {/* DrawerContent uses full-height flex column so footer stays fixed */}
-      <DrawerContent className="h-[85vh] max-w-md ml-auto mr-[1%] bg-white dark:bg-[#181818]">
-        <div className="flex flex-col h-full">
+      <DrawerContent className="h-[85vh] max-w-md ml-auto mr-[1%] bg-white dark:bg-[#191919] border-l border-gray-200 dark:border-[#2a2a2a] pb-safe">
+        <div className="flex flex-col h-full overflow-hidden">
           {view === 'list' ? (
             <>
-              <DrawerHeader className="border-b border-gray-200 dark:border-[#2a2a2a]">
-                <DrawerTitle className="text-gray-900 dark:text-[#e7e7e7]">Messages</DrawerTitle>
-                <DrawerDescription className="text-gray-600 dark:text-gray-400">
+              {/* Header - Fixed */}
+              <DrawerHeader className="shrink-0 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919] px-6 py-4">
+                <DrawerTitle className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7]">Messages</DrawerTitle>
+                <DrawerDescription className="text-sm text-gray-500 dark:text-gray-500 mt-1">
                   {chatRooms.length} conversation{chatRooms.length !== 1 ? 's' : ''}
                 </DrawerDescription>
               </DrawerHeader>
 
-              <ScrollArea className="flex-1 p-4 overflow-auto">
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto">
                 {chatRooms.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                  <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12">
                     <div className="p-4 bg-gray-100 dark:bg-[#2a2a2a] rounded-full mb-4">
-                      <ChatBubbleLeftIcon className="w-12 h-12 text-gray-400 dark:text-gray-600" />
+                      <ChatBubbleLeftIcon className="w-10 h-10 text-gray-400 dark:text-gray-600" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">
                       No messages yet
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-500">
                       Start a conversation from the People panel
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="px-3 py-2">
                     {chatRooms.map((room) => (
                       <button
                         key={room.id}
                         onClick={() => openChat(room)}
-                        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
+                        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#212121] transition-colors text-left"
                       >
-                        <div className="relative">
-                          <Avatar className="h-12 w-12">
-                            <AvatarFallback className="bg-gray-700 dark:bg-gray-600 text-white">
+                        <div className="relative shrink-0">
+                          <Avatar className="h-11 w-11">
+                            <AvatarFallback className="bg-gray-700 dark:bg-gray-600 text-white text-sm">
                               {room.type === 'workspace' ? (
-                                <UserGroupIcon className="w-6 h-6" />
+                                <UserGroupIcon className="w-5 h-5" />
                               ) : (
                                 room.otherMember?.email?.charAt(0).toUpperCase() || '?'
                               )}
@@ -397,24 +464,24 @@ const sendMessage = async () => {
                           {room.unreadCount > 0 && (
                             <Badge
                               variant="destructive"
-                              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] font-semibold"
                             >
-                              {room.unreadCount}
+                              {room.unreadCount > 9 ? '9+' : room.unreadCount}
                             </Badge>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center justify-between gap-2 mb-1">
                             <h3 className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7] truncate">
                               {room.type === 'workspace'
                                 ? room.workspace?.name || 'Workspace Chat'
                                 : room.otherMember?.display_name || room.otherMember?.email || 'Direct Message'}
                             </h3>
-                            <span className="text-xs text-gray-500 dark:text-gray-500 ml-2">
+                            <span className="text-xs text-gray-500 dark:text-gray-500 shrink-0">
                               {formatTime(room.lastMessage?.created_at || room.updated_at)}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                          <p className="text-sm text-gray-500 dark:text-gray-500 truncate">
                             {room.lastMessage ? room.lastMessage.content : 'No messages yet'}
                           </p>
                         </div>
@@ -422,16 +489,17 @@ const sendMessage = async () => {
                     ))}
                   </div>
                 )}
-              </ScrollArea>
+              </div>
             </>
           ) : (
             <>
-              <DrawerHeader className="border-b border-gray-200 dark:border-[#2a2a2a]">
-                <div className="flex items-center gap-3 ">
+              {/* Header - Fixed */}
+              <div className="shrink-0 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919] px-4 py-3">
+                <div className="flex items-center gap-3">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#333333]"
+                    className="h-10 w-10 shrink-0 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg"
                     onClick={() => {
                       setView('list');
                       setSelectedRoom(null);
@@ -440,88 +508,103 @@ const sendMessage = async () => {
                   >
                     <ArrowLeftIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
                   </Button>
-                  <div className="flex-1">
-                    <DrawerTitle className="text-gray-900 dark:text-[#e7e7e7]">
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <h2 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] truncate leading-tight">
                       {selectedRoom?.type === 'workspace'
                         ? selectedRoom?.workspace?.name
                         : selectedRoom?.otherMember?.display_name || selectedRoom?.otherMember?.email}
-                    </DrawerTitle>
-                    <DrawerDescription className="text-gray-600 dark:text-gray-400">
+                    </h2>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 leading-tight">
                       {selectedRoom?.type === 'workspace' ? 'Workspace Chat' : 'Direct Message'}
-                    </DrawerDescription>
+                    </p>
                   </div>
                 </div>
-              </DrawerHeader>
+              </div>
 
-              {/* Messages area: scrollable */}
-              <ScrollArea
-                className="flex-1 p-4 bg-gray-50 dark:bg-[#1c1c1c] overflow-auto"
+              {/* Messages - Scrollable */}
+              <div 
                 ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto bg-[#fafafa] dark:bg-[#1a1a1a] px-4 py-4"
               >
                 <div className="space-y-4">
-                  {messages.map((message) => {
-                    const isOwn = message.user_id === userId;
-                    return (
-                      <div
-                        key={message.id}
-                        className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
-                      >
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-gray-700 dark:bg-gray-600 text-white text-xs">
-                            {message.user?.email?.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                  {loadingMore && (
+                    <div className="flex justify-center py-2">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-white"></div>
+                    </div>
+                  )}
+                  {messages.length === 0 ? (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-sm text-gray-500 dark:text-gray-500">No messages yet. Start the conversation!</p>
+                    </div>
+                  ) : (
+                    messages.map((message) => {
+                      const isOwn = message.user_id === userId;
+                      return (
                         <div
-                          className={`flex flex-col gap-1 max-w-[70%] ${
-                            isOwn ? 'items-end' : 'items-start'
-                          }`}
+                          key={message.id}
+                          className={`flex gap-2.5 ${isOwn ? 'flex-row-reverse' : ''}`}
                         >
-                          {!isOwn && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 px-1">
-                              {message.user?.display_name || message.user?.email}
-                            </p>
-                          )}
+                          <Avatar className="h-8 w-8 shrink-0">
+                            <AvatarFallback className="bg-gray-700 dark:bg-gray-600 text-white text-xs">
+                              {message.user?.email?.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
                           <div
-                            className={`px-4 py-2 rounded-lg ${
-                              isOwn
-                                ? 'bg-gray-900 dark:bg-gray-700 text-white'
-                                : 'bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-[#e7e7e7]'
+                            className={`flex flex-col gap-1 max-w-[75%] ${
+                              isOwn ? 'items-end' : 'items-start'
                             }`}
                           >
-                            <p className="text-sm whitespace-pre-wrap break-all">{message.content}</p>
+                            {!isOwn && (
+                              <p className="text-xs text-gray-500 dark:text-gray-500 px-1">
+                                {message.user?.display_name || message.user?.email}
+                              </p>
+                            )}
+                            <div
+                              className={`px-3 py-2 rounded-2xl ${
+                                isOwn
+                                  ? 'bg-gray-900 dark:bg-gray-700 text-white rounded-br-md'
+                                  : 'bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-[#e7e7e7] border border-gray-200 dark:border-[#383838] rounded-bl-md'
+                              }`}
+                            >
+                              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
+                            </div>
+                            <p className="text-[11px] text-gray-400 dark:text-gray-600 px-1">
+                              {formatTime(message.created_at)}
+                            </p>
                           </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 px-1">
-                            {formatTime(message.created_at)}
-                          </p>
                         </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* scroll anchor */}
+                      );
+                    })
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
-              </ScrollArea>
+              </div>
 
-              {/* Footer: input + send (fixed at bottom by flex layout) */}
-              <DrawerFooter className="border-t border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#181818] sticky bottom-0 z-10">
-                <div className="flex gap-2 w-full">
+              {/* Input - Sticky at bottom */}
+              <div className="shrink-0 border-t border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919] px-4 py-4">
+                <div className="flex gap-2 items-center">
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
                     placeholder="Type a message..."
-                    className="flex-1 bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a]"
+                    className="flex-1 h-10 bg-white dark:bg-[#212121] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 rounded-lg"
                   />
                   <Button
                     onClick={sendMessage}
                     disabled={!newMessage.trim()}
-                    className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900"
+                    size="icon"
+                    className="h-10 w-10 shrink-0 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
                   >
                     <PaperAirplaneIcon className="h-5 w-5" />
                   </Button>
                 </div>
-              </DrawerFooter>
+              </div>
             </>
           )}
         </div>

@@ -1,8 +1,28 @@
-import { supabase } from '@/lib/supabase';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
 
     // Fetch share and related content - allows public access
     const { data: share, error: shareError } = await supabase
@@ -12,7 +32,7 @@ export async function GET(request, { params }) {
       .single();
 
     if (shareError || !share) {
-      return new Response(JSON.stringify({ error: 'Share not found' }), { status: 404 });
+      return NextResponse.json({ error: 'Share not found' }, { status: 404 });
     }
 
     // Check access permissions
@@ -20,10 +40,10 @@ export async function GET(request, { params }) {
 
     if (share.share_type === 'email' && user) {
       if (!share.allowed_emails.includes(user.email)) {
-        return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403 });
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
     } else if (share.share_type === 'email' && !user) {
-      return new Response(JSON.stringify({ error: 'Please login to access this share' }), { status: 403 });
+      return NextResponse.json({ error: 'Please login to access this share' }, { status: 403 });
     }
 
     // Fetch snippet or folder content
@@ -54,19 +74,39 @@ export async function GET(request, { params }) {
       }
     }
 
-    return new Response(JSON.stringify({ share, content }), { status: 200 });
+    return NextResponse.json({ share, content }, { status: 200 });
   } catch (error) {
     console.error('Share GET error:', error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
     const { data: { user } } = await supabase.auth.getUser();
+    
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -80,11 +120,11 @@ export async function PUT(request, { params }) {
       .single();
 
     if (shareError || !share) {
-      return new Response(JSON.stringify({ error: 'Share not found' }), { status: 404 });
+      return NextResponse.json({ error: 'Share not found' }, { status: 404 });
     }
 
     if (share.shared_by !== user.id) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     // Update share
@@ -102,22 +142,42 @@ export async function PUT(request, { params }) {
       .single();
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return new Response(JSON.stringify(data), { status: 200 });
+    return NextResponse.json(data, { status: 200 });
   } catch (error) {
     console.error('Share PUT error:', error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
     const { data: { user } } = await supabase.auth.getUser();
+    
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Verify user owns this share
@@ -128,11 +188,11 @@ export async function DELETE(request, { params }) {
       .single();
 
     if (shareError || !share) {
-      return new Response(JSON.stringify({ error: 'Share not found' }), { status: 404 });
+      return NextResponse.json({ error: 'Share not found' }, { status: 404 });
     }
 
     if (share.shared_by !== user.id) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     const { error } = await supabase
@@ -141,12 +201,12 @@ export async function DELETE(request, { params }) {
       .eq('share_token', id);
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error('Share DELETE error:', error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

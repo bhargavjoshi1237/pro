@@ -1,4 +1,6 @@
-import { supabase } from '@/lib/supabase';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 // Generate a simple UUID v4 compatible token
 function generateToken() {
@@ -12,24 +14,48 @@ function generateToken() {
 
 export async function POST(request) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const cookieStore = await cookies();
+
+    // Create Supabase client with SSR package
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    console.log('Auth check:', { user: user?.id, authError });
+    
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      console.error('No user found in session');
+      return NextResponse.json({ error: 'Unauthorized', details: 'No user session found' }, { status: 401 });
     }
 
     const body = await request.json();
     const { snippet_id, folder_id, workspace_id, share_type, allowed_emails, access_level } = body;
 
     if (!workspace_id || (!snippet_id && !folder_id) || !share_type) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     if (!['public', 'email'].includes(share_type)) {
-      return new Response(JSON.stringify({ error: 'Invalid share_type' }), { status: 400 });
+      return NextResponse.json({ error: 'Invalid share_type' }, { status: 400 });
     }
 
     if (!['view', 'edit'].includes(access_level)) {
-      return new Response(JSON.stringify({ error: 'Invalid access_level' }), { status: 400 });
+      return NextResponse.json({ error: 'Invalid access_level' }, { status: 400 });
     }
 
     // Generate unique share token
@@ -52,12 +78,12 @@ export async function POST(request) {
 
     if (error) {
       console.error('Share creation error:', error);
-      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return new Response(JSON.stringify(data), { status: 201 });
+    return NextResponse.json(data, { status: 201 });
   } catch (error) {
     console.error('Share POST error:', error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

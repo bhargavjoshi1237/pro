@@ -18,8 +18,8 @@ export function useEntities(workspaceId) {
                     supabase.from('workspace_tags').select('*').eq('workspace_id', workspaceId).order('name')
                 ]);
 
-                console.log('Entities response:', entitiesRes);
-                console.log('Tags response:', tagsRes);
+                // console.log('Entities response:', entitiesRes);
+                // console.log('Tags response:', tagsRes);
 
                 if (entitiesRes.data) setEntities(entitiesRes.data);
                 if (tagsRes.data) setTags(tagsRes.data);
