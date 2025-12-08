@@ -1,13 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ClockIcon, DocumentDuplicateIcon, CheckCircleIcon, ArrowsPointingOutIcon,
-  TagIcon, LinkIcon, PlusIcon, XMarkIcon, UserIcon, MapPinIcon, CubeIcon,
-  BookOpenIcon, PuzzlePieceIcon, GlobeAltIcon
+  TagIcon, PlusIcon, XMarkIcon, UserIcon, MapPinIcon, CubeIcon,
+  BookOpenIcon, PuzzlePieceIcon, GlobeAltIcon, ChatBubbleOvalLeftIcon, 
+  PaperClipIcon, Squares2X2Icon
 } from '@heroicons/react/24/outline';
 import { useRealtimeCollaboration } from '@/hooks/useRealtimeCollaboration';
 import { useSnippetMetadata } from '@/hooks/useSnippetMetadata';
+import { useSnippetComments } from '@/hooks/useSnippetComments';
 import ActiveUsers from '@/components/workspace/ActiveUsers';
 import AttachmentManager from '@/components/workspace/AttachmentManager';
+import CommentsPanel from '@/components/workspace/CommentsPanel';
+import CommentMenu from '@/components/workspace/CommentMenu';
 
 export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, hasFinalVersion, finalVersion, onOpenSnippet, user, entities = [], tags = [] }) {
   const [title, setTitle] = useState('');
@@ -16,10 +20,17 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
   const [isSaving, setIsSaving] = useState(false);
   const [showSplitView, setShowSplitView] = useState(false);
   const [showMetadataPanel, setShowMetadataPanel] = useState(false);
+  const [showCommentsPanel, setShowCommentsPanel] = useState(false);
   const [syncScroll, setSyncScroll] = useState(true);
   const leftScrollRef = useRef(null);
   const rightScrollRef = useRef(null);
   const isScrollingRef = useRef(false);
+  
+  // Text selection and comment menu
+  const [commentMenuPosition, setCommentMenuPosition] = useState(null);
+  const [selectedText, setSelectedText] = useState(null);
+  const [highlightedLineNumber, setHighlightedLineNumber] = useState(null);
+  const editorRef = useRef(null);
 
   // Final version state
   const [finalTitle, setFinalTitle] = useState('');
@@ -47,6 +58,16 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
     snippet?.id,
     user?.id
   );
+
+  // Comments
+  const {
+    comments,
+    users: commentUsers,
+    loading: commentsLoading,
+    addComment,
+    updateComment,
+    deleteComment
+  } = useSnippetComments(snippet?.id, user?.id);
 
   useEffect(() => {
     if (snippet) {
@@ -155,6 +176,74 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
 
   const availableTags = tags.filter(t => !attachedTags.includes(t.id));
   const availableEntities = entities.filter(e => !attachedEntities.includes(e.id));
+
+  // Handle text selection for comments
+  const handleTextSelect = (e) => {
+    const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+    
+    if (selectedText && editorRef.current?.contains(selection.anchorNode)) {
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      
+      // Calculate line number
+      const textBeforeSelection = content.substring(0, editorRef.current.selectionStart || 0);
+      const lineNumber = textBeforeSelection.split('\n').length;
+      
+      setSelectedText({ text: selectedText, lineNumber });
+      setCommentMenuPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.bottom + 5
+      });
+    } else {
+      setCommentMenuPosition(null);
+      setSelectedText(null);
+    }
+  };
+
+  const handleAddCommentFromSelection = async () => {
+    if (selectedText) {
+      await addComment(`"${selectedText.text}"\n\n`, selectedText.lineNumber);
+      setCommentMenuPosition(null);
+      setSelectedText(null);
+      setShowCommentsPanel(true);
+      window.getSelection()?.removeAllRanges();
+    }
+  };
+
+  const handleCommentClick = (comment) => {
+    if (comment.line_number) {
+      // Highlight the line
+      setHighlightedLineNumber(comment.line_number);
+      
+      // Scroll to the line
+      if (editorRef.current) {
+        const lines = content.split('\n');
+        const charPosition = lines.slice(0, comment.line_number - 1).join('\n').length;
+        editorRef.current.focus();
+        editorRef.current.setSelectionRange(charPosition, charPosition);
+        editorRef.current.scrollTop = (comment.line_number - 1) * 20; // Approximate line height
+      }
+      
+      // Remove highlight after animation
+      setTimeout(() => {
+        setHighlightedLineNumber(null);
+      }, 2000);
+    }
+  };
+
+  // Close comment menu on click outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (commentMenuPosition) {
+        setCommentMenuPosition(null);
+        setSelectedText(null);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [commentMenuPosition]);
 
   if (showSplitView && hasFinalVersion && finalVersion) {
     // Split view implementation (omitted for brevity, keeping existing logic if needed, but for now just returning the split view component)
@@ -300,29 +389,45 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
           />
 
           <button
-            onClick={() => setShowMetadataPanel(!showMetadataPanel)}
-            className={`p-2 rounded transition-colors ${showMetadataPanel
-              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-              : 'bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] text-gray-700 dark:text-[#e7e7e7]'
+            onClick={() => setShowCommentsPanel(!showCommentsPanel)}
+            className={`p-2 rounded-lg transition-all relative ${showCommentsPanel
+              ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+              : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a] text-gray-600 dark:text-gray-400'
               }`}
-            title="Toggle Metadata"
+            title="Comments"
           >
-            <LinkIcon className="w-4 h-4" />
+            <ChatBubbleOvalLeftIcon className="w-5 h-5" />
+            {comments.length > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-blue-600 text-white text-[10px] font-medium rounded-full flex items-center justify-center">
+                {comments.length > 9 ? '9+' : comments.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setShowMetadataPanel(!showMetadataPanel)}
+            className={`p-2 rounded-lg transition-all ${showMetadataPanel
+              ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
+              : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a] text-gray-600 dark:text-gray-400'
+              }`}
+            title="Metadata"
+          >
+            <PaperClipIcon className="w-5 h-5" />
           </button>
 
           {!snippet?.is_final && (
             <button
               onClick={hasFinalVersion ? () => setShowSplitView(true) : handleCreateOrViewFinal}
-              className={`p-2 rounded transition-colors ${hasFinalVersion
-                ? 'bg-green-600 hover:bg-green-700'
-                : 'bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838]'
+              className={`p-2 rounded-lg transition-all ${hasFinalVersion
+                ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a] text-gray-600 dark:text-gray-400'
                 }`}
-              title={hasFinalVersion ? 'View final version (split view)' : 'Create final version'}
+              title={hasFinalVersion ? 'View final version' : 'Create final version'}
             >
               {hasFinalVersion ? (
-                <CheckCircleIcon className="w-4 h-4 text-white" />
+                <CheckCircleIcon className="w-5 h-5" />
               ) : (
-                <DocumentDuplicateIcon className="w-4 h-4 text-gray-900 dark:text-[#e7e7e7]" />
+                <Squares2X2Icon className="w-5 h-5" />
               )}
             </button>
           )}
@@ -331,15 +436,46 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
 
       <div className="flex-1 flex overflow-hidden">
         {/* Editor Area */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto relative">
           <textarea
+            ref={editorRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            onMouseUp={handleTextSelect}
             placeholder="Start writing your story..."
-            className="w-full h-full px-3 sm:px-6 py-4 bg-transparent border-none outline-none resize-none text-gray-900 dark:text-[#e7e7e7] text-sm sm:text-base leading-relaxed font-serif placeholder-gray-400 dark:placeholder-gray-600"
+            className={`w-full h-full px-3 sm:px-6 py-4 bg-transparent border-none outline-none resize-none text-gray-900 dark:text-[#e7e7e7] text-sm sm:text-base leading-relaxed font-serif placeholder-gray-400 dark:placeholder-gray-600 ${
+              highlightedLineNumber ? 'highlight-line' : ''
+            }`}
             style={{ minHeight: '100%' }}
           />
+          
+          {/* Comment Menu */}
+          <CommentMenu
+            position={commentMenuPosition}
+            onAddComment={handleAddCommentFromSelection}
+            onClose={() => {
+              setCommentMenuPosition(null);
+              setSelectedText(null);
+            }}
+          />
         </div>
+
+        {/* Comments Panel */}
+        {showCommentsPanel && (
+          <div className="fixed sm:relative inset-0 sm:inset-auto z-50 sm:z-auto sm:w-80 bg-[#fafafa] dark:bg-[#191919] sm:border-l border-gray-200 dark:border-[#2a2a2a] flex flex-col">
+            <CommentsPanel
+              comments={comments}
+              users={commentUsers}
+              onAddComment={addComment}
+              onUpdateComment={updateComment}
+              onDeleteComment={deleteComment}
+              currentUserId={user?.id}
+              loading={commentsLoading}
+              onClose={() => setShowCommentsPanel(false)}
+              onCommentClick={handleCommentClick}
+            />
+          </div>
+        )}
 
         {/* Metadata Panel */}
         {showMetadataPanel && (

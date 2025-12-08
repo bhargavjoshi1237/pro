@@ -45,12 +45,15 @@ export function KanbanColumn({ column, cards, workspaceId, isOverlay }) {
 
     const handleAddCard = async () => {
         if (newCardTitle.trim()) {
+            setIsAddingCard(true);
             try {
                 await createCard(column.id, newCardTitle.trim());
                 setNewCardTitle('');
                 setIsAddingCard(false);
             } catch (error) {
-                console.error('Error creating card:', error);
+                console.error('Error creating card:', error instanceof Error ? error.message : JSON.stringify(error));
+                setIsAddingCard(false);
+                // Error toast is already shown by createCard
             }
         }
     };

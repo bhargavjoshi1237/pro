@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import {
   FolderIcon,
@@ -16,10 +18,20 @@ import {
   MoonIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
-  ChevronDoubleLeftIcon
+  ChevronDoubleLeftIcon,
+  ShareIcon,
+  EllipsisVerticalIcon
 } from '@heroicons/react/24/outline';
 import { useTheme } from '@/context/ThemeContext';
 import WorkspaceMembers from './WorkspaceMembers';
+import { ShareDialog } from '@/components/ShareDialog';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function Sidebar({
   workspace,
@@ -47,6 +59,7 @@ export default function Sidebar({
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFolders, setExpandedFolders] = useState(new Set());
   const [expandedCategories, setExpandedCategories] = useState(new Set(['tags']));
+  const [allExpanded, setAllExpanded] = useState(false); // Track if all are expanded
 
   // Creation states
   const [showNewFolder, setShowNewFolder] = useState(false);
@@ -64,9 +77,19 @@ export default function Sidebar({
   // Drag and drop states
   const [draggedItem, setDraggedItem] = useState(null);
   const [draggedOverId, setDraggedOverId] = useState(null);
+  const [pendingMove, setPendingMove] = useState(null);
+  const [pendingMoveProcessing, setPendingMoveProcessing] = useState(false);
 
   // Delete confirmation
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  // Share dialog
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareItem, setShareItem] = useState(null);
+
+  // Mobile menu states
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [openFolderMenuId, setOpenFolderMenuId] = useState(null);
 
   const entityTypes = [
     { id: 'character', name: 'Characters', icon: UserGroupIcon },
@@ -192,7 +215,8 @@ export default function Sidebar({
       }
     } else if (draggedType === 'snippet' && targetType === 'folder' && onMoveSnippetToFolder) {
       if (draggedSnippet.folder_id !== targetId) {
-        onMoveSnippetToFolder(draggedSnippet.id, targetId);
+        // Ask for confirmation before moving the snippet to another folder
+        setPendingMove({ snippetId: draggedSnippet.id, fromFolderId: draggedSnippet.folder_id, toFolderId: targetId, title: draggedSnippet.title });
       }
     }
 
@@ -206,7 +230,19 @@ export default function Sidebar({
   };
 
   return (
-    <div className="w-full bg-[#fafafa] dark:bg-[#191919] border-r border-gray-200 dark:border-[#2a2a2a] flex flex-col h-full">
+    <div className="w-full bg-[#fafafa] dark:bg-[#191919] border-r border-gray-200 dark:border-[#2a2a2a] flex flex-col h-full relative overflow-hidden">
+      {/* Subtle background from cover image */}
+      {workspace?.cover_image && (
+        <div 
+          className="absolute inset-0 opacity-[0.02] dark:opacity-[0.015] pointer-events-none"
+          style={{
+            backgroundImage: `url(${workspace.cover_image})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        />
+      )}
       <div className="px-3 py-2.5 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <a
@@ -223,9 +259,39 @@ export default function Sidebar({
           </span>
         </div>
         <div className="flex items-center gap-1">
+          {/* Collapse/Expand All Toggle */}
+          <button
+            onClick={() => {
+              if (activeSidebarTab === 'files') {
+                if (allExpanded) {
+                  setExpandedFolders(new Set());
+                } else {
+                  const allFolderIds = new Set(folders.map(f => f.id));
+                  setExpandedFolders(allFolderIds);
+                }
+              } else {
+                if (allExpanded) {
+                  setExpandedCategories(new Set());
+                } else {
+                  const allTypes = ['character', 'location', 'item', 'lore', 'faction', 'event'];
+                  setExpandedCategories(new Set(allTypes));
+                }
+              }
+              setAllExpanded(!allExpanded);
+            }}
+            className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0"
+            title={allExpanded ? 'Collapse all' : 'Expand all'}
+          >
+            {allExpanded ? (
+              <ChevronRightIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <ChevronDownIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
           <button
             onClick={toggleTheme}
             className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0"
+            title={theme === 'light' ? 'Dark mode' : 'Light mode'}
           >
             {theme === 'light' ? (
               <MoonIcon className="w-4 h-4 text-gray-600" />
@@ -326,23 +392,31 @@ export default function Sidebar({
           <>
             {unfiledSnippets.length > 0 && (
               <div className="mb-3">
-                <h3 className="text-[10px] font-semibold text-gray-500 dark:text-gray-500 uppercase mb-1 px-2">Unfiled</h3>
-                {unfiledSnippets.map(snippet => (
-                  <SnippetItem
-                    key={snippet.id}
-                    snippet={snippet}
-                    isActive={activeTabId === snippet.id}
-                    isOpen={openTabs.some(tab => tab.id === snippet.id)}
-                    onSelect={onOpenSnippet}
-                    onDragStart={handleDragStart}
-                    onDragOver={(e) => handleDragOver(e, snippet.id, 'snippet')}
-                    onDrop={(e) => handleDrop(e, snippet.id, 'snippet')}
-                    onDragLeave={handleDragLeave}
-                    isDraggedOver={draggedOverId === snippet.id}
-                    setDeleteConfirm={setDeleteConfirm}
-                    hasFinalVersion={snippets.some(s => s.draft_id === snippet.id && s.is_final)}
-                  />
-                ))}
+                <h3 className="text-[10px] font-semibold text-gray-500 dark:text-gray-500 uppercase mb-2 px-2.5">Unfiled</h3>
+                <div className="space-y-1">
+                  {unfiledSnippets.map(snippet => (
+                    <SnippetItem
+                      key={snippet.id}
+                      snippet={snippet}
+                      isActive={activeTabId === snippet.id}
+                      isOpen={openTabs.some(tab => tab.id === snippet.id)}
+                      onSelect={onOpenSnippet}
+                      onDragStart={handleDragStart}
+                      onDragOver={(e) => handleDragOver(e, snippet.id, 'snippet')}
+                      onDrop={(e) => handleDrop(e, snippet.id, 'snippet')}
+                      onDragLeave={handleDragLeave}
+                      isDraggedOver={draggedOverId === snippet.id}
+                      setDeleteConfirm={setDeleteConfirm}
+                      hasFinalVersion={snippets.some(s => s.draft_id === snippet.id && s.is_final)}
+                      onShare={(snippet) => {
+                        setShareItem({ id: snippet.id, type: 'snippet', title: snippet.title });
+                        setShareDialogOpen(true);
+                      }}
+                      openMenuId={openMenuId}
+                      setOpenMenuId={setOpenMenuId}
+                    />
+                  ))}
+                </div>
               </div>
             )}
 
@@ -355,7 +429,7 @@ export default function Sidebar({
               return (
                 <div key={folder.id} className="mb-1">
                   <div
-                    className={`flex items-center gap-0.5 group ${draggedOverId === folder.id ? 'bg-gray-200 dark:bg-[#2a2a2a] rounded' : ''
+                    className={`relative flex items-center gap-2 group ${draggedOverId === folder.id ? 'bg-gray-200 dark:bg-[#2a2a2a] rounded' : ''
                       }`}
                     onDragOver={(e) => handleDragOver(e, folder.id, 'folder')}
                     onDrop={(e) => handleDrop(e, folder.id, 'folder')}
@@ -363,27 +437,49 @@ export default function Sidebar({
                   >
                     <button
                       onClick={() => toggleFolder(folder.id)}
-                      className="flex-1 flex items-center gap-1.5 px-2 py-1 hover:bg-gray-200 dark:hover:bg-[#2a2a2a] rounded transition-colors"
+                      className="flex-1 flex items-center gap-2 px-2.5 py-2 hover:bg-gray-200 dark:hover:bg-[#2a2a2a] rounded transition-colors"
                     >
                       {isExpanded ? (
-                        <ChevronDownIcon className="w-3 h-3 text-gray-500" />
+                        <ChevronDownIcon className="w-3.5 h-3.5 text-gray-500" />
                       ) : (
-                        <ChevronRightIcon className="w-3 h-3 text-gray-500" />
+                        <ChevronRightIcon className="w-3.5 h-3.5 text-gray-500" />
                       )}
-                      <FolderIcon className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-500" />
+                      <FolderIcon className="w-4 h-4 text-yellow-600 dark:text-yellow-500" />
                       <span className="text-xs font-medium text-gray-700 dark:text-[#e7e7e7]">{folder.name}</span>
                       <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto">{folderSnippets.length}</span>
                     </button>
-                    <button
-                      onClick={() => setDeleteConfirm({ type: 'folder', id: folder.id, name: folder.name })}
-                      className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-all shrink-0"
-                    >
-                      <TrashIcon className="w-3.5 h-3.5 text-red-500" />
-                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-1.5 hover:bg-gray-300 dark:hover:bg-[#383838] rounded transition-all shrink-0"
+                        >
+                          <EllipsisVerticalIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="min-w-[160px]">
+                        <DropdownMenuItem onClick={() => {
+                          setShareItem({ id: folder.id, type: 'folder', title: folder.name });
+                          setShareDialogOpen(true);
+                        }}>
+                          <ShareIcon className="w-4 h-4 mr-2" />
+                          Share
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => setDeleteConfirm({ type: 'folder', id: folder.id, name: folder.name })}
+                          className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20"
+                        >
+                          <TrashIcon className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   {isExpanded && (
-                    <div className="ml-5 mt-0.5 space-y-0.5">
+                    <div className="ml-6 mt-1 space-y-1">
                       {folderSnippets.map(snippet => (
                         <SnippetItem
                           key={snippet.id}
@@ -398,6 +494,12 @@ export default function Sidebar({
                           isDraggedOver={draggedOverId === snippet.id}
                           setDeleteConfirm={setDeleteConfirm}
                           hasFinalVersion={snippets.some(s => s.draft_id === snippet.id && s.is_final)}
+                          onShare={(snippet) => {
+                            setShareItem({ id: snippet.id, type: 'snippet', title: snippet.title });
+                            setShareDialogOpen(true);
+                          }}
+                          openMenuId={openMenuId}
+                          setOpenMenuId={setOpenMenuId}
                         />
                       ))}
                     </div>
@@ -411,34 +513,47 @@ export default function Sidebar({
           <>
             {/* Tags Section */}
             <div className="mb-1">
-              <div className="flex items-center gap-0.5 group">
+              <div className="flex items-center gap-2 group">
                 <button
                   onClick={() => toggleCategory('tags')}
-                  className="flex-1 flex items-center gap-1.5 px-2 py-1 hover:bg-gray-200 dark:hover:bg-[#2a2a2a] rounded transition-colors"
+                  className="flex-1 flex items-center gap-2 px-2.5 py-2 hover:bg-gray-200 dark:hover:bg-[#2a2a2a] rounded transition-colors"
                 >
                   {expandedCategories.has('tags') ? (
-                    <ChevronDownIcon className="w-3 h-3 text-gray-500" />
+                    <ChevronDownIcon className="w-3.5 h-3.5 text-gray-500" />
                   ) : (
-                    <ChevronRightIcon className="w-3 h-3 text-gray-500" />
+                    <ChevronRightIcon className="w-3.5 h-3.5 text-gray-500" />
                   )}
-                  <TagIcon className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
+                  <TagIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                   <span className="text-xs font-medium text-gray-700 dark:text-[#e7e7e7]">Tags</span>
                   <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto">{filteredTags.length}</span>
                 </button>
               </div>
 
               {expandedCategories.has('tags') && (
-                <div className="ml-5 mt-0.5 space-y-0.5">
+                <div className="ml-6 mt-1 space-y-1">
                   {filteredTags.map(tag => (
-                    <div key={tag.id} className="flex items-center gap-1 group px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-[#212121]">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                    <div key={tag.id} className="flex items-center gap-2 group px-2.5 py-2 rounded hover:bg-gray-200 dark:hover:bg-[#212121]">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tag.color }} />
                       <span className="text-xs text-gray-700 dark:text-[#e7e7e7] flex-1 truncate">{tag.name}</span>
-                      <button
-                        onClick={() => setDeleteConfirm({ type: 'tag', id: tag.id, name: tag.name })}
-                        className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-all shrink-0"
-                      >
-                        <TrashIcon className="w-3 h-3 text-red-500" />
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-1.5 hover:bg-gray-300 dark:hover:bg-[#383838] rounded transition-all shrink-0"
+                          >
+                            <EllipsisVerticalIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="min-w-[160px]">
+                          <DropdownMenuItem 
+                            onClick={() => setDeleteConfirm({ type: 'tag', id: tag.id, name: tag.name })}
+                            className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20"
+                          >
+                            <TrashIcon className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   ))}
                 </div>
@@ -455,33 +570,46 @@ export default function Sidebar({
 
               return (
                 <div key={type.id} className="mb-1">
-                  <div className="flex items-center gap-0.5 group">
+                  <div className="flex items-center gap-2 group">
                     <button
                       onClick={() => toggleCategory(type.id)}
-                      className="flex-1 flex items-center gap-1.5 px-2 py-1 hover:bg-gray-200 dark:hover:bg-[#2a2a2a] rounded transition-colors"
+                      className="flex-1 flex items-center gap-2 px-2.5 py-2 hover:bg-gray-200 dark:hover:bg-[#2a2a2a] rounded transition-colors"
                     >
                       {isExpanded ? (
-                        <ChevronDownIcon className="w-3 h-3 text-gray-500" />
+                        <ChevronDownIcon className="w-3.5 h-3.5 text-gray-500" />
                       ) : (
-                        <ChevronRightIcon className="w-3 h-3 text-gray-500" />
+                        <ChevronRightIcon className="w-3.5 h-3.5 text-gray-500" />
                       )}
-                      <Icon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      <Icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       <span className="text-xs font-medium text-gray-700 dark:text-[#e7e7e7]">{type.name}</span>
                       <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto">{typeEntities.length}</span>
                     </button>
                   </div>
 
                   {isExpanded && (
-                    <div className="ml-5 mt-0.5 space-y-0.5">
+                    <div className="ml-6 mt-1 space-y-1">
                       {typeEntities.map(entity => (
-                        <div key={entity.id} className="flex items-center gap-1 group px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-[#212121]">
+                        <div key={entity.id} className="flex items-center gap-2 group px-2.5 py-2 rounded hover:bg-gray-200 dark:hover:bg-[#212121]">
                           <span className="text-xs text-gray-700 dark:text-[#e7e7e7] flex-1 truncate">{entity.name}</span>
-                          <button
-                            onClick={() => setDeleteConfirm({ type: 'entity', id: entity.id, name: entity.name })}
-                            className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-all shrink-0"
-                          >
-                            <TrashIcon className="w-3 h-3 text-red-500" />
-                          </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-1.5 hover:bg-gray-300 dark:hover:bg-[#383838] rounded transition-all shrink-0"
+                              >
+                                <EllipsisVerticalIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="min-w-[160px]">
+                              <DropdownMenuItem 
+                                onClick={() => setDeleteConfirm({ type: 'entity', id: entity.id, name: entity.name })}
+                                className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20"
+                              >
+                                <TrashIcon className="w-4 h-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       ))}
                     </div>
@@ -528,6 +656,48 @@ export default function Sidebar({
               >
                 Cancel
               </button>
+            </div>
+          </Modal>
+        )
+      }
+      {
+        pendingMove && (
+          <Modal onClose={() => !pendingMoveProcessing && setPendingMove(null)}>
+            <div className="flex items-start gap-3">
+              <FolderIcon className="w-6 h-6 text-yellow-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-1">Move Snippet?</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Move &quot;{pendingMove.title}&quot; to &quot;{(folders.find(f => f.id === pendingMove.toFolderId) || {}).name || 'Folder'}&quot;?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      try {
+                        setPendingMoveProcessing(true);
+                        await onMoveSnippetToFolder(pendingMove.snippetId, pendingMove.toFolderId);
+                        setPendingMove(null);
+                      } catch (err) {
+                        console.error('Error moving snippet:', err);
+                      } finally {
+                        setPendingMoveProcessing(false);
+                        setDraggedItem(null);
+                        setDraggedOverId(null);
+                      }
+                    }}
+                    disabled={pendingMoveProcessing}
+                    className="flex-1 px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors font-medium"
+                  >
+                    {pendingMoveProcessing ? 'Moving...' : 'Move'}
+                  </button>
+                  <button
+                    onClick={() => !pendingMoveProcessing && setPendingMove(null)}
+                    className="flex-1 px-3 py-2 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </div>
           </Modal>
         )
@@ -656,53 +826,48 @@ export default function Sidebar({
         )
       }
 
-      {
-        deleteConfirm && (
-          <Modal onClose={() => setDeleteConfirm(null)}>
-            <div className="flex items-start gap-3">
-              <ExclamationTriangleIcon className="w-6 h-6 text-red-500 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-[#e7e7e7] mb-1">
-                  Delete {deleteConfirm.type.charAt(0).toUpperCase() + deleteConfirm.type.slice(1)}?
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Are you sure you want to delete "{deleteConfirm.name}"? This action cannot be undone.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      if (deleteConfirm.type === 'folder') onDeleteFolder(deleteConfirm.id);
-                      else if (deleteConfirm.type === 'snippet') onDeleteSnippet(deleteConfirm.id);
-                      else if (deleteConfirm.type === 'entity') onDeleteEntity(deleteConfirm.id);
-                      else if (deleteConfirm.type === 'tag') onDeleteTag(deleteConfirm.id);
-                      setDeleteConfirm(null);
-                    }}
-                    className="flex-1 px-3 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors font-medium"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={() => setDeleteConfirm(null)}
-                    className="flex-1 px-3 py-2 text-sm bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] rounded transition-colors font-medium"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          </Modal>
-        )
-      }
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={() => {
+          if (deleteConfirm.type === 'folder') onDeleteFolder(deleteConfirm.id);
+          else if (deleteConfirm.type === 'snippet') onDeleteSnippet(deleteConfirm.id);
+          else if (deleteConfirm.type === 'entity') onDeleteEntity(deleteConfirm.id);
+          else if (deleteConfirm.type === 'tag') onDeleteTag(deleteConfirm.id);
+          setDeleteConfirm(null);
+        }}
+        title={`Confirm to delete ${deleteConfirm?.type || 'item'}`}
+        message={`This is permanent! Are you sure you want to delete "${deleteConfirm?.name}"?`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
+
+      {/* Share Dialog */}
+      {shareItem && (
+        <ShareDialog
+          isOpen={shareDialogOpen}
+          onClose={() => {
+            setShareDialogOpen(false);
+            setShareItem(null);
+          }}
+          itemId={shareItem.id}
+          itemType={shareItem.type}
+          itemTitle={shareItem.title}
+          workspaceId={workspace?.id}
+        />
+      )}
     </div >
   );
 }
 
 
-function SnippetItem({ snippet, isActive, isOpen, onSelect, onDragStart, onDragOver, onDrop, onDragLeave, isDraggedOver, setDeleteConfirm, hasFinalVersion }) {
+function SnippetItem({ snippet, isActive, isOpen, onSelect, onDragStart, onDragOver, onDrop, onDragLeave, isDraggedOver, setDeleteConfirm, hasFinalVersion, onShare, openMenuId, setOpenMenuId }) {
   return (
     <div
-      className={`flex items-center gap-1 group px-2 py-1 rounded transition-colors cursor-move ${isDraggedOver ? 'bg-gray-200 dark:bg-[#2a2a2a] border-l-2 border-gray-400 dark:border-gray-600' :
-        isActive ? 'bg-gray-100 dark:bg-[#2a2a2a]' : 'hover:bg-gray-200 dark:hover:bg-[#212121]'
+      className={`relative flex items-center gap-2 group px-2.5 py-2 rounded transition-colors cursor-move ${isDraggedOver ? 'bg-gray-200 dark:bg-[#2a2a2a] border-l-2 border-gray-400 dark:border-gray-600' :
+        isActive ? 'bg-gray-200 dark:bg-[#2a2a2a]' : 'hover:bg-gray-200 dark:hover:bg-[#212121]'
         }`}
       draggable
       onDragStart={(e) => onDragStart(e, snippet, 'snippet')}
@@ -712,9 +877,9 @@ function SnippetItem({ snippet, isActive, isOpen, onSelect, onDragStart, onDragO
     >
       <button
         onClick={() => onSelect(snippet)}
-        className="flex-1 flex items-center gap-1.5 text-left min-w-0"
+        className="flex-1 flex items-center gap-2 text-left min-w-0"
       >
-        <DocumentTextIcon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`} />
+        <DocumentTextIcon className={`w-4 h-4 shrink-0 ${isActive ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`} />
         <div className="flex-1 min-w-0">
           <p className={`text-xs font-medium truncate ${isActive ? 'text-gray-900 dark:text-[#e7e7e7]' : 'text-gray-700 dark:text-[#e7e7e7]'
             }`}>
@@ -723,18 +888,37 @@ function SnippetItem({ snippet, isActive, isOpen, onSelect, onDragStart, onDragO
           <p className="text-[10px] text-gray-400 dark:text-gray-500">{snippet.word_count || 0} words</p>
         </div>
         {hasFinalVersion && (
-          <CheckCircleIcon className="w-3.5 h-3.5 text-green-500 shrink-0" />
+          <CheckCircleIcon className="w-4 h-4 text-green-500 shrink-0" />
         )}
         {isOpen && !isActive && !hasFinalVersion && (
           <div className="w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-gray-400 shrink-0" />
         )}
       </button>
-      <button
-        onClick={() => setDeleteConfirm({ type: 'snippet', id: snippet.id, name: snippet.title })}
-        className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-all shrink-0"
-      >
-        <TrashIcon className="w-3.5 h-3.5 text-red-500" />
-      </button>
+      
+      {/* Dropdown Menu */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            onClick={(e) => e.stopPropagation()}
+            className="p-1.5 hover:bg-gray-300 dark:hover:bg-[#383838] rounded transition-all shrink-0"
+          >
+            <EllipsisVerticalIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[160px]">
+          <DropdownMenuItem onClick={() => onShare?.(snippet)}>
+            <ShareIcon className="w-4 h-4 mr-2" />
+            Share
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => setDeleteConfirm({ type: 'snippet', id: snippet.id, name: snippet.title })}
+            className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20"
+          >
+            <TrashIcon className="w-4 h-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

@@ -24,11 +24,15 @@ import MemberAvatars from '@/components/workspace/MemberAvatars';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import CommandPalette from '@/components/CommandPalette';
-import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+// import { NotificationCenter } from '@/components/notifications/NotificationCenter'; // Disabled
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import WorkspaceCustomization from '@/components/workspace/WorkspaceCustomization';
+import { getIconById, DEFAULT_ICON } from '@/components/workspace/WorkspaceIcons';
 
 import { motion, useSpring, useTransform } from 'framer-motion';
+import { WaveBackground } from '@/components/landing/wave/WaveBackground';
 
 // Counter animation component
 function AnimatedCounter({ value }) {
@@ -61,6 +65,7 @@ function DashboardContent() {
   const { theme, toggleTheme } = useTheme();
   const [totalCollaborators, setTotalCollaborators] = useState(0);
   const [totalSnippets, setTotalSnippets] = useState(0);
+  const [openingWorkspaceId, setOpeningWorkspaceId] = useState(null);
 
   useEffect(() => {
     const loadWorkspaces = async (userId) => {
@@ -77,6 +82,13 @@ function DashboardContent() {
         .order('created_at', { ascending: false });
 
       if (!error && data) {
+        // console.log('📂 Loaded workspaces:', data.length);
+        data.forEach(ws => {
+          if (ws.cover_image) {
+            // console.log(`🖼️ Workspace "${ws.name}" has cover:`, ws.cover_image);
+          }
+        });
+
         // Enrich workspaces with user's role
         const enrichedWorkspaces = data.map(ws => ({
           ...ws,
@@ -212,8 +224,15 @@ function DashboardContent() {
   };
 
   const openWorkspace = (workspaceId) => {
+    setOpeningWorkspaceId(workspaceId);
     router.push(`/workspace/${workspaceId}`);
   };
+
+  useEffect(() => {
+    if (!openingWorkspaceId) return;
+    const timeout = setTimeout(() => setOpeningWorkspaceId(null), 10000);
+    return () => clearTimeout(timeout);
+  }, [openingWorkspaceId]);
 
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -281,6 +300,7 @@ function DashboardContent() {
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [renameWorkspaceName, setRenameWorkspaceName] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCustomization, setShowCustomization] = useState(false);
 
   const handleRenameWorkspace = async () => {
     if (!supabase || !selectedWorkspace || !renameWorkspaceName.trim()) return;
@@ -327,23 +347,27 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="flex flex-col lg:flex-row h-screen bg-[#f8f9fa] dark:bg-[#1c1c1c]">
-        {/* Sidebar Skeleton */}
-        <div className="hidden lg:flex lg:w-64 bg-white dark:bg-[#181818] border-r border-gray-200 dark:border-[#2a2a2a] flex-col">
+      <div className="relative min-h-screen overflow-hidden">
+        <div className="flex flex-col lg:flex-row h-screen">
+          <WaveBackground />
+             <div className="absolute inset-0 bg-white/40 dark:bg-[#191919]/40 backdrop-blur-xs z-0"></div>
+          {/* Sidebar Skeleton */}
+        <div className="hidden lg:flex lg:w-64 bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border-r border-gray-200 dark:border-[#2a2a2a] flex-col relative z-10">
           <div className="px-3 py-2.5 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
               <div className="w-24 h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
             </div>
           </div>
+
           <nav className="flex-1 p-3 space-y-1">
             <div className="w-full h-10 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg animate-pulse" />
           </nav>
         </div>
 
         {/* Main Content Skeleton */}
-        <div className="flex-1 overflow-auto">
-          <div className="bg-white dark:bg-[#181818] border-b border-gray-200 dark:border-[#2a2a2a] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="flex-1 overflow-auto relative z-10">
+          <div className="bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border-b border-gray-200 dark:border-[#2a2a2a] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <div className="w-48 h-8 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse mb-2" />
             <div className="w-64 h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
           </div>
@@ -352,7 +376,7 @@ function DashboardContent() {
             {/* Stats Skeleton */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               {[1, 2, 3].map(i => (
-                <div key={i} className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
+                <div key={i} className="bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="w-24 h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse mb-3" />
@@ -365,7 +389,7 @@ function DashboardContent() {
             </div>
 
             {/* Workspaces Skeleton */}
-            <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg">
+            <div className="bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200 dark:border-[#2a2a2a] rounded-lg">
               <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-[#2a2a2a]">
                 <div className="w-32 h-6 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
               </div>
@@ -387,11 +411,51 @@ function DashboardContent() {
           </div>
         </div>
       </div>
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-[#f8f9fa] dark:bg-[#1c1c1c] relative overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden">
+      <div className="flex flex-col lg:flex-row h-screen">
+        <WaveBackground />
+        
+        {/* Blurred Overlay */}
+        <div className="absolute inset-0 bg-white/40 dark:bg-[#191919]/40 backdrop-blur-xs z-0"></div>
+        
+        {/* Elegant centered loader when opening a workspace */}
+      {openingWorkspaceId && (
+        (() => {
+          const workspace = workspaces.find(w => w.id === openingWorkspaceId);
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none bg-black/20 dark:bg-black/40 backdrop-blur-sm">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="pointer-events-auto"
+              >
+                <div className="flex items-center gap-4 px-6 py-4 bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl border border-gray-200 dark:border-[#2a2a2a]">
+                  <div className="relative">
+                    <svg className="animate-spin h-8 w-8 text-gray-900 dark:text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                  </div>
+                  <div className="leading-tight">
+                    <p className="text-base font-semibold text-gray-900 dark:text-white">
+                      Opening{workspace ? ` ${workspace.name}` : ' workspace'}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Preparing your workspace...
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()
+      )}
+      
       {/* Command Palette */}
       <CommandPalette workspaces={workspaces} />
 
@@ -399,7 +463,7 @@ function DashboardContent() {
       {user && <ChatDrawer userId={user.id} />}
 
       {/* Sidebar */}
-      <div className="hidden lg:flex lg:w-64 bg-white dark:bg-[#181818] border-r border-gray-200 dark:border-[#2a2a2a] flex-col">
+      <div className="hidden lg:flex lg:w-64 bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border-r border-gray-200 dark:border-[#2a2a2a] flex-col relative z-10">
         {/* Logo with Theme Toggle */}
         <div className="px-3 py-2.5 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -442,26 +506,27 @@ function DashboardContent() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto relative z-10">
         {/* Header */}
-        <div className="bg-white dark:bg-[#181818] border-b border-gray-200 dark:border-[#2a2a2a] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-[#e7e7e7]">All Workspaces</h1>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
+        <div className="bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border-b border-gray-200 dark:border-[#2a2a2a] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-[#e7e7e7] truncate">All Workspaces</h1>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 hidden sm:flex items-center gap-2">
                 Manage and organize your writing projects
                 <span className="hidden md:flex items-center gap-1 text-xs text-gray-500 dark:text-gray-500">
                   • Press <KbdGroup><Kbd>⌘</Kbd><Kbd>K</Kbd></KbdGroup> for quick actions
                 </span>
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              {user && <NotificationCenter userId={user.id} />}
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              {/* Notifications disabled */}
+              {/* {user && <NotificationCenter userId={user.id} />} */}
               <button
                 onClick={() => setShowNewWorkspace(true)}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#212121] dark:bg-[#e7e7e7] hover:bg-gray-300 dark:hover:bg-[#a5a5a5] border border-gray-300 dark:border-[#383838] text-[#e7e7e7] dark:text-gray-900 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-[#212121] dark:bg-[#e7e7e7] hover:bg-gray-300 dark:hover:bg-[#a5a5a5] border border-gray-300 dark:border-[#383838] text-[#e7e7e7] dark:text-gray-900 text-sm font-medium rounded-lg transition-colors whitespace-nowrap min-h-[40px]"
               >
-                <PlusIcon className="w-4 h-4" />
+                <PlusIcon className="w-4 h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">New Workspace</span>
                 <span className="sm:hidden">New</span>
               </button>
@@ -475,7 +540,7 @@ function DashboardContent() {
             <>
               {/* Stats */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
+                <div className="bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Workspaces</p>
@@ -488,7 +553,7 @@ function DashboardContent() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
+                <div className="bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Collaborators</p>
@@ -501,7 +566,7 @@ function DashboardContent() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
+                <div className="bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Snippets</p>
@@ -517,50 +582,72 @@ function DashboardContent() {
               </div>
 
               {/* Workspaces Table */}
-              <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg overflow-visible">
+              <div className="bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200 dark:border-[#2a2a2a] rounded-lg">
                 <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-[#2a2a2a]">
                   <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-[#e7e7e7]">Your Workspaces</h2>
                 </div>
-                <div className="divide-y divide-gray-200 dark:divide-[#2a2a2a] overflow-visible">
+                <div className="divide-y divide-gray-200 dark:divide-[#2a2a2a]">
                   {workspaces.map((workspace) => (
                     <div
                       key={workspace.id}
-                      className="relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 dark:hover:bg-[#1c1c1c] transition-colors group"
+                      className="relative group"
                     >
-                      <button
-                        onClick={() => openWorkspace(workspace.id)}
-                        className="flex-1 flex items-center gap-4 text-left"
-                      >
-                        <div className="p-2 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg">
-                          <FolderIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
-                              {workspace.name}
-                            </h3>
-                            {workspace.userRole && workspace.userRole !== 'owner' && (
-                              <span className="px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">
-                                Shared
-                              </span>
+                      {/* Cover Image Background */}
+                      {workspace.cover_image && (
+                        <div 
+                          className="absolute inset-0 opacity-10 dark:opacity-5 pointer-events-none transition-opacity group-hover:opacity-15 dark:group-hover:opacity-8"
+                          style={{
+                            backgroundImage: `url(${workspace.cover_image})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
+                          }}
+                        />
+                      )}
+                      
+                      {/* Subtle hover overlay */}
+                      <div className="absolute inset-0 bg-transparent group-hover:bg-gray-50/50 dark:group-hover:bg-white/5 transition-colors pointer-events-none" />
+                      
+                      <div className="relative px-4 sm:px-6 py-3 sm:py-4 overflow-visible">
+                      <div className="flex items-center justify-between gap-4">
+                        <div
+                          onClick={() => openWorkspace(workspace.id)}
+                          className="flex flex-1 items-center gap-4 text-left cursor-pointer"
+                        >
+                          {/* Workspace Icon */}
+                          <div className="w-12 h-12 rounded-lg bg-gray-900 dark:bg-white flex items-center justify-center shrink-0">
+                            {(() => {
+                              const IconComponent = getIconById(workspace.icon || DEFAULT_ICON);
+                              return <IconComponent className="w-6 h-6 text-white dark:text-gray-900" />;
+                            })()}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
+                                {workspace.name}
+                              </h3>
+                              {workspace.userRole && workspace.userRole !== 'owner' && (
+                                <span className="px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">
+                                  Shared
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                              Created {new Date(workspace.created_at).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {workspaceMembersMap[workspace.id] && workspaceMembersMap[workspace.id].length > 0 && (
+                              <MemberAvatars members={workspaceMembersMap[workspace.id]} max={3} />
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
-                            Created {new Date(workspace.created_at).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </p>
+                          <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
                         </div>
-                      </button>
 
-                      <div className="flex items-center gap-3">
-                        {/* Member Avatars */}
-                        {workspaceMembersMap[workspace.id] && workspaceMembersMap[workspace.id].length > 0 && (
-                          <MemberAvatars members={workspaceMembersMap[workspace.id]} max={3} />
-                        )}
-                        <div className="relative">
+                        <div className="relative flex items-center">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -601,6 +688,17 @@ function DashboardContent() {
                                 <button
                                   onClick={() => {
                                     setSelectedWorkspace(workspace);
+                                    setShowCustomization(true);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-left"
+                                >
+                                  <SparklesIcon className="w-4 h-4" />
+                                  Personalise
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedWorkspace(workspace);
                                     setRenameWorkspaceName(workspace.name);
                                     setShowRenameDialog(true);
                                     setOpenMenuId(null);
@@ -627,8 +725,10 @@ function DashboardContent() {
                             </>
                           )}
                         </div>
-                        <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
                       </div>
+                      </div>
+
+                      {/* per-row loader removed in favor of a single elegant centered loader */}
                     </div>
                   ))}
                 </div>
@@ -778,40 +878,16 @@ function DashboardContent() {
       )}
 
       {/* Delete Confirmation Dialog */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowDeleteConfirm(false)}>
-          <div
-            className="bg-white dark:bg-[#181818] rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-200 dark:border-[#2a2a2a]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-                <TrashIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">Delete Workspace</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Are you sure you want to delete &ldquo;{selectedWorkspace?.name}&rdquo;? This action cannot be undone and will delete all snippets in this workspace.
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleDeleteWorkspace}
-                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="px-4 py-2 bg-gray-100 dark:bg-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] text-sm font-medium rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteWorkspace}
+        title="Confirm to delete workspace"
+        message={`This is permanent! Are you sure you want to delete "${selectedWorkspace?.name}"? This will delete all snippets in this workspace.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
 
       {/* Create Workspace Modal */}
       {showNewWorkspace && (
@@ -862,6 +938,21 @@ function DashboardContent() {
           </div>
         </div>
       )}
+
+      {/* Workspace Customization Dialog */}
+      {showCustomization && selectedWorkspace && (
+        <WorkspaceCustomization
+          workspace={selectedWorkspace}
+          onUpdate={(updatedWorkspace) => {
+            setWorkspaces(workspaces.map(w => 
+              w.id === updatedWorkspace.id ? updatedWorkspace : w
+            ));
+            setShowCustomization(false);
+          }}
+          onClose={() => setShowCustomization(false)}
+        />
+      )}
+      </div>
     </div>
   );
 }

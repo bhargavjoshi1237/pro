@@ -18,8 +18,7 @@ import KanbanBoard from '@/components/kanban/KanbanBoard';
 import StoragePanel from '@/components/workspace/StoragePanel';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { UserGroupIcon, XMarkIcon, SparklesIcon, ChatBubbleLeftRightIcon, ViewColumnsIcon, FolderIcon, ChevronDoubleRightIcon, PresentationChartBarIcon } from '@heroicons/react/24/outline';
-import WhiteboardPanel from '@/components/whiteboard/WhiteboardPanel';
+import { UserGroupIcon, XMarkIcon, SparklesIcon, ChatBubbleLeftRightIcon, ViewColumnsIcon, FolderIcon, ChevronDoubleRightIcon, ChevronDoubleLeftIcon } from '@heroicons/react/24/outline';
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -39,7 +38,9 @@ export default function WorkspacePage() {
   const [activeBoard, setActiveBoard] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [showMobileUI, setShowMobileUI] = useState(true); // Toggle header/footer visibility
 
   const toggleSidebar = () => {
     const panel = sidebarRef.current;
@@ -55,7 +56,7 @@ export default function WorkspacePage() {
   const handleOpenKanban = (board) => {
     setActiveBoard(board);
     setActiveView('kanban');
-    setKanbanPanelOpen(false); // Close the panel on mobile/desktop when opening board
+    setKanbanPanelOpen(false);
   };
 
   const {
@@ -154,16 +155,29 @@ export default function WorkspacePage() {
     <div className="flex h-screen bg-white dark:bg-[#191919] overflow-hidden">
       {/* Mobile Layout */}
       <div className="lg:hidden flex flex-col flex-1 h-full w-full">
-        {/* Mobile Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919]">
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] truncate">
-            {workspace?.name || 'Workspace'}
-          </h1>
-          <MobileUserMenu user={user} onSettingsClick={() => setSettingsOpen(true)} />
-        </div>
+        {/* Mobile Header - Sticky */}
+        {showMobileUI && (
+          <div className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919]">
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] truncate flex-1">
+              {workspace?.name || 'Workspace'}
+            </h1>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowMobileUI(false)}
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                title="Hide UI for full screen"
+              >
+                <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <MobileUserMenu user={user} onSettingsClick={() => setSettingsOpen(true)} />
+            </div>
+          </div>
+        )}
 
-        {/* Mobile Main Content */}
-        <div className="flex-1 overflow-hidden">
+        {/* Mobile Main Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
           {activeView === 'kanban' && activeBoard ? (
             <KanbanBoard
               board={activeBoard}
@@ -184,12 +198,14 @@ export default function WorkspacePage() {
               user={user}
               entities={entities}
               tags={tags}
+              workspace={workspace}
             />
           )}
         </div>
 
-        {/* Mobile Bottom Navigation */}
-        <div className="flex items-center justify-around px-2 py-2 border-t border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919]">
+        {/* Mobile Bottom Navigation - Sticky + Full Screen Toggle */}
+        {showMobileUI && (
+          <div className="sticky  bottom-0 z-40 flex items-center justify-around px-2 py-2 border-t border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919]">
           <button
             onClick={() => setMobileSidebarOpen(true)}
             className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors tap-target"
@@ -225,10 +241,10 @@ export default function WorkspacePage() {
             onClick={() => togglePanel('kanban')}
             className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors tap-target ${kanbanPanelOpen ? 'bg-blue-100 dark:bg-blue-900/20' : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
               }`}
-            title="Projects"
+            title="Boards"
           >
             <ViewColumnsIcon className={`w-6 h-6 ${kanbanPanelOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`} />
-            <span className={`text-xs mt-1 ${kanbanPanelOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>Projects</span>
+            <span className={`text-xs mt-1 ${kanbanPanelOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>Boards</span>
           </button>
 
           <button
@@ -261,6 +277,20 @@ export default function WorkspacePage() {
             <span className={`text-xs mt-1 ${peoplePanelOpen ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`}>People</span>
           </button>
         </div>
+        )}
+
+        {/* Full Screen Toggle - Visible when UI is hidden */}
+        {!showMobileUI && (
+          <button
+            onClick={() => setShowMobileUI(true)}
+            className="fixed top-4 right-4 z-50 p-2 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#3a3a3a] rounded-lg shadow-lg hover:shadow-xl transition-all"
+            title="Show UI"
+          >
+            <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Desktop Resizable Layout */}
@@ -316,7 +346,17 @@ export default function WorkspacePage() {
               )}
               <ResizablePanelGroup direction="horizontal" className="flex-1 h-full">
                 <ResizablePanel defaultSize={isRightPanelOpen ? 75 : 100} minSize={30}>
-                  <div className="h-full overflow-hidden">
+                  <div className="h-full overflow-hidden relative">
+                    {/* Right sidebar expand button when collapsed */}
+                    {isRightPanelCollapsed && (
+                      <button
+                        onClick={() => setIsRightPanelCollapsed(false)}
+                        className="absolute bottom-3 right-3 z-50 p-1.5 bg-white dark:bg-[#191919] border border-gray-200 dark:border-[#2a2a2a] rounded-md shadow-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                        title="Show Panels"
+                      >
+                        <ChevronDoubleLeftIcon className="w-4 h-4" />
+                      </button>
+                    )}
                     {activeView === 'kanban' && activeBoard ? (
                       <KanbanBoard
                         board={activeBoard}
@@ -343,6 +383,7 @@ export default function WorkspacePage() {
                         user={user}
                         entities={entities}
                         tags={tags}
+                        workspace={workspace}
                       />
                     )}
                   </div>
@@ -371,75 +412,101 @@ export default function WorkspacePage() {
         <UserMenu user={user} onSettingsClick={() => setSettingsOpen(true)} />
       </div>
 
-      {/* Panel Toggle Buttons - Desktop */}
-      <div className="hidden lg:flex flex-col items-start pt-4 pl-2 pr-2 gap-2">
-        <button
-          onClick={() => togglePanel('ai')}
-          className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
-          title={aiPanelOpen ? 'Hide AI assistant' : 'Show AI assistant'}
-        >
-          {aiPanelOpen ? (
-            <XMarkIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-          ) : (
-            <SparklesIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+      {/* Panel Toggle Buttons - Desktop - Only show when not collapsed */}
+      {!isRightPanelCollapsed && (
+        <div className="hidden lg:flex flex-col h-full relative overflow-hidden">
+          {/* Subtle background from cover image */}
+          {workspace?.cover_image && (
+            <div 
+              className="absolute inset-0 opacity-[0.02] dark:opacity-[0.015] pointer-events-none"
+              style={{
+                backgroundImage: `url(${workspace.cover_image})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
           )}
-        </button>
-        <button
-          onClick={() => togglePanel('chat')}
-          className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
-          title={workspaceChatOpen ? 'Hide Workspace Chat' : 'Show Workspace Chat'}
-        >
-          {workspaceChatOpen ? (
-            <XMarkIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          ) : (
-            <ChatBubbleLeftRightIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          )}
-        </button>
-        <button
-          onClick={() => togglePanel('people')}
-          className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
-          title={peoplePanelOpen ? 'Hide people panel' : 'Show people panel'}
-        >
-          {peoplePanelOpen ? (
-            <XMarkIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          ) : (
-            <UserGroupIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          )}
-        </button>
-        <button
-          onClick={() => togglePanel('kanban')}
-          className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
-          title={kanbanPanelOpen ? 'Hide Kanban' : 'Show Kanban'}
-        >
-          {kanbanPanelOpen ? (
-            <XMarkIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          ) : (
-            <ViewColumnsIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          )}
-        </button>
-        <button
-          onClick={() => togglePanel('storage')}
-          className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
-          title={storagePanelOpen ? 'Hide Files' : 'Show Files'}
-        >
-          {storagePanelOpen ? (
-            <XMarkIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-          ) : (
-            <FolderIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveView(activeView === 'whiteboard' ? 'editor' : 'whiteboard')}
-          className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
-          title={activeView === 'whiteboard' ? 'Hide Board' : 'Show Board'}
-        >
-          {activeView === 'whiteboard' ? (
-            <XMarkIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-          ) : (
-            <PresentationChartBarIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-          )}
-        </button>
-      </div>
+          
+          {/* Top buttons */}
+          <div className="flex flex-col items-start pt-4 pl-2 pr-2 gap-2 relative z-10">
+            <button
+              onClick={() => togglePanel('ai')}
+              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+              title={aiPanelOpen ? 'Hide AI assistant' : 'Show AI assistant'}
+            >
+              {aiPanelOpen ? (
+                <XMarkIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              ) : (
+                <SparklesIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              )}
+            </button>
+            <button
+              onClick={() => togglePanel('chat')}
+              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+              title={workspaceChatOpen ? 'Hide Workspace Chat' : 'Show Workspace Chat'}
+            >
+              {workspaceChatOpen ? (
+                <XMarkIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              ) : (
+                <ChatBubbleLeftRightIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              )}
+            </button>
+            <button
+              onClick={() => togglePanel('people')}
+              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+              title={peoplePanelOpen ? 'Hide people panel' : 'Show people panel'}
+            >
+              {peoplePanelOpen ? (
+                <XMarkIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              ) : (
+                <UserGroupIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              )}
+            </button>
+            <button
+              onClick={() => togglePanel('kanban')}
+              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+              title={kanbanPanelOpen ? 'Hide Kanban' : 'Show Kanban'}
+            >
+              {kanbanPanelOpen ? (
+                <XMarkIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              ) : (
+                <ViewColumnsIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              )}
+            </button>
+            <button
+              onClick={() => togglePanel('storage')}
+              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+              title={storagePanelOpen ? 'Hide Files' : 'Show Files'}
+            >
+              {storagePanelOpen ? (
+                <XMarkIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              ) : (
+                <FolderIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              )}
+            </button>
+          </div>
+          
+          {/* Collapse button at bottom */}
+          <div className="mt-auto flex flex-col items-start pl-2 pr-2 pb-4 gap-2 relative z-10">
+            <div className="w-full h-px bg-gray-200 dark:bg-[#2a2a2a] mb-2" />
+            <button
+              onClick={() => {
+                setIsRightPanelCollapsed(true);
+                setAiPanelOpen(false);
+                setWorkspaceChatOpen(false);
+                setPeoplePanelOpen(false);
+                setKanbanPanelOpen(false);
+                setStoragePanelOpen(false);
+              }}
+              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+              title="Hide panels"
+            >
+              <ChevronDoubleRightIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* AI Assistant Panel - Mobile (Full Screen Overlay) */}
       {aiPanelOpen && (
@@ -499,7 +566,7 @@ export default function WorkspacePage() {
       {kanbanPanelOpen && (
         <div className="lg:hidden fixed inset-0 z-50 bg-white dark:bg-[#181818]">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a]">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7]">Projects</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7]">Boards</h2>
             <button
               onClick={() => setKanbanPanelOpen(false)}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
