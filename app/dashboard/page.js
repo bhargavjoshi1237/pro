@@ -33,6 +33,7 @@ import { getIconById, DEFAULT_ICON } from '@/components/workspace/WorkspaceIcons
 
 import { motion, useSpring, useTransform } from 'framer-motion';
 import { WaveBackground } from '@/components/landing/wave/WaveBackground';
+import { ToolCase } from 'lucide-react';
 
 // Counter animation component
 function AnimatedCounter({ value }) {
@@ -501,6 +502,13 @@ function DashboardContent() {
             >
               <EnvelopeIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               Emails
+            </button>
+            <button
+              onClick={() => router.push('/proper6k')}
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
+            >
+              <ToolCase className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              Proper 6K
             </button>
           </nav>
         </div>

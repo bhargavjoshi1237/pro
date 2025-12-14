@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { CheckIcon, ChevronUpDownIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { useState } from 'react';
+import { ChevronUpDownIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import {
     Command,
@@ -26,8 +26,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 export function TemplateSelector({
     onSelect,
@@ -57,14 +55,14 @@ export function TemplateSelector({
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className="w-full justify-between bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a]"
+                        className="w-full justify-between bg-background text-foreground border-input"
                         disabled={disabled}
                     >
                         Load Template...
                         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0 bg-white dark:bg-[#1c1c1c] border-gray-200 dark:border-[#2a2a2a]">
+                <PopoverContent className="w-[300px] p-0 bg-popover text-popover-foreground border-input">
                     <Command>
                         <CommandInput
                             placeholder="Search templates..."
@@ -74,7 +72,7 @@ export function TemplateSelector({
                         <CommandList>
                             <CommandEmpty>
                                 <div className="p-2">
-                                    <p className="text-sm text-gray-500 mb-2">No templates found.</p>
+                                    <p className="text-sm text-muted-foreground mb-2">No templates found.</p>
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -95,24 +93,24 @@ export function TemplateSelector({
                                             onSelect(template);
                                             setOpen(false);
                                         }}
-                                        className="cursor-pointer hover:bg-gray-100 dark:hover:bg-[#2a2a2a] flex justify-between group"
+                                        className="cursor-pointer hover:bg-accent hover:text-accent-foreground flex justify-between group"
                                     >
                                         <span>{template.name}</span>
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 onDelete(template.id);
                                             }}
                                         >
-                                            <TrashIcon className="h-4 w-4 text-red-500" />
+                                            <TrashIcon className="h-4 w-4" />
                                         </Button>
                                     </CommandItem>
                                 ))}
                             </CommandGroup>
-                            <div className="p-1 border-t border-gray-200 dark:border-[#2a2a2a]">
+                            <div className="p-1 border-t border-border">
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -129,7 +127,7 @@ export function TemplateSelector({
             </Popover>
 
             <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-                <DialogContent className="bg-white dark:bg-[#1c1c1c] border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-[#e7e7e7]">
+                <DialogContent className="bg-background border-border text-foreground">
                     <DialogHeader>
                         <DialogTitle>Save Template</DialogTitle>
                         <DialogDescription>
@@ -144,15 +142,15 @@ export function TemplateSelector({
                                 value={templateName}
                                 onChange={(e) => setTemplateName(e.target.value)}
                                 placeholder="e.g., Monthly Report, Sick Leave"
-                                className="bg-white dark:bg-[#181818] border-gray-300 dark:border-[#2a2a2a]"
+                                className="bg-background border-input"
                             />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowSaveDialog(false)} className="border-gray-300 dark:border-[#2a2a2a]">
+                        <Button variant="outline" onClick={() => setShowSaveDialog(false)} className="border-border">
                             Cancel
                         </Button>
-                        <Button onClick={handleSave} disabled={!templateName.trim()} className="bg-purple-600 hover:bg-purple-700 text-white">
+                        <Button onClick={handleSave} disabled={!templateName.trim()} className="bg-primary text-primary-foreground hover:bg-primary/90">
                             Save
                         </Button>
                     </DialogFooter>

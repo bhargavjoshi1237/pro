@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { CheckIcon, ChevronUpDownIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,7 +55,7 @@ export function EntitySelector({
         try {
             const newEntity = await onCreateEntity(newEntityName, type, newEntityContext);
             if (newEntity) {
-                onChange(newEntity.name); // Or ID if you prefer, but form uses text currently
+                onChange(newEntity.name);
                 setShowCreateDialog(false);
                 setNewEntityName('');
                 setNewEntityContext('');
@@ -76,14 +76,14 @@ export function EntitySelector({
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className="w-full justify-between bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                        className="w-full justify-between bg-background text-foreground border-input"
                         disabled={disabled}
                     >
                         {value || placeholder}
                         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0 bg-white dark:bg-[#1c1c1c] border-gray-200 dark:border-[#2a2a2a]">
+                <PopoverContent className="w-[300px] p-0 bg-popover text-popover-foreground border-input">
                     <Command>
                         <CommandInput
                             placeholder={`Search ${type}...`}
@@ -93,7 +93,7 @@ export function EntitySelector({
                         <CommandList>
                             <CommandEmpty>
                                 <div className="p-2">
-                                    <p className="text-sm text-gray-500 mb-2">No {type} found.</p>
+                                    <p className="text-sm text-muted-foreground mb-2">No {type} found.</p>
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -114,7 +114,7 @@ export function EntitySelector({
                                             onChange(currentValue === value ? "" : currentValue);
                                             setOpen(false);
                                         }}
-                                        className="cursor-pointer hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+                                        className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
                                     >
                                         <CheckIcon
                                             className={cn(
@@ -125,14 +125,14 @@ export function EntitySelector({
                                         <div className="flex flex-col">
                                             <span>{entity.name}</span>
                                             {entity.description && (
-                                                <span className="text-xs text-gray-500 truncate max-w-[200px]">{entity.description}</span>
+                                                <span className="text-xs text-muted-foreground truncate max-w-[200px]">{entity.description}</span>
                                             )}
                                         </div>
                                     </CommandItem>
                                 ))}
                             </CommandGroup>
                             {filteredEntities.length > 0 && (
-                                <div className="p-1 border-t border-gray-200 dark:border-[#2a2a2a]">
+                                <div className="p-1 border-t border-border">
                                     <Button
                                         variant="ghost"
                                         size="sm"
@@ -150,7 +150,7 @@ export function EntitySelector({
             </Popover>
 
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-                <DialogContent className="bg-white dark:bg-[#1c1c1c] border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-[#e7e7e7]">
+                <DialogContent className="bg-background border-border text-foreground">
                     <DialogHeader>
                         <DialogTitle>Create New {type}</DialogTitle>
                         <DialogDescription>
@@ -165,7 +165,7 @@ export function EntitySelector({
                                 value={newEntityName}
                                 onChange={(e) => setNewEntityName(e.target.value)}
                                 placeholder={`e.g., ${type === 'Role' ? 'Manager' : 'Boss'}`}
-                                className="bg-white dark:bg-[#181818] border-gray-300 dark:border-[#2a2a2a]"
+                                className="bg-background border-input"
                             />
                         </div>
                         <div className="grid gap-2">
@@ -175,18 +175,18 @@ export function EntitySelector({
                                 value={newEntityContext}
                                 onChange={(e) => setNewEntityContext(e.target.value)}
                                 placeholder="Add extra context about this entity (e.g., 'Strict but fair', 'Always busy'). This will be used as background info."
-                                className="bg-white dark:bg-[#181818] border-gray-300 dark:border-[#2a2a2a]"
+                                className="bg-background border-input"
                             />
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                                 Note: This context will have low relevance compared to your specific email goal.
                             </p>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="border-gray-300 dark:border-[#2a2a2a]">
+                        <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="border-border">
                             Cancel
                         </Button>
-                        <Button onClick={handleCreate} disabled={!newEntityName.trim() || creating} className="bg-purple-600 hover:bg-purple-700 text-white">
+                        <Button onClick={handleCreate} disabled={!newEntityName.trim() || creating} className="bg-primary text-primary-foreground hover:bg-primary/90">
                             {creating ? 'Creating...' : 'Create'}
                         </Button>
                     </DialogFooter>

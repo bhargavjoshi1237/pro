@@ -5,17 +5,23 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AIChatView } from '@/components/ai/AIChatView';
-import {
-  SparklesIcon,
-  HomeIcon,
-  ArrowLeftIcon,
-  EnvelopeIcon
-} from '@heroicons/react/24/outline';
+import AppLayout from '@/components/layout/AppLayout';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { TrashIcon } from '@heroicons/react/24/outline';
+import { toast } from 'sonner';
 
 export default function AIChatPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
+  const [appLoading, setAppLoading] = useState(true);
+
+  // AI Chat State
+  const [messages, setMessages] = useState([]);
+  const [aiSettings, setAiSettings] = useState(null);
+  const [chatLoading, setChatLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -28,82 +34,104 @@ export default function AIChatPage() {
       }
 
       setUser(session.user);
-      setLoading(false);
+
+      // Load user profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url, display_name, ai_settings')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profile) {
+        setUserProfile(profile);
+        if (profile.ai_settings) setAiSettings(profile.ai_settings);
+      }
+
+      setAppLoading(false);
+
+      // Load History
+      if (session?.user?.id) {
+        const { data } = await supabase
+          .from('ai_chat_history')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: true })
+          .limit(50);
+        if (data) setMessages(data);
+        setChatLoading(false);
+      }
     };
 
     checkAuth();
   }, [router]);
 
-  if (loading) {
-    return (
-      <ThemeProvider>
-        <div className="flex h-screen items-center justify-center bg-[#f8f9fa] dark:bg-[#1c1c1c]">
-          <div className="text-center">
-            <div className="relative w-16 h-16 mx-auto mb-6">
-              <div className="absolute inset-0 border-4 border-purple-200 dark:border-purple-900 rounded-full"></div>
-              <div className="absolute inset-0 border-4 border-purple-600 dark:border-purple-500 rounded-full border-t-transparent animate-spin"></div>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">Loading AI Chat...</h3>
-          </div>
-        </div>
-      </ThemeProvider>
-    );
-  }
+  const clearHistory = async () => {
+    if (!confirm('Are you sure you want to clear all chat history?')) return;
+
+    await supabase
+      .from('ai_chat_history')
+      .delete()
+      .eq('user_id', user.id);
+
+    setMessages([]);
+    toast.success('Chat history cleared');
+  };
+
+  const actions = (
+    <div className="flex items-center gap-2">
+      {aiSettings?.apiKey ? (
+        <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-0">
+          Connected
+        </Badge>
+      ) : (
+        <Badge variant="secondary" className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-0">
+          Not Configured
+        </Badge>
+      )}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={clearHistory}
+        disabled={messages.length === 0}
+        className="text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+      >
+        <TrashIcon className="w-4 h-4 mr-1" />
+        Clear
+      </Button>
+    </div>
+  );
 
   return (
     <ThemeProvider>
-      <div className="flex h-screen bg-[#f8f9fa] dark:bg-[#1c1c1c]">
-        {/* Sidebar */}
-        <div className="hidden lg:flex lg:w-64 bg-white dark:bg-[#181818] border-r border-gray-200 dark:border-[#2a2a2a] flex-col">
-          <div className="px-3 py-2.5 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <SparklesIcon className="w-6 h-6 text-purple-600 dark:text-purple-500" />
-              <span className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7]">Prodigy</span>
+      <AppLayout
+        title="AI Chat"
+        description="Chat with your intelligent assistant"
+        user={user}
+        userProfile={userProfile}
+        actions={actions}
+      >
+        {appLoading || chatLoading ? (
+          <div className="flex flex-col h-full animate-pulse">
+            <div className="flex-1 p-6 space-y-6">
+              <div className="flex gap-4 flex-row-reverse">
+                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-800" />
+                <div className="h-12 w-64 rounded-lg bg-gray-200 dark:bg-gray-800" />
+              </div>
+              <div className="flex gap-4">
+                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-800" />
+                <div className="h-24 w-96 rounded-lg bg-gray-200 dark:bg-gray-800" />
+              </div>
             </div>
           </div>
-
-          <nav className="flex-1 p-3 space-y-1">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
-            >
-              <HomeIcon className="w-5 h-5" />
-              Home
-            </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-900 dark:text-[#e7e7e7] bg-gray-100 dark:bg-[#2a2a2a] rounded-lg">
-              <SparklesIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              AI Chat
-            </button>
-            <button
-              onClick={() => router.push('/emails')}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
-            >
-              <EnvelopeIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              Emails
-            </button>
-          </nav>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          {/* Mobile Header */}
-          <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white dark:bg-[#181818] border-b border-gray-200 dark:border-[#2a2a2a]">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
-            >
-              <HomeIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </button>
-            <h1 className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7] truncate flex-1 flex items-center gap-2">
-              <SparklesIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              AI Chat
-            </h1>
-          </div>
-
-          {/* Chat View */}
-          {user && <AIChatView userId={user.id} />}
-        </div>
-      </div>
+        ) : (
+          <AIChatView
+            userId={user?.id}
+            messages={messages}
+            setMessages={setMessages}
+            aiSettings={aiSettings}
+          />
+        )}
+      </AppLayout>
     </ThemeProvider>
   );
 }

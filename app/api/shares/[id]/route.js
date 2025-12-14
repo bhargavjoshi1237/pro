@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 export async function GET(request, { params }) {
@@ -46,17 +47,24 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Please login to access this share' }, { status: 403 });
     }
 
+    // Use admin client to bypass RLS for content fetching
+    // This is safe because we've already validated the share existence and permissions above
+    const adminSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+
     // Fetch snippet or folder content
     let content = null;
     if (share.snippet_id) {
-      const { data: snippet } = await supabase
+      const { data: snippet } = await adminSupabase
         .from('snippets')
         .select('*')
         .eq('id', share.snippet_id)
         .single();
       content = snippet;
     } else if (share.folder_id) {
-      const { data: folder } = await supabase
+      const { data: folder } = await adminSupabase
         .from('folders')
         .select('*')
         .eq('id', share.folder_id)
@@ -64,7 +72,7 @@ export async function GET(request, { params }) {
       content = folder;
 
       // Also fetch snippets in folder
-      const { data: snippets } = await supabase
+      const { data: snippets } = await adminSupabase
         .from('snippets')
         .select('*')
         .eq('folder_id', share.folder_id)
@@ -104,7 +112,7 @@ export async function PUT(request, { params }) {
     );
 
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -175,7 +183,7 @@ export async function DELETE(request, { params }) {
     );
 
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

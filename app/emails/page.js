@@ -6,25 +6,35 @@ import { supabase } from '@/lib/supabase';
 import { ThemeProvider } from '@/context/ThemeContext';
 import {
     SparklesIcon,
-    HomeIcon,
-    EnvelopeIcon,
     PaperAirplaneIcon,
     ClipboardDocumentIcon,
-    ArrowPathIcon
+    ArrowPathIcon,
+    EnvelopeIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
 import { useEntities } from '@/hooks/useEntities';
 import { EntitySelector } from '@/components/emails/EntitySelector';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { TemplateSelector } from '@/components/emails/TemplateSelector';
 import { HistoryPanel } from '@/components/emails/HistoryPanel';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import AppLayout from '@/components/layout/AppLayout';
 
 export default function EmailsPage() {
     const router = useRouter();
     const [user, setUser] = useState(null);
+    const [userProfile, setUserProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
     const [generatedResult, setGeneratedResult] = useState(null);
@@ -43,7 +53,7 @@ export default function EmailsPage() {
         additional_points: '',
         style_samples: '',
         constraints: '',
-        variant_count: 1
+        variant_count: "1"
     });
 
     // New State
@@ -67,8 +77,16 @@ export default function EmailsPage() {
 
             setUser(session.user);
 
-            // Fetch workspace ID (assuming single workspace for now or getting first one)
-            // In a real app, this might come from context or URL
+            // Fetch user profile for AppLayout
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('avatar_url, display_name')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile) setUserProfile(profile);
+
+            // Fetch workspace ID
             const { data: members } = await supabase
                 .from('workspace_members')
                 .select('workspace_id')
@@ -190,13 +208,16 @@ export default function EmailsPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleValueChange = (name, value) => {
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
     const handleEntityChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     const handleCreateEntity = async (name, type, context) => {
         if (!workspaceId) return null;
-        // Create entity with type and description (context)
         return await createEntity(name, type, context);
     };
 
@@ -210,19 +231,16 @@ export default function EmailsPage() {
         setGeneratedResult(null);
 
         try {
-            // Find selected entities to pass their context if available
             const roleEntity = entities.find(e => e.name === formData.recipient_role && e.type === 'Role');
             const relEntity = entities.find(e => e.name === formData.relationship && e.type === 'Relationship');
 
-            // Prepare data for API
             const apiData = {
                 ...formData,
                 additional_points: formData.additional_points ? formData.additional_points.split('\n').filter(line => line.trim()) : [],
                 style_samples: formData.style_samples ? [formData.style_samples] : [],
                 constraints: formData.constraints ? formData.constraints.split('\n').filter(line => line.trim()) : [],
                 variant_count: parseInt(formData.variant_count) || 1,
-                userId: user?.id, // Pass userId for API to use if auth check is skipped
-                // Pass entity context if available
+                userId: user?.id,
                 role_context: roleEntity?.description,
                 relationship_context: relEntity?.description
             };
@@ -264,111 +282,62 @@ export default function EmailsPage() {
         window.open(mailtoLink, '_blank');
     };
 
-    if (loading) {
-        return (
-            <ThemeProvider>
-                <div className="flex h-screen items-center justify-center bg-[#f8f9fa] dark:bg-[#1c1c1c]">
-                    <div className="text-center">
-                        <div className="relative w-16 h-16 mx-auto mb-6">
-                            <div className="absolute inset-0 border-4 border-purple-200 dark:border-purple-900 rounded-full"></div>
-                            <div className="absolute inset-0 border-4 border-purple-600 dark:border-purple-500 rounded-full border-t-transparent animate-spin"></div>
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] mb-2">Loading...</h3>
-                    </div>
-                </div>
-            </ThemeProvider>
-        );
-    }
-
     return (
         <ThemeProvider>
-            <div className="flex h-screen bg-[#f8f9fa] dark:bg-[#1c1c1c]">
-                {/* Sidebar */}
-                <div className="hidden lg:flex lg:w-64 bg-white dark:bg-[#181818] border-r border-gray-200 dark:border-[#2a2a2a] flex-col">
-                    <div className="px-3 py-2.5 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <SparklesIcon className="w-6 h-6 text-purple-600 dark:text-purple-500" />
-                            <span className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7]">Prodigy</span>
+            <AppLayout
+                title="Email Engine"
+                description="Turn brief ideas into professional, context-aware emails instantly."
+                user={user}
+                userProfile={userProfile}
+                disableScroll={true}
+                disablePadding={true}
+                actions={
+                    <Sheet open={showHistory} onOpenChange={setShowHistory}>
+                        <SheetTrigger asChild>
+                            <Button variant="outline" className="gap-2">
+                                <ArrowPathIcon className="w-4 h-4" />
+                                History
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent className="bg-background border-border">
+                            <SheetHeader>
+                                <SheetTitle>Email History</SheetTitle>
+                            </SheetHeader>
+                            <div className="mt-4 h-[calc(100vh-100px)]">
+                                <HistoryPanel
+                                    history={history}
+                                    loading={historyLoading}
+                                    onLoad={handleLoadHistory}
+                                />
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+                }
+            >
+                {loading ? (
+                    <div className="flex-1 overflow-hidden p-4 sm:p-6 lg:p-8 h-full">
+                        <div className="max-w-7xl mx-auto h-full grid grid-cols-1 lg:grid-cols-2 gap-8 animate-pulse">
+                            <div className="space-y-6">
+                                <div className="h-64 bg-muted rounded-lg" />
+                                <div className="h-32 bg-muted rounded-lg" />
+                                <div className="h-48 bg-muted rounded-lg" />
+                            </div>
+                            <div className="space-y-6">
+                                <div className="h-96 bg-muted rounded-lg" />
+                            </div>
                         </div>
                     </div>
-
-                    <nav className="flex-1 p-3 space-y-1">
-                        <button
-                            onClick={() => router.push('/dashboard')}
-                            className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
-                        >
-                            <HomeIcon className="w-5 h-5" />
-                            Home
-                        </button>
-                        <button
-                            onClick={() => router.push('/ai-chat')}
-                            className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
-                        >
-                            <SparklesIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                            AI Chat
-                        </button>
-                        <button className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-900 dark:text-[#e7e7e7] bg-gray-100 dark:bg-[#2a2a2a] rounded-lg">
-                            <EnvelopeIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                            Emails
-                        </button>
-                    </nav>
-                </div>
-
-                {/* Main Content */}
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    {/* Mobile Header */}
-                    <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white dark:bg-[#181818] border-b border-gray-200 dark:border-[#2a2a2a]">
-                        <button
-                            onClick={() => router.push('/dashboard')}
-                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
-                        >
-                            <HomeIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                        </button>
-                        <h1 className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7] truncate flex-1 flex items-center gap-2">
-                            <EnvelopeIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                            Emails
-                        </h1>
-                    </div>
-
-                    <div className="flex-1 overflow-hidden p-4 sm:p-6 lg:p-8">
+                ) : (
+                    <div className="flex-1 overflow-hidden p-4 sm:p-6 lg:p-8 h-full">
                         <div className="max-w-7xl mx-auto h-full flex flex-col">
-                            <div className="mb-6 flex-shrink-0 flex justify-between items-start">
-                                <div>
-                                    <h1 className="text-2xl font-semibold text-gray-900 dark:text-[#e7e7e7]">Email Creation Engine</h1>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                        Turn brief ideas into professional, context-aware emails instantly.
-                                    </p>
-                                </div>
-                                <Sheet open={showHistory} onOpenChange={setShowHistory}>
-                                    <SheetTrigger asChild>
-                                        <Button variant="outline" className="gap-2">
-                                            <ArrowPathIcon className="w-4 h-4" />
-                                            History
-                                        </Button>
-                                    </SheetTrigger>
-                                    <SheetContent className="bg-white dark:bg-[#1c1c1c] border-gray-200 dark:border-[#2a2a2a]">
-                                        <SheetHeader>
-                                            <SheetTitle>Email History</SheetTitle>
-                                        </SheetHeader>
-                                        <div className="mt-4 h-[calc(100vh-100px)]">
-                                            <HistoryPanel
-                                                history={history}
-                                                loading={historyLoading}
-                                                onLoad={handleLoadHistory}
-                                            />
-                                        </div>
-                                    </SheetContent>
-                                </Sheet>
-                            </div>
-
                             <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-0">
-                                {/* Input Form - Scrollable if needed, but usually fixed height container */}
+                                {/* Input Form */}
                                 <div className="flex flex-col h-full overflow-hidden">
                                     <ScrollArea className="h-full pr-4">
                                         <div className="space-y-6 pb-6">
-                                            <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-6">
+                                            <div className="bg-card border border-border rounded-lg p-6">
                                                 <div className="flex justify-between items-center mb-4">
-                                                    <h2 className="text-lg font-medium text-gray-900 dark:text-[#e7e7e7]">Email Details</h2>
+                                                    <h2 className="text-lg font-medium text-foreground">Email Details</h2>
                                                     <div className="w-[200px]">
                                                         <TemplateSelector
                                                             templates={templates}
@@ -382,24 +351,21 @@ export default function EmailsPage() {
 
                                                 <div className="space-y-4">
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                            Context / Description
-                                                        </label>
-                                                        <textarea
+                                                        <Label className="mb-1.5" htmlFor="context">Context / Description</Label>
+                                                        <Textarea
+                                                            id="context"
                                                             name="context"
                                                             value={formData.context}
                                                             onChange={handleInputChange}
                                                             placeholder="e.g., I need to ask for a sick leave for 2 days due to fever..."
                                                             rows={4}
-                                                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                                                            className="resize-none"
                                                         />
                                                     </div>
 
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                         <div>
-                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                                Recipient Role
-                                                            </label>
+                                                            <Label className="mb-1.5" htmlFor="recipient_role">Recipient Role</Label>
                                                             <EntitySelector
                                                                 value={formData.recipient_role}
                                                                 onChange={(val) => handleEntityChange('recipient_role', val)}
@@ -411,9 +377,7 @@ export default function EmailsPage() {
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                                Relationship
-                                                            </label>
+                                                            <Label className="mb-1.5" htmlFor="relationship">Relationship</Label>
                                                             <EntitySelector
                                                                 value={formData.relationship}
                                                                 onChange={(val) => handleEntityChange('relationship', val)}
@@ -427,161 +391,159 @@ export default function EmailsPage() {
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                            Goal
-                                                        </label>
-                                                        <input
+                                                        <Label className="mb-1.5" htmlFor="goal">Goal</Label>
+                                                        <Input
+                                                            id="goal"
                                                             type="text"
                                                             name="goal"
                                                             value={formData.goal}
                                                             onChange={handleInputChange}
                                                             placeholder="e.g., Request leave, Apologize for delay"
-                                                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
                                                         />
                                                     </div>
 
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                         <div>
-                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                                Tone
-                                                            </label>
-                                                            <select
-                                                                name="tone"
+                                                            <Label className="mb-1.5" htmlFor="tone">Tone</Label>
+                                                            <Select
                                                                 value={formData.tone}
-                                                                onChange={handleInputChange}
-                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
+                                                                onValueChange={(val) => handleValueChange('tone', val)}
                                                             >
-                                                                <option value="formal">Formal</option>
-                                                                <option value="neutral">Neutral</option>
-                                                                <option value="friendly">Friendly</option>
-                                                                <option value="urgent">Urgent</option>
-                                                                <option value="match-my-tone">Match my tone</option>
-                                                            </select>
+                                                                <SelectTrigger className="w-full">
+                                                                    <SelectValue placeholder="Select tone" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="formal">Formal</SelectItem>
+                                                                    <SelectItem value="neutral">Neutral</SelectItem>
+                                                                    <SelectItem value="friendly">Friendly</SelectItem>
+                                                                    <SelectItem value="urgent">Urgent</SelectItem>
+                                                                    <SelectItem value="match-my-tone">Match my tone</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                                Length
-                                                            </label>
-                                                            <select
-                                                                name="length"
+                                                            <Label className="mb-1.5" htmlFor="length">Length</Label>
+                                                            <Select
                                                                 value={formData.length}
-                                                                onChange={handleInputChange}
-                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
+                                                                onValueChange={(val) => handleValueChange('length', val)}
                                                             >
-                                                                <option value="short">Short</option>
-                                                                <option value="medium">Medium</option>
-                                                                <option value="long">Long</option>
-                                                            </select>
+                                                                <SelectTrigger className="w-full">
+                                                                    <SelectValue placeholder="Select length" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="short">Short</SelectItem>
+                                                                    <SelectItem value="medium">Medium</SelectItem>
+                                                                    <SelectItem value="long">Long</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
                                                         </div>
                                                     </div>
 
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                         <div>
-                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                                Language
-                                                            </label>
-                                                            <select
-                                                                name="language"
+                                                            <Label className="mb-1.5" htmlFor="language">Language</Label>
+                                                            <Select
                                                                 value={formData.language}
-                                                                onChange={handleInputChange}
-                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
+                                                                onValueChange={(val) => handleValueChange('language', val)}
                                                             >
-                                                                <option value="English">English</option>
-                                                                <option value="Spanish">Spanish</option>
-                                                                <option value="French">French</option>
-                                                                <option value="German">German</option>
-                                                                <option value="Italian">Italian</option>
-                                                                <option value="Portuguese">Portuguese</option>
-                                                                <option value="Chinese">Chinese</option>
-                                                                <option value="Japanese">Japanese</option>
-                                                                <option value="Hindi">Hindi</option>
-                                                            </select>
+                                                                <SelectTrigger className="w-full">
+                                                                    <SelectValue placeholder="Select language" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="English">English</SelectItem>
+                                                                    <SelectItem value="Spanish">Spanish</SelectItem>
+                                                                    <SelectItem value="French">French</SelectItem>
+                                                                    <SelectItem value="German">German</SelectItem>
+                                                                    <SelectItem value="Italian">Italian</SelectItem>
+                                                                    <SelectItem value="Portuguese">Portuguese</SelectItem>
+                                                                    <SelectItem value="Chinese">Chinese</SelectItem>
+                                                                    <SelectItem value="Japanese">Japanese</SelectItem>
+                                                                    <SelectItem value="Hindi">Hindi</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                                Variants
-                                                            </label>
-                                                            <select
-                                                                name="variant_count"
-                                                                value={formData.variant_count}
-                                                                onChange={handleInputChange}
-                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
+                                                            <Label className="mb-1.5" htmlFor="variant_count">Variants</Label>
+                                                            <Select
+                                                                value={String(formData.variant_count)}
+                                                                onValueChange={(val) => handleValueChange('variant_count', parseInt(val))}
                                                             >
-                                                                <option value={1}>1 Variant</option>
-                                                                <option value={2}>2 Variants</option>
-                                                                <option value={3}>3 Variants</option>
-                                                            </select>
+                                                                <SelectTrigger className="w-full">
+                                                                    <SelectValue placeholder="Select variants" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="1">1 Variant</SelectItem>
+                                                                    <SelectItem value="2">2 Variants</SelectItem>
+                                                                    <SelectItem value="3">3 Variants</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
                                                         </div>
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                            Deadline (Optional)
-                                                        </label>
-                                                        <input
+                                                        <Label className="mb-1.5" htmlFor="deadline">Deadline (Optional)</Label>
+                                                        <Input
+                                                            id="deadline"
                                                             type="text"
                                                             name="deadline"
                                                             value={formData.deadline}
                                                             onChange={handleInputChange}
                                                             placeholder="e.g., By Friday 5 PM"
-                                                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
                                                         />
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                            Additional Points (one per line)
-                                                        </label>
-                                                        <textarea
+                                                        <Label className="mb-1.5" htmlFor="additional_points">Additional Points (one per line)</Label>
+                                                        <Textarea
+                                                            id="additional_points"
                                                             name="additional_points"
                                                             value={formData.additional_points}
                                                             onChange={handleInputChange}
                                                             placeholder="- Mention the attached report&#10;- Ask for a meeting"
                                                             rows={3}
-                                                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                                                            className="resize-none"
                                                         />
                                                     </div>
 
                                                     {formData.tone === 'match-my-tone' && (
                                                         <div>
-                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                                Style Sample
-                                                            </label>
-                                                            <textarea
+                                                            <Label className="mb-1.5" htmlFor="style_samples">Style Sample</Label>
+                                                            <Textarea
+                                                                id="style_samples"
                                                                 name="style_samples"
                                                                 value={formData.style_samples}
                                                                 onChange={handleInputChange}
                                                                 placeholder="Paste a previous email you wrote to match your style..."
                                                                 rows={3}
-                                                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                                                                className="resize-none"
                                                             />
                                                         </div>
                                                     )}
 
-                                                    <button
+                                                    <Button
                                                         onClick={handleGenerate}
                                                         disabled={generating}
-                                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                                                        className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                                                     >
                                                         {generating ? (
                                                             <>
-                                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                                                                 Generating...
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <SparklesIcon className="w-5 h-5" />
+                                                                <SparklesIcon className="w-5 h-5 mr-2" />
                                                                 Generate Email
                                                             </>
                                                         )}
-                                                    </button>
+                                                    </Button>
                                                 </div>
                                             </div>
                                         </div>
                                     </ScrollArea>
                                 </div>
 
-                                {/* Output Area - Constrained to match input height */}
+                                {/* Output Area */}
                                 <div className="flex flex-col h-full overflow-hidden">
                                     <ScrollArea className="h-full pr-4">
                                         <div className="space-y-6 pb-6">
@@ -592,17 +554,17 @@ export default function EmailsPage() {
                                                         <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-100 uppercase tracking-wider mb-2">
                                                             TLDR
                                                         </h3>
-                                                        <p className="text-gray-800 dark:text-gray-200 mb-4">
+                                                        <p className="text-foreground mb-4">
                                                             {generatedResult.tldr || generatedResult.summary}
                                                         </p>
                                                         {generatedResult.action_items && generatedResult.action_items.length > 0 && (
                                                             <div>
-                                                                <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                                                                     Action Items
                                                                 </h4>
                                                                 <ul className="list-disc list-inside space-y-1">
                                                                     {generatedResult.action_items.map((item, idx) => (
-                                                                        <li key={idx} className="text-sm text-gray-700 dark:text-gray-300">
+                                                                        <li key={idx} className="text-sm text-foreground">
                                                                             {item}
                                                                         </li>
                                                                     ))}
@@ -613,40 +575,42 @@ export default function EmailsPage() {
 
                                                     {/* Variants */}
                                                     {generatedResult.variants.map((variant, idx) => (
-                                                        <div key={idx} className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                                            <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between bg-gray-50 dark:bg-[#212121]">
+                                                        <div key={idx} className="bg-card border border-border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                                            <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30">
                                                                 <div>
-                                                                    <h3 className="font-semibold text-gray-900 dark:text-[#e7e7e7]">
+                                                                    <h3 className="font-semibold text-foreground">
                                                                         {variant.title || `Option ${idx + 1}`}
                                                                     </h3>
                                                                     <div className="flex gap-2 mt-1">
-                                                                        <span className="text-xs px-2 py-0.5 bg-gray-200 dark:bg-[#333] text-gray-700 dark:text-gray-300 rounded-full capitalize">
+                                                                        <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full capitalize">
                                                                             {variant.tone}
                                                                         </span>
-                                                                        <span className="text-xs px-2 py-0.5 bg-gray-200 dark:bg-[#333] text-gray-700 dark:text-gray-300 rounded-full capitalize">
+                                                                        <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full capitalize">
                                                                             {variant.length}
                                                                         </span>
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex gap-2">
-                                                                    <button
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
                                                                         onClick={() => openInMailApp(generatedResult.tldr, variant.email)}
-                                                                        className="p-2 hover:bg-gray-200 dark:hover:bg-[#333] rounded-lg transition-colors text-gray-500 dark:text-gray-400"
                                                                         title="Open in Mail App"
                                                                     >
                                                                         <EnvelopeIcon className="w-5 h-5" />
-                                                                    </button>
-                                                                    <button
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
                                                                         onClick={() => copyToClipboard(variant.email)}
-                                                                        className="p-2 hover:bg-gray-200 dark:hover:bg-[#333] rounded-lg transition-colors text-gray-500 dark:text-gray-400"
                                                                         title="Copy to clipboard"
                                                                     >
                                                                         <ClipboardDocumentIcon className="w-5 h-5" />
-                                                                    </button>
+                                                                    </Button>
                                                                 </div>
                                                             </div>
                                                             <div className="p-6">
-                                                                <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 font-sans leading-relaxed">
+                                                                <div className="whitespace-pre-wrap text-foreground font-sans leading-relaxed">
                                                                     {variant.email}
                                                                 </div>
                                                             </div>
@@ -654,14 +618,14 @@ export default function EmailsPage() {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2a2a2a] border-dashed rounded-lg min-h-[400px]">
-                                                    <div className="w-16 h-16 bg-gray-100 dark:bg-[#212121] rounded-full flex items-center justify-center mb-4">
-                                                        <PaperAirplaneIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                                                <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-card border border-border border-dashed rounded-lg min-h-[400px]">
+                                                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                                                        <PaperAirplaneIcon className="w-8 h-8 text-muted-foreground" />
                                                     </div>
-                                                    <h3 className="text-lg font-medium text-gray-900 dark:text-[#e7e7e7] mb-2">
+                                                    <h3 className="text-lg font-medium text-foreground mb-2">
                                                         Ready to Generate
                                                     </h3>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+                                                    <p className="text-sm text-muted-foreground max-w-sm">
                                                         Fill in the details on the left and click Generate to create professional emails instantly.
                                                     </p>
                                                 </div>
@@ -672,8 +636,8 @@ export default function EmailsPage() {
                             </div>
                         </div>
                     </div>
-                </div>
-            </div >
-        </ThemeProvider >
+                )}
+            </AppLayout>
+        </ThemeProvider>
     );
 }
