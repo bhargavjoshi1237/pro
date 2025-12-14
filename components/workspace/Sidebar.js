@@ -31,6 +31,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 
 export default function Sidebar({
@@ -233,7 +235,7 @@ export default function Sidebar({
     <div className="w-full bg-[#fafafa] dark:bg-[#191919] border-r border-gray-200 dark:border-[#2a2a2a] flex flex-col h-full relative overflow-hidden">
       {/* Subtle background from cover image */}
       {workspace?.cover_image && (
-        <div 
+        <div
           className="absolute inset-0 opacity-[0.02] dark:opacity-[0.015] pointer-events-none"
           style={{
             backgroundImage: `url(${workspace.cover_image})`,
@@ -444,11 +446,17 @@ export default function Sidebar({
                       ) : (
                         <ChevronRightIcon className="w-3.5 h-3.5 text-gray-500" />
                       )}
-                      <FolderIcon className="w-4 h-4 text-yellow-600 dark:text-yellow-500" />
+                      {isExpanded ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4 text-yellow-600 dark:text-yellow-500" fill="currentColor">
+                          <path d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h6l2 2h8q.825 0 1.413.588T22 8H11.175l-2-2H4v12l2.4-8h17.1l-2.575 8.575q-.2.65-.737 1.038T19 20zm2.1-2H19l1.8-6H7.9zm0 0l1.8-6zM4 8V6z" />
+                        </svg>
+                      ) : (
+                        <FolderIcon className="w-4 h-4 text-yellow-600 dark:text-yellow-500" />
+                      )}
                       <span className="text-xs font-medium text-gray-700 dark:text-[#e7e7e7]">{folder.name}</span>
                       <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto">{folderSnippets.length}</span>
                     </button>
-                    
+
                     {/* Dropdown Menu */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -467,7 +475,7 @@ export default function Sidebar({
                           <ShareIcon className="w-4 h-4 mr-2" />
                           Share
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => setDeleteConfirm({ type: 'folder', id: folder.id, name: folder.name })}
                           className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20"
                         >
@@ -545,7 +553,7 @@ export default function Sidebar({
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="min-w-[160px]">
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => setDeleteConfirm({ type: 'tag', id: tag.id, name: tag.name })}
                             className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20"
                           >
@@ -601,7 +609,7 @@ export default function Sidebar({
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="min-w-[160px]">
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onClick={() => setDeleteConfirm({ type: 'entity', id: entity.id, name: entity.name })}
                                 className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20"
                               >
@@ -894,7 +902,7 @@ function SnippetItem({ snippet, isActive, isOpen, onSelect, onDragStart, onDragO
           <div className="w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-gray-400 shrink-0" />
         )}
       </button>
-      
+
       {/* Dropdown Menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -910,7 +918,7 @@ function SnippetItem({ snippet, isActive, isOpen, onSelect, onDragStart, onDragO
             <ShareIcon className="w-4 h-4 mr-2" />
             Share
           </DropdownMenuItem>
-          <DropdownMenuItem 
+          <DropdownMenuItem
             onClick={() => setDeleteConfirm({ type: 'snippet', id: snippet.id, name: snippet.title })}
             className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20"
           >

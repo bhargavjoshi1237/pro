@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { MoonIcon, SunIcon } from '@heroicons/react/24/outline';
 import { Switch } from '@/components/ui/switch';
@@ -12,6 +12,30 @@ export default function PreferencesSettings({ userId }) {
   const [autoSave, setAutoSave] = useState(true);
   const [autoSaveDelay, setAutoSaveDelay] = useState(1000);
   const { theme, toggleTheme } = useTheme();
+
+  // Auto-complete Settings
+  const [autoCompleteEnabled, setAutoCompleteEnabled] = useState(false);
+  const [autoCompleteDelay, setAutoCompleteDelay] = useState(5000);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const savedEnabled = localStorage.getItem('autoCompleteEnabled') === 'true';
+    const savedDelay = localStorage.getItem('autoCompleteDelay');
+
+    if (savedEnabled) setAutoCompleteEnabled(true);
+    if (savedDelay) setAutoCompleteDelay(Number(savedDelay));
+  }, []);
+
+  const handleAutoCompleteChange = (enabled) => {
+    setAutoCompleteEnabled(enabled);
+    localStorage.setItem('autoCompleteEnabled', String(enabled));
+  };
+
+  const handleDelayChange = (delay) => {
+    setAutoCompleteDelay(delay);
+    localStorage.setItem('autoCompleteDelay', String(delay));
+  };
 
   const handleThemeChange = (newTheme) => {
     if ((theme === 'light' && newTheme === 'dark') || (theme === 'dark' && newTheme === 'light')) {
@@ -34,8 +58,8 @@ export default function PreferencesSettings({ userId }) {
           <button
             onClick={() => handleThemeChange('light')}
             className={`p-3 lg:p-4 border rounded-xl transition-all flex flex-col items-center gap-2 lg:gap-3 ${theme === 'light'
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500'
-                : 'border-gray-200 dark:border-[#333] hover:border-gray-300 dark:hover:border-[#444] bg-white dark:bg-[#1c1c1c]'
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500'
+              : 'border-gray-200 dark:border-[#333] hover:border-gray-300 dark:hover:border-[#444] bg-white dark:bg-[#1c1c1c]'
               }`}
           >
             <SunIcon className={`w-5 h-5 lg:w-6 lg:h-6 ${theme === 'light' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`} />
@@ -44,8 +68,8 @@ export default function PreferencesSettings({ userId }) {
           <button
             onClick={() => handleThemeChange('dark')}
             className={`p-3 lg:p-4 border rounded-xl transition-all flex flex-col items-center gap-2 lg:gap-3 ${theme === 'dark'
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500'
-                : 'border-gray-200 dark:border-[#333] hover:border-gray-300 dark:hover:border-[#444] bg-white dark:bg-[#1c1c1c]'
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500'
+              : 'border-gray-200 dark:border-[#333] hover:border-gray-300 dark:hover:border-[#444] bg-white dark:bg-[#1c1c1c]'
               }`}
           >
             <MoonIcon className={`w-5 h-5 lg:w-6 lg:h-6 ${theme === 'dark' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`} />
@@ -99,6 +123,43 @@ export default function PreferencesSettings({ userId }) {
           </div>
           <Switch defaultChecked className="shrink-0" />
         </div>
+      </div>
+
+      <div className="h-px bg-gray-200 dark:bg-[#2a2a2a]" />
+
+      {/* AI Features */}
+      <div className="space-y-4 lg:space-y-6">
+        <h4 className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7]">AI Assistance</h4>
+
+        <div className="flex items-start sm:items-center justify-between gap-4">
+          <div className="space-y-0.5 flex-1 min-w-0">
+            <Label className="text-sm lg:text-base text-gray-900 dark:text-[#e7e7e7]">Auto-complete</Label>
+            <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400">Suggest completions after inactivity</p>
+          </div>
+          <Switch
+            checked={autoCompleteEnabled}
+            onCheckedChange={handleAutoCompleteChange}
+            className="shrink-0"
+          />
+        </div>
+
+        {autoCompleteEnabled && (
+          <div className="space-y-2 pl-3 lg:pl-4 border-l-2 border-gray-100 dark:border-[#2a2a2a]">
+            <Label className="text-xs lg:text-sm text-gray-700 dark:text-gray-300">Suggestion Delay (sec)</Label>
+            <Input
+              type="number"
+              value={autoCompleteDelay / 1000}
+              onChange={(e) => handleDelayChange(Number(e.target.value) * 1000)}
+              min="5"
+              max="60"
+              step="1"
+              className="max-w-[200px] bg-white dark:bg-[#1c1c1c] border-gray-300 dark:border-[#333] h-9 lg:h-10 text-sm"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Suggestions will appear after {autoCompleteDelay / 1000} seconds of inactivity
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="h-px bg-gray-200 dark:bg-[#2a2a2a]" />

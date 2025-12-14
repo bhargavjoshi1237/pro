@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ClockIcon, DocumentDuplicateIcon, CheckCircleIcon, ArrowsPointingOutIcon,
   TagIcon, PlusIcon, XMarkIcon, UserIcon, MapPinIcon, CubeIcon,
-  BookOpenIcon, PuzzlePieceIcon, GlobeAltIcon, ChatBubbleOvalLeftIcon, 
+  BookOpenIcon, PuzzlePieceIcon, GlobeAltIcon, ChatBubbleOvalLeftIcon,
   PaperClipIcon, Squares2X2Icon
 } from '@heroicons/react/24/outline';
 import { useRealtimeCollaboration } from '@/hooks/useRealtimeCollaboration';
@@ -25,7 +25,7 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
   const leftScrollRef = useRef(null);
   const rightScrollRef = useRef(null);
   const isScrollingRef = useRef(false);
-  
+
   // Text selection and comment menu
   const [commentMenuPosition, setCommentMenuPosition] = useState(null);
   const [selectedText, setSelectedText] = useState(null);
@@ -181,15 +181,15 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
   const handleTextSelect = (e) => {
     const selection = window.getSelection();
     const selectedText = selection.toString().trim();
-    
+
     if (selectedText && editorRef.current?.contains(selection.anchorNode)) {
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
-      
+
       // Calculate line number
       const textBeforeSelection = content.substring(0, editorRef.current.selectionStart || 0);
       const lineNumber = textBeforeSelection.split('\n').length;
-      
+
       setSelectedText({ text: selectedText, lineNumber });
       setCommentMenuPosition({
         x: rect.left + rect.width / 2,
@@ -215,7 +215,7 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
     if (comment.line_number) {
       // Highlight the line
       setHighlightedLineNumber(comment.line_number);
-      
+
       // Scroll to the line
       if (editorRef.current) {
         const lines = content.split('\n');
@@ -224,7 +224,7 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
         editorRef.current.setSelectionRange(charPosition, charPosition);
         editorRef.current.scrollTop = (comment.line_number - 1) * 20; // Approximate line height
       }
-      
+
       // Remove highlight after animation
       setTimeout(() => {
         setHighlightedLineNumber(null);
@@ -240,7 +240,7 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
         setSelectedText(null);
       }
     };
-    
+
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [commentMenuPosition]);
@@ -398,7 +398,7 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
           >
             <ChatBubbleOvalLeftIcon className="w-5 h-5" />
             {comments.length > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-blue-600 text-white text-[10px] font-medium rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-1 bg-zinc-600 text-white text-[9px] font-medium rounded-full flex items-center justify-center">
                 {comments.length > 9 ? '9+' : comments.length}
               </span>
             )}
@@ -443,12 +443,11 @@ export default function TabEditor({ snippet, onUpdate, onCreateFinalVersion, has
             onChange={(e) => setContent(e.target.value)}
             onMouseUp={handleTextSelect}
             placeholder="Start writing your story..."
-            className={`w-full h-full px-3 sm:px-6 py-4 bg-transparent border-none outline-none resize-none text-gray-900 dark:text-[#e7e7e7] text-sm sm:text-base leading-relaxed font-serif placeholder-gray-400 dark:placeholder-gray-600 ${
-              highlightedLineNumber ? 'highlight-line' : ''
-            }`}
+            className={`w-full h-full px-3 sm:px-6 py-4 bg-transparent border-none outline-none resize-none text-gray-900 dark:text-[#e7e7e7] text-sm sm:text-base leading-relaxed font-serif placeholder-gray-400 dark:placeholder-gray-600 ${highlightedLineNumber ? 'highlight-line' : ''
+              }`}
             style={{ minHeight: '100%' }}
           />
-          
+
           {/* Comment Menu */}
           <CommentMenu
             position={commentMenuPosition}

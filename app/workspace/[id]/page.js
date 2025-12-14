@@ -18,8 +18,9 @@ import KanbanBoard from '@/components/kanban/KanbanBoard';
 import StoragePanel from '@/components/workspace/StoragePanel';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { UserGroupIcon, XMarkIcon, SparklesIcon, ChatBubbleLeftRightIcon, ViewColumnsIcon, FolderIcon, ChevronDoubleRightIcon, ChevronDoubleLeftIcon, PresentationChartBarIcon } from '@heroicons/react/24/outline';
+import { UserGroupIcon, XMarkIcon, SparklesIcon, ChatBubbleLeftRightIcon, ViewColumnsIcon, FolderIcon, ChevronDoubleRightIcon, ChevronDoubleLeftIcon, PresentationChartBarIcon, Square2StackIcon } from '@heroicons/react/24/outline';
 import WhiteboardPanel from '@/components/whiteboard/WhiteboardPanel';
+import { SharedBoardsPanel } from '@/components/whiteboard/SharedBoardsPanel';
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -34,9 +35,11 @@ export default function WorkspacePage() {
   const [workspaceChatOpen, setWorkspaceChatOpen] = useState(false);
   const [kanbanPanelOpen, setKanbanPanelOpen] = useState(false);
   const [storagePanelOpen, setStoragePanelOpen] = useState(false);
+  const [sharedBoardsPanelOpen, setSharedBoardsPanelOpen] = useState(false);
 
   const [activeView, setActiveView] = useState('editor'); // 'editor' | 'kanban' | 'whiteboard'
   const [activeBoard, setActiveBoard] = useState(null);
+  const [activeWhiteboardId, setActiveWhiteboardId] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
@@ -58,6 +61,15 @@ export default function WorkspacePage() {
     setActiveBoard(board);
     setActiveView('kanban');
     setKanbanPanelOpen(false);
+  };
+
+  const handleOpenWhiteboard = (boardId) => {
+    setActiveWhiteboardId(boardId);
+    setActiveView('whiteboard');
+    setSharedBoardsPanelOpen(false); // Optional: keep open or close? Usually close on mobile, maybe keep on desktop. Let's close for focus.
+    if (window.innerWidth < 1024) {
+      setSharedBoardsPanelOpen(false);
+    }
   };
 
   const {
@@ -117,12 +129,18 @@ export default function WorkspacePage() {
       if (!aiPanelOpen) {
         setPeoplePanelOpen(false);
         setWorkspaceChatOpen(false);
+        setKanbanPanelOpen(false);
+        setStoragePanelOpen(false);
+        setSharedBoardsPanelOpen(false);
       }
     } else if (panel === 'people') {
       setPeoplePanelOpen(!peoplePanelOpen);
       if (!peoplePanelOpen) {
         setAiPanelOpen(false);
         setWorkspaceChatOpen(false);
+        setKanbanPanelOpen(false);
+        setStoragePanelOpen(false);
+        setSharedBoardsPanelOpen(false);
       }
     } else if (panel === 'chat') {
       setWorkspaceChatOpen(!workspaceChatOpen);
@@ -130,6 +148,8 @@ export default function WorkspacePage() {
         setAiPanelOpen(false);
         setPeoplePanelOpen(false);
         setKanbanPanelOpen(false);
+        setStoragePanelOpen(false);
+        setSharedBoardsPanelOpen(false);
       }
     } else if (panel === 'kanban') {
       setKanbanPanelOpen(!kanbanPanelOpen);
@@ -138,6 +158,7 @@ export default function WorkspacePage() {
         setPeoplePanelOpen(false);
         setWorkspaceChatOpen(false);
         setStoragePanelOpen(false);
+        setSharedBoardsPanelOpen(false);
       }
     } else if (panel === 'storage') {
       setStoragePanelOpen(!storagePanelOpen);
@@ -146,36 +167,44 @@ export default function WorkspacePage() {
         setPeoplePanelOpen(false);
         setWorkspaceChatOpen(false);
         setKanbanPanelOpen(false);
+        setSharedBoardsPanelOpen(false);
+      }
+    } else if (panel === 'sharedBoards') {
+      setSharedBoardsPanelOpen(!sharedBoardsPanelOpen);
+      if (!sharedBoardsPanelOpen) {
+        setAiPanelOpen(false);
+        setPeoplePanelOpen(false);
+        setWorkspaceChatOpen(false);
+        setKanbanPanelOpen(false);
+        setStoragePanelOpen(false);
       }
     }
   };
 
-  const isRightPanelOpen = aiPanelOpen || workspaceChatOpen || peoplePanelOpen || kanbanPanelOpen || storagePanelOpen;
+  const isRightPanelOpen = aiPanelOpen || workspaceChatOpen || peoplePanelOpen || kanbanPanelOpen || storagePanelOpen || sharedBoardsPanelOpen;
 
   return (
     <div className="flex h-screen bg-white dark:bg-[#191919] overflow-hidden">
       {/* Mobile Layout */}
       <div className="lg:hidden flex flex-col flex-1 h-full w-full">
         {/* Mobile Header - Sticky */}
-        {showMobileUI && (
-          <div className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919]">
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] truncate flex-1">
-              {workspace?.name || 'Workspace'}
-            </h1>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowMobileUI(false)}
-                className="p-1.5 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
-                title="Hide UI for full screen"
-              >
-                <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <MobileUserMenu user={user} onSettingsClick={() => setSettingsOpen(true)} />
-            </div>
+        <div className={`sticky top-0 z-40 items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919] ${showMobileUI ? 'flex' : 'hidden'}`}>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] truncate flex-1">
+            {workspace?.name || 'Workspace'}
+          </h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowMobileUI(false)}
+              className="p-1.5 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded-lg transition-colors"
+              title="Hide UI for full screen"
+            >
+              <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+            </button>
+            <MobileUserMenu user={user} onSettingsClick={() => setSettingsOpen(true)} />
           </div>
-        )}
+        </div>
 
         {/* Mobile Main Content - Scrollable */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
@@ -205,8 +234,7 @@ export default function WorkspacePage() {
         </div>
 
         {/* Mobile Bottom Navigation - Sticky + Full Screen Toggle */}
-        {showMobileUI && (
-          <div className="sticky  bottom-0 z-40 flex items-center justify-around px-2 py-2 border-t border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919]">
+        <div className={`sticky bottom-0 z-40 items-center justify-around px-2 py-2 border-t border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919] ${showMobileUI ? 'flex' : 'hidden'}`}>
           <button
             onClick={() => setMobileSidebarOpen(true)}
             className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors tap-target"
@@ -259,14 +287,15 @@ export default function WorkspacePage() {
           </button>
 
           <button
-            onClick={() => setActiveView(activeView === 'whiteboard' ? 'editor' : 'whiteboard')}
-            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors tap-target ${activeView === 'whiteboard' ? 'bg-orange-100 dark:bg-orange-900/20' : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
+            onClick={() => togglePanel('sharedBoards')}
+            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors tap-target ${sharedBoardsPanelOpen ? 'bg-orange-100 dark:bg-orange-900/20' : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
               }`}
-            title="Board"
+            title="Shared Boards"
           >
-            <PresentationChartBarIcon className={`w-6 h-6 ${activeView === 'whiteboard' ? 'text-orange-600 dark:text-orange-400' : 'text-gray-600 dark:text-gray-400'}`} />
-            <span className={`text-xs mt-1 ${activeView === 'whiteboard' ? 'text-orange-600 dark:text-orange-400' : 'text-gray-600 dark:text-gray-400'}`}>Board</span>
+            <PresentationChartBarIcon className={`w-6 h-6 ${sharedBoardsPanelOpen ? 'text-orange-600 dark:text-orange-400' : 'text-gray-600 dark:text-gray-400'}`} />
+            <span className={`text-xs mt-1 ${sharedBoardsPanelOpen ? 'text-orange-600 dark:text-orange-400' : 'text-gray-600 dark:text-gray-400'}`}>Boards</span>
           </button>
+
 
           <button
             onClick={() => togglePanel('people')}
@@ -278,7 +307,6 @@ export default function WorkspacePage() {
             <span className={`text-xs mt-1 ${peoplePanelOpen ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`}>People</span>
           </button>
         </div>
-        )}
 
         {/* Full Screen Toggle - Visible when UI is hidden */}
         {!showMobileUI && (
@@ -367,6 +395,7 @@ export default function WorkspacePage() {
                     ) : activeView === 'whiteboard' ? (
                       <WhiteboardPanel
                         workspaceId={workspaceId}
+                        whiteboardId={activeWhiteboardId}
                         userId={user?.id}
                         onClose={() => setActiveView('editor')}
                       />
@@ -399,6 +428,7 @@ export default function WorkspacePage() {
                       {peoplePanelOpen && user && <PeoplePanel workspaceId={workspaceId} currentUserId={user.id} />}
                       {kanbanPanelOpen && user && <KanbanPanel workspaceId={workspaceId} onOpenBoard={handleOpenKanban} />}
                       {storagePanelOpen && <StoragePanel workspaceId={workspaceId} />}
+                      {sharedBoardsPanelOpen && <SharedBoardsPanel workspaceId={workspaceId} onOpenBoard={handleOpenWhiteboard} />}
                     </ResizablePanel>
                   </>
                 )}
@@ -418,7 +448,7 @@ export default function WorkspacePage() {
         <div className="hidden lg:flex flex-col h-full relative overflow-hidden">
           {/* Subtle background from cover image */}
           {workspace?.cover_image && (
-            <div 
+            <div
               className="absolute inset-0 opacity-[0.02] dark:opacity-[0.015] pointer-events-none"
               style={{
                 backgroundImage: `url(${workspace.cover_image})`,
@@ -428,7 +458,7 @@ export default function WorkspacePage() {
               }}
             />
           )}
-          
+
           {/* Top buttons */}
           <div className="flex flex-col items-start pt-4 pl-2 pr-2 gap-2 relative z-10">
             <button
@@ -486,8 +516,19 @@ export default function WorkspacePage() {
                 <FolderIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
               )}
             </button>
+            <button
+              onClick={() => togglePanel('sharedBoards')}
+              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+              title={sharedBoardsPanelOpen ? 'Hide Shared Boards' : 'Show Shared Boards'}
+            >
+              {sharedBoardsPanelOpen ? (
+                <XMarkIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              ) : (
+                <Square2StackIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              )}
+            </button>
           </div>
-          
+
           {/* Collapse button at bottom */}
           <div className="mt-auto flex flex-col items-start pl-2 pr-2 pb-4 gap-2 relative z-10">
             <div className="w-full h-px bg-gray-200 dark:bg-[#2a2a2a] mb-2" />
@@ -497,8 +538,10 @@ export default function WorkspacePage() {
                 setAiPanelOpen(false);
                 setWorkspaceChatOpen(false);
                 setPeoplePanelOpen(false);
+                setPeoplePanelOpen(false);
                 setKanbanPanelOpen(false);
                 setStoragePanelOpen(false);
+                setSharedBoardsPanelOpen(false);
               }}
               className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
               title="Hide panels"
@@ -595,6 +638,24 @@ export default function WorkspacePage() {
           </div>
           <div className="h-[calc(100vh-60px)]">
             <StoragePanel workspaceId={workspaceId} />
+          </div>
+        </div>
+      )}
+
+      {/* Shared Boards Panel - Mobile (Full Screen Overlay) */}
+      {sharedBoardsPanelOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-white dark:bg-[#181818]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a]">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7]">Shared Boards</h2>
+            <button
+              onClick={() => setSharedBoardsPanelOpen(false)}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+            >
+              <XMarkIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+            </button>
+          </div>
+          <div className="h-[calc(100vh-60px)]">
+            <SharedBoardsPanel workspaceId={workspaceId} onOpenBoard={handleOpenWhiteboard} />
           </div>
         </div>
       )}

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 
-export function KanbanColumn({ column, cards, workspaceId, isOverlay }) {
+export function KanbanColumn({ column, cards, workspaceId, isOverlay, allColumns, moveCard }) {
     const {
         setNodeRef,
         attributes,
@@ -124,7 +124,13 @@ export function KanbanColumn({ column, cards, workspaceId, isOverlay }) {
                 <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[100px]">
                     <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
                         {cards.map((card) => (
-                            <KanbanCard key={card.id} card={card} workspaceId={workspaceId} />
+                            <KanbanCard
+                                key={card.id}
+                                card={card}
+                                workspaceId={workspaceId}
+                                allColumns={allColumns}
+                                moveCard={moveCard}
+                            />
                         ))}
                     </SortableContext>
 

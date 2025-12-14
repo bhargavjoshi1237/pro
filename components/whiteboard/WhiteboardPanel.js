@@ -40,7 +40,11 @@ const Excalidraw = dynamic(
         ssr: false,
         loading: () => (
             <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+                <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
             </div>
         ),
     }
@@ -54,6 +58,7 @@ export default function WhiteboardPanel({ workspaceId, userId, onClose }) {
     const [loading, setLoading] = useState(true);
     const [activeUsers, setActiveUsers] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
+    const [boardName, setBoardName] = useState('');
 
     // Fetch current user details
     useEffect(() => {
@@ -67,19 +72,35 @@ export default function WhiteboardPanel({ workspaceId, userId, onClose }) {
     // Fetch or create whiteboard for this workspace
     useEffect(() => {
         const fetchWhiteboard = async () => {
+            // If ID is passed explicitly, use it
+            if (whiteboardId) {
+                // Fetch name if we just have ID
+                const { data } = await supabase.from('whiteboards').select('name').eq('id', whiteboardId).single();
+                if (data) setBoardName(data.name);
+
+                setWhiteboardId(whiteboardId);
+                setLoading(false);
+                return;
+            }
+
+            // Legacy/Fallback: Find the first whiteboard or create default
             try {
                 let { data, error } = await supabase
                     .from('whiteboards')
-                    .select('id')
+                    .select('id, name')
                     .eq('workspace_id', workspaceId)
-                    .single();
+                    .limit(1)
+                    .maybeSingle();
 
-                if (error && error.code === 'PGRST116') {
+                if (!data) {
                     // No whiteboard found, create one
                     const { data: newData, error: createError } = await supabase
                         .from('whiteboards')
-                        .insert({ workspace_id: workspaceId })
-                        .select('id')
+                        .insert({
+                            workspace_id: workspaceId,
+                            name: 'Main Board'
+                        })
+                        .select('id, name')
                         .single();
 
                     if (createError) throw createError;
@@ -89,6 +110,7 @@ export default function WhiteboardPanel({ workspaceId, userId, onClose }) {
                 }
 
                 setWhiteboardId(data.id);
+                setBoardName(data.name);
             } catch (err) {
                 console.error('Error fetching whiteboard:', err);
             } finally {
@@ -96,10 +118,8 @@ export default function WhiteboardPanel({ workspaceId, userId, onClose }) {
             }
         };
 
-        if (workspaceId) {
-            fetchWhiteboard();
-        }
-    }, [workspaceId]);
+        fetchWhiteboard();
+    }, [workspaceId, whiteboardId]);
 
     // Initialize collaboration
     useEffect(() => {
@@ -132,6 +152,16 @@ export default function WhiteboardPanel({ workspaceId, userId, onClose }) {
         // Initial load from Yjs if data exists
         if (yElements.length > 0) {
             handleRemoteUpdate();
+        }
+
+        // Broadcast initial presence
+        if (currentUser) {
+            whiteboardProvider.broadcastAwareness({
+                pointer: { x: 0, y: 0 },
+                button: 'up',
+                username: currentUser.user_metadata?.full_name || currentUser.email,
+                avatarUrl: currentUser.user_metadata?.avatar_url
+            });
         }
 
         return () => {
@@ -211,43 +241,54 @@ export default function WhiteboardPanel({ workspaceId, userId, onClose }) {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full bg-white dark:bg-[#191919]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+                <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="h-full flex flex-col bg-white dark:bg-[#191919]">
-            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-[#2a2a2a]">
+        <div className={`h-full flex flex-col ${theme === 'dark' ? 'bg-[#191919]' : 'bg-white'}`}>
+            <div className={`flex items-center justify-between px-4 py-2 border-b ${theme === 'dark' ? 'border-[#2a2a2a]' : 'border-gray-200'}`}>
                 <div className="flex items-center gap-4">
-                    <h2 className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7]">Whiteboard</h2>
+                    <h2 className={`text-sm font-semibold ${theme === 'dark' ? 'text-[#e7e7e7]' : 'text-gray-900'}`}>{boardName || 'Whiteboard'}</h2>
                     {/* Active Users Presence Bar */}
-                    <div className="flex items-center -space-x-2">
-                        {activeUsers.map(user => (
-                            <div key={user.id} className="relative group" title={user.name}>
-                                {user.avatarUrl ? (
-                                    <img
-                                        src={user.avatarUrl}
-                                        alt={user.name}
-                                        className="w-6 h-6 rounded-full border-2 border-white dark:border-[#191919]"
-                                    />
-                                ) : (
-                                    <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 border-2 border-white dark:border-[#191919] flex items-center justify-center text-[10px] font-medium text-white">
-                                        {user.name?.[0]?.toUpperCase() || 'U'}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center -space-x-2">
+                            {activeUsers.map(user => (
+                                <div key={user.id} className="relative group" title={user.name}>
+                                    {user.avatarUrl ? (
+                                        <img
+                                            src={user.avatarUrl}
+                                            alt={user.name}
+                                            className={`w-6 h-6 rounded-full border-2 ${theme === 'dark' ? 'border-[#191919]' : 'border-white'}`}
+                                        />
+                                    ) : (
+                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium text-white border-2 ${theme === 'dark' ? 'bg-gray-600 border-[#191919]' : 'bg-gray-300 border-white'}`}>
+                                            {user.name?.[0]?.toUpperCase() || 'U'}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        {activeUsers.length > 0 && (
+                            <span className="hidden sm:inline text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                {activeUsers.length} active
+                            </span>
+                        )}
                     </div>
                 </div>
                 <button
                     onClick={onClose}
-                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#2a2a2a] text-gray-500"
+                    className={`p-1 rounded transition-colors ${theme === 'dark' ? 'hover:bg-[#2a2a2a] text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
                 >
                     <XMarkIcon className="w-5 h-5" />
                 </button>
             </div>
-            <div className="flex-1 w-full h-full">
+            <div className="flex-1 w-full h-full relative overflow-hidden touch-none">
                 <Excalidraw
                     excalidrawAPI={(api) => setExcalidrawAPI(api)}
                     onChange={handleChange}
@@ -257,7 +298,7 @@ export default function WhiteboardPanel({ workspaceId, userId, onClose }) {
                         canvasActions: {
                             loadScene: false,
                             saveToActiveFile: false,
-                            toggleTheme: true,
+                            toggleTheme: true, // Allow manual toggle if they want, but we init with app theme
                             saveAsImage: true,
                         },
                     }}

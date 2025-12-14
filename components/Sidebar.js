@@ -71,7 +71,7 @@ export default function Sidebar({
         </button>
       </div>
 
-      <div className="px-3 py-2 space-y-1.5 border-b border-gray-200 dark:border-[#2a2a2a]">
+      <div className="px-3 py-2 space-y-1.5 border-b border-gray-200 dark:border-[#2a2a2a] flex gap-2 items-center">
         <button
           onClick={() => setShowNewSnippet(true)}
           className="w-full flex items-center gap-2 px-2.5 py-1.5 bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] rounded text-sm transition-colors"
@@ -112,7 +112,7 @@ export default function Sidebar({
               </div>
             )}
 
-           {folders.map(folder => {
+            {folders.map(folder => {
               const folderSnippets = snippets.filter(s => s.folder_id === folder.id);
               const isExpanded = expandedFolders.has(folder.id);
               const isMenuOpen = openFolderMenuId === folder.id;
@@ -134,14 +134,14 @@ export default function Sidebar({
                         {folder.name}
                       </span>
                     </button>
-                    
+
                     {/* Count badge - always visible on mobile, hidden on desktop hover */}
                     <div className="absolute right-8 top-0 bottom-0 flex items-center justify-center pointer-events-none md:transition-transform md:duration-200 md:group-hover:translate-x-full">
                       <span className="text-[10px] text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-[#212121] px-1.5 py-0.5 rounded">
                         {folderSnippets.length}
                       </span>
                     </div>
-                    
+
                     {/* Mobile menu button - always visible */}
                     <button
                       onClick={(e) => {
@@ -152,7 +152,7 @@ export default function Sidebar({
                     >
                       <EllipsisVerticalIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                     </button>
-                    
+
                     {/* Desktop delete button - slides in on hover */}
                     <button
                       onClick={(e) => {
@@ -163,12 +163,12 @@ export default function Sidebar({
                     >
                       <TrashIcon className="w-3.5 h-3.5 text-red-500" />
                     </button>
-                    
+
                     {/* Mobile dropdown menu */}
                     {isMenuOpen && (
                       <>
-                        <div 
-                          className="fixed inset-0 z-20 md:hidden" 
+                        <div
+                          className="fixed inset-0 z-20 md:hidden"
                           onClick={() => setOpenFolderMenuId(null)}
                         />
                         <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#383838] rounded-lg shadow-lg z-30 md:hidden">
@@ -186,7 +186,7 @@ export default function Sidebar({
                         </div>
                       </>
                     )}
-                  </div>  
+                  </div>
 
                   {isExpanded && (
                     <div className="ml-5 mt-0.5 space-y-0.5">
@@ -285,26 +285,24 @@ export default function Sidebar({
 
 function SnippetItem({ snippet, isActive, onSelect, onDelete, onShare, openMenuId, setOpenMenuId, setDeleteConfirm }) {
   const isMenuOpen = openMenuId === snippet.id;
-  
+
   return (
-    <div className={`relative flex items-center gap-1 group px-2 py-1 rounded transition-colors cursor-pointer ${
-      isActive ? 'bg-gray-100 dark:bg-[#2a2a2a]' : 'hover:bg-gray-200 dark:hover:bg-[#212121]'
-    }`}>
+    <div className={`relative flex items-center gap-1 group px-2 py-1 rounded transition-colors cursor-pointer ${isActive ? 'bg-gray-100 dark:bg-[#2a2a2a]' : 'hover:bg-gray-200 dark:hover:bg-[#212121]'
+      }`}>
       <button
         onClick={() => onSelect(snippet)}
         className="flex-1 flex items-center gap-1.5 text-left min-w-0"
       >
         <DocumentTextIcon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`} />
         <div className="flex-1 min-w-0">
-          <p className={`text-xs font-medium truncate ${
-            isActive ? 'text-gray-900 dark:text-[#e7e7e7]' : 'text-gray-700 dark:text-[#e7e7e7]'
-          }`}>
+          <p className={`text-xs font-medium truncate ${isActive ? 'text-gray-900 dark:text-[#e7e7e7]' : 'text-gray-700 dark:text-[#e7e7e7]'
+            }`}>
             {snippet.title}
           </p>
           <p className="text-[10px] text-gray-400 dark:text-gray-500">{snippet.word_count || 0} words</p>
         </div>
       </button>
-      
+
       {/* Mobile menu button - always visible */}
       <button
         onClick={(e) => {
@@ -315,7 +313,7 @@ function SnippetItem({ snippet, isActive, onSelect, onDelete, onShare, openMenuI
       >
         <EllipsisVerticalIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
       </button>
-      
+
       {/* Desktop buttons - show on hover */}
       <div className="hidden md:flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
         {onShare && (
@@ -339,12 +337,12 @@ function SnippetItem({ snippet, isActive, onSelect, onDelete, onShare, openMenuI
           <TrashIcon className="w-3.5 h-3.5 text-red-500" />
         </button>
       </div>
-      
+
       {/* Mobile dropdown menu */}
       {isMenuOpen && (
         <>
-          <div 
-            className="fixed inset-0 z-20 md:hidden" 
+          <div
+            className="fixed inset-0 z-20 md:hidden"
             onClick={() => setOpenMenuId(null)}
           />
           <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#383838] rounded-lg shadow-lg z-30 md:hidden overflow-hidden">

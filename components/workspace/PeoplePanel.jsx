@@ -2,15 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { 
-  UserGroupIcon, 
+import {
+  UserGroupIcon,
   ChatBubbleLeftIcon,
   CheckCircleIcon,
   ClockIcon,
-  XCircleIcon 
+  XCircleIcon
 } from '@heroicons/react/24/outline';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -22,12 +22,22 @@ const STATUS_COLORS = {
   offline: 'bg-gray-400',
 };
 
+const membersCache = {};
+
 export function PeoplePanel({ workspaceId, currentUserId }) {
-  const [members, setMembers] = useState([]);
+  const [members, setMembers] = useState(() => membersCache[workspaceId]?.data || []);
   const [activeSessions, setActiveSessions] = useState([]);
 
   const loadMembers = useCallback(async () => {
     if (!workspaceId) return;
+
+    // Use cache if available and fresh (e.g., < 5 minutes)
+    const cached = membersCache[workspaceId];
+    if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) {
+      setMembers(cached.data);
+      // We can still fetch in background if needed, but for now trust cache to save bills
+    }
+
     const { data, error } = await supabase
       .from('workspace_members')
       .select('*, profiles(id, email, display_name, avatar_url)')
@@ -35,6 +45,11 @@ export function PeoplePanel({ workspaceId, currentUserId }) {
 
     if (!error && data) {
       setMembers(data);
+      // Update cache
+      membersCache[workspaceId] = {
+        data,
+        timestamp: Date.now()
+      };
     }
   }, [workspaceId]);
 
@@ -50,32 +65,6 @@ export function PeoplePanel({ workspaceId, currentUserId }) {
       setActiveSessions(data);
     }
   }, [workspaceId]);
-
-  const updatePresence = useCallback(async () => {
-    if (!workspaceId || !currentUserId) return;
-    const color = `#${Math.floor(Math.random()*16777215).toString(16)}`;
-    
-    await supabase
-      .from('active_sessions')
-      .upsert({
-        user_id: currentUserId,
-        workspace_id: workspaceId,
-        color,
-        status: 'online',
-        last_seen: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id,workspace_id'
-      });
-  }, [currentUserId, workspaceId]);
-
-  const removePresence = useCallback(async () => {
-    if (!workspaceId || !currentUserId) return;
-    await supabase
-      .from('active_sessions')
-      .delete()
-      .eq('user_id', currentUserId)
-      .eq('workspace_id', workspaceId);
-  }, [currentUserId, workspaceId]);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -100,22 +89,14 @@ export function PeoplePanel({ workspaceId, currentUserId }) {
       )
       .subscribe();
 
-    const presenceInterval = setInterval(() => {
-      updatePresence();
-    }, 30000);
-
-    updatePresence();
-
     return () => {
-      channel.unsubscribe();
-      clearInterval(presenceInterval);
-      removePresence();
+      supabase.removeChannel(channel);
     };
-  }, [workspaceId, loadMembers, loadActiveSessions, updatePresence, removePresence]);
+  }, [workspaceId, loadMembers, loadActiveSessions]);
 
   const startDirectChat = useCallback(async (otherUserId) => {
     if (!currentUserId || !workspaceId) return;
-    
+
     try {
       // First, check if a direct chat room already exists
       const { data: myRooms } = await supabase
@@ -125,7 +106,7 @@ export function PeoplePanel({ workspaceId, currentUserId }) {
 
       if (myRooms && myRooms.length > 0) {
         const roomIds = myRooms.map(r => r.room_id);
-        
+
         // Get direct chat rooms in this workspace
         const { data: directRooms } = await supabase
           .from('chat_rooms')
@@ -171,7 +152,7 @@ export function PeoplePanel({ workspaceId, currentUserId }) {
         alert(`Failed to create chat room: ${createError?.message || 'Unknown error'}`);
         return;
       }
-      
+
       console.log('Chat room created successfully:', newRoom);
 
       // Add both users as members
@@ -197,11 +178,11 @@ export function PeoplePanel({ workspaceId, currentUserId }) {
   const getUserStatus = (userId) => {
     const session = activeSessions.find(s => s.user_id === userId);
     if (!session) return 'offline';
-    
+
     const lastSeen = new Date(session.last_seen);
     const now = new Date();
     const diffMinutes = (now - lastSeen) / 1000 / 60;
-    
+
     if (diffMinutes > 5) return 'offline';
     return session.status || 'online';
   };
@@ -221,7 +202,7 @@ export function PeoplePanel({ workspaceId, currentUserId }) {
 
   const openWorkspaceChat = useCallback(async () => {
     if (!currentUserId || !workspaceId) return;
-    
+
     try {
       // Check if workspace chat already exists
       const { data: existingRoom } = await supabase
@@ -276,7 +257,7 @@ export function PeoplePanel({ workspaceId, currentUserId }) {
     }
   }, [currentUserId, workspaceId, members]);
 
- return (
+  return (
     <div className="h-full flex flex-col bg-white dark:bg-[#1a1a1a] border-l border-gray-200 dark:border-[#2a2a2a]">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a]">
@@ -313,13 +294,14 @@ export function PeoplePanel({ workspaceId, currentUserId }) {
             const isCurrentUser = member.profiles.id === currentUserId;
 
             return (
-<div
+              <div
                 key={member.id}
                 className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-[#252525] hover:bg-gray-100 dark:hover:bg-[#2f2f2f] transition-colors border border-gray-200 dark:border-[#333333]"
               >
                 {/* Avatar */}
                 <div className="relative">
                   <Avatar className="h-10 w-10">
+                    <AvatarImage src={member.profiles.avatar_url} />
                     <AvatarFallback className="bg-gray-500 dark:bg-gray-600 text-white">
                       {member.profiles.email?.charAt(0).toUpperCase()}
                     </AvatarFallback>
@@ -331,31 +313,29 @@ export function PeoplePanel({ workspaceId, currentUserId }) {
                 </div>
 
                 {/* Info */}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0  ">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] truncate">
                       {member.profiles.display_name || member.profiles.email}
                     </p>
-                    {isCurrentUser && (
-                      <Badge variant="outline" className="text-xs text-gray-900 dark:text-[#e7e7e7]">You</Badge>
-                    )}
+
                   </div>
                   <div className="flex items-center gap-1 mt-0.5">
                     {getStatusIcon(status)}
                     <p className="text-xs text-gray-600 dark:text-gray-400 capitalize">
                       {status}
                     </p>
-                    {member.role && (
-                      <>
-                        <span className="text-gray-600 dark:text-gray-400">•</span>
-                        <Badge variant="secondary" className="text-xs h-4 px-1 bg-gray-200 dark:bg-[#2a2a2a] text-gray-900 dark:text-[#e7e7e7]">
-                          {member.role}
-                        </Badge>
-                      </>
-                    )}
+
                   </div>
                 </div>
+                {member.role && (
+                  <>
 
+                    <Badge variant="secondary" className="capitalize text-xs h-4 p-2.5 ml-auto bg-gray-200 dark:bg-zinc-600 text-gray-900 dark:text-[#e7e7e7]">
+                      {member.role}
+                    </Badge>
+                  </>
+                )}
                 {/* Actions */}
                 {!isCurrentUser && (
                   <Button

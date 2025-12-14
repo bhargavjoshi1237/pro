@@ -57,10 +57,10 @@ export default function MobileUserMenu({ user, onSettingsClick }) {
             {showMenu && (
                 <>
                     <div
-                        className="fixed inset-0 z-40"
+                        className="fixed inset-0 z-50"
                         onClick={() => setShowMenu(false)}
                     />
-                    <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-[#212121] rounded-lg shadow-xl border border-gray-200 dark:border-[#2a2a2a] z-50">
+                    <div className="fixed top-16 right-4 w-56 bg-white dark:bg-[#212121] rounded-lg shadow-xl border border-gray-200 dark:border-[#2a2a2a] z-50">
                         <div className="p-3 border-b border-gray-200 dark:border-[#2a2a2a]">
                             <p className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] truncate">
                                 {user?.email}

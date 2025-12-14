@@ -142,31 +142,48 @@ function LandingContent() {
 
         {/* CTA Section */}
         <section className="relative z-10 py-32 px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            {/* CTA Label */}
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span className="text-sm font-semibold tracking-widest uppercase text-gray-500 dark:text-gray-400">CTA</span>
-            </div>
-
-            {/* Heading */}
-            <h2 className="text-5xl md:text-7xl font-bold mb-8 text-gray-900 dark:text-white leading-tight">
-              READY TO TRANSFORM <br />
-              <span className="text-gray-400 dark:text-gray-600">YOUR BUSINESS?</span>
-            </h2>
-
-            {/* Subtext */}
-            <p className="text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto">
-              Let's talk about how we can help you achieve your goals.
-            </p>
-
-            {/* Button */}
-            <button className="inline-flex items-center gap-3 px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-full font-semibold text-lg transition-all hover:scale-105 group">
-              Book A Consultation
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                <ArrowRightIcon className="w-4 h-4 text-white -rotate-45 group-hover:rotate-0 transition-transform" />
+          <div className="max-w-5xl mx-auto">
+            <div className="relative overflow-hidden rounded-3xl bg-gray-900 dark:bg-black border border-gray-800 dark:border-[#333] p-12 md:p-24 text-center">
+              {/* Background Effects */}
+              <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-blue-500/10 blur-[100px] rounded-full mix-blend-screen"></div>
+                <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-purple-500/10 blur-[100px] rounded-full mix-blend-screen"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px] opacity-50"></div>
               </div>
-            </button>
+
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-8">
+                  <SparklesIcon className="w-4 h-4" />
+                  <span>Start for free today</span>
+                </div>
+
+                <h2 className="text-4xl md:text-6xl font-bold mb-6 text-white tracking-tight leading-tight">
+                  Unleash your potential. <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+                    Write your masterpiece.
+                  </span>
+                </h2>
+
+                <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl">
+                  Join thousands of writers who are already using Prodigy to organize their ideas and write better stories, faster.
+                </p>
+
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <button
+                    onClick={() => router.push(isLoggedIn ? '/dashboard' : '/login')}
+                    className="group relative px-8 py-4 bg-white text-gray-900 rounded-full font-bold text-lg hover:bg-gray-100 transition-all hover:scale-105 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
+                  >
+                    <span className="flex items-center gap-2">
+                      Get Started Free
+                      <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </button>
+                  <button className="px-8 py-4 bg-transparent border border-gray-700 text-gray-300 rounded-full font-semibold text-lg hover:bg-gray-800 hover:text-white transition-all">
+                    View Demo
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

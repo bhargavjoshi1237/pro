@@ -7,6 +7,7 @@ import {
     closestCorners,
     KeyboardSensor,
     PointerSensor,
+    TouchSensor,
     useSensor,
     useSensors,
     defaultDropAnimationSideEffects,
@@ -70,7 +71,13 @@ export default function KanbanBoard({ board, workspaceId, onClose }) {
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 10, // 10px movement before drag starts
+                distance: 10,
+            },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 250, // Press and hold for 250ms to pick up (prevents scroll conflict)
+                tolerance: 5,
             },
         }),
         useSensor(KeyboardSensor, {
@@ -220,6 +227,8 @@ export default function KanbanBoard({ board, workspaceId, onClose }) {
                                     column={col}
                                     cards={cards.filter(c => c.column_id === col.id).sort((a, b) => a.position - b.position)}
                                     workspaceId={workspaceId}
+                                    allColumns={columns}
+                                    moveCard={moveCard}
                                 />
                             ))}
                         </SortableContext>

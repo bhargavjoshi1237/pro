@@ -135,19 +135,6 @@ export function AIAssistantPanel({ workspaceId, currentUserId }) {
 
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
-          {/* System Prompt */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-              System Prompt
-            </label>
-            <Textarea
-              value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
-              placeholder="You are a helpful writing assistant..."
-              className="min-h-[80px] bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a]"
-            />
-          </div>
-
           {/* Content */}
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">

@@ -24,13 +24,17 @@ export default function WorkspaceMembers({ workspaceId }) {
   useEffect(() => {
     if (!supabase || !workspaceId || !currentUser) return;
 
-    // Load initial active sessions
+    // Load initial active sessions with profiles
     const loadActiveSessions = async () => {
       const { data, error } = await supabase
         .from('active_sessions')
         .select(`
           *,
-          profiles(email, display_name, avatar_url)
+          profiles (
+            email,
+            display_name,
+            avatar_url
+          )
         `)
         .eq('workspace_id', workspaceId)
         .neq('user_id', currentUser.id);
@@ -94,26 +98,19 @@ export default function WorkspaceMembers({ workspaceId }) {
 
   return (
     <div className="border-t border-gray-200 dark:border-[#2a2a2a] px-3 py-3">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-end mb-2 ">
         <h4 className="text-[10px] font-semibold text-gray-500 dark:text-gray-500 uppercase">
           Active ({activeSessions.length})
         </h4>
       </div>
-      
-      <div className="flex items-center -space-x-2">
+
+      <div className="flex justify-end -space-x-2 ">
         <TooltipProvider>
           {activeSessions.slice(0, 5).map((session) => (
             <Tooltip key={session.id}>
               <TooltipTrigger asChild>
-                <div
-                  className="relative"
-                  style={{
-                    borderColor: session.color,
-                    borderWidth: '2px',
-                    borderRadius: '50%',
-                  }}
-                >
-                  <Avatar className="w-7 h-7 border-2 border-white dark:border-[#191919]">
+                <div className="relative">
+                  <Avatar className="w-10 h-10 border-2 border-white dark:border-[#191919]">
                     {session.profiles?.avatar_url ? (
                       <img
                         src={session.profiles.avatar_url}
@@ -123,7 +120,7 @@ export default function WorkspaceMembers({ workspaceId }) {
                     ) : (
                       <AvatarFallback
                         className="text-white text-xs font-semibold"
-                        style={{ backgroundColor: session.color }}
+                        style={{ backgroundColor: session.color || '#3b82f6' }}
                       >
                         {getInitials(session.profiles?.email, session.profiles?.display_name)}
                       </AvatarFallback>
@@ -132,19 +129,19 @@ export default function WorkspaceMembers({ workspaceId }) {
                   {/* Active indicator */}
                   <div
                     className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#191919]"
-                    style={{ backgroundColor: session.color }}
+                    style={{ backgroundColor: session.color || '#3b82f6' }}
                   />
                 </div>
               </TooltipTrigger>
               <TooltipContent side="right">
                 <p className="text-xs font-medium">
-                  {session.profiles?.display_name || session.profiles?.email}
+                  {session.profiles?.display_name || session.profiles?.email || 'Unknown User'}
                 </p>
                 <p className="text-xs text-gray-400">Active in workspace</p>
               </TooltipContent>
             </Tooltip>
           ))}
-          
+
           {activeSessions.length > 5 && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -158,7 +155,7 @@ export default function WorkspaceMembers({ workspaceId }) {
                 <div className="space-y-1 max-h-48 overflow-y-auto">
                   {activeSessions.slice(5).map((session) => (
                     <p key={session.id} className="text-xs">
-                      {session.profiles?.display_name || session.profiles?.email}
+                      {session.profiles?.display_name || session.profiles?.email || 'Unknown User'}
                     </p>
                   ))}
                 </div>

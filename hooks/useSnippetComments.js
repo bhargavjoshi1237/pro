@@ -12,28 +12,18 @@ export function useSnippetComments(snippetId, userId) {
       if (!supabase || !userId) return;
 
       try {
-        // Try to get from profiles first
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, email, full_name')
-          .eq('id', userId)
-          .single();
-
-        if (!error && data) {
-          setUsers(prev => ({ ...prev, [data.id]: data }));
-        } else {
-          // Fallback: try to get from auth.users metadata
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user && user.id === userId) {
-            setUsers(prev => ({ 
-              ...prev, 
-              [user.id]: { 
-                id: user.id, 
-                email: user.email,
-                full_name: user.user_metadata?.full_name || user.email?.split('@')[0]
-              } 
-            }));
-          }
+        // Profile fetching disabled
+        // Fallback: try to get from auth.users metadata
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && user.id === userId) {
+          setUsers(prev => ({
+            ...prev,
+            [user.id]: {
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || user.email?.split('@')[0]
+            }
+          }));
         }
       } catch (error) {
         console.error('Error loading current user:', error);
@@ -56,13 +46,14 @@ export function useSnippetComments(snippetId, userId) {
           .order('created_at', { ascending: true });
 
         if (error) throw error;
-        
-        // Fetch user data for all unique user IDs
+
+        // Profile fetching disabled
+        /*
         if (data && data.length > 0) {
           const userIds = [...new Set(data.map(c => c.user_id))];
           const { data: userData, error: userError } = await supabase
             .from('profiles')
-            .select('id, email, full_name')
+            .select('id, email, full_name, avatar_url')
             .in('id', userIds);
 
           if (!userError && userData) {
@@ -77,7 +68,8 @@ export function useSnippetComments(snippetId, userId) {
             console.warn('Could not fetch user profiles:', userError);
           }
         }
-        
+        */
+
         setComments(data || []);
       } catch (error) {
         console.error('Error loading comments:', error);
@@ -132,19 +124,21 @@ export function useSnippetComments(snippetId, userId) {
       // Immediately add the comment to the local state with user data
       if (data) {
         setComments(prev => [...prev, data]);
-        
-        // Ensure current user is in users map
+
+        // Profile fetching disabled
+        /*
         if (!users[userId]) {
           const { data: userData } = await supabase
             .from('profiles')
-            .select('id, email, full_name')
+            .select('id, email, full_name, avatar_url')
             .eq('id', userId)
             .single();
-          
+
           if (userData) {
             setUsers(prev => ({ ...prev, [userData.id]: userData }));
           }
         }
+        */
       }
 
       return data;

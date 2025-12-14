@@ -11,7 +11,11 @@ import { CardEditModal } from './CardEditModal';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { format } from 'date-fns';
 
-export function KanbanCard({ card, workspaceId, isOverlay }) {
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useRef, useCallback } from 'react';
+
+export function KanbanCard({ card, workspaceId, isOverlay, allColumns, moveCard }) {
     const {
         setNodeRef,
         attributes,
@@ -38,6 +42,43 @@ export function KanbanCard({ card, workspaceId, isOverlay }) {
     const [isHovered, setIsHovered] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isShiftOpen, setIsShiftOpen] = useState(false);
+
+    // Long press logic
+    const longPressTimerRef = useRef(null);
+    const isLongPressRef = useRef(false);
+
+    const handleTouchStart = useCallback(() => {
+        isLongPressRef.current = false;
+        longPressTimerRef.current = setTimeout(() => {
+            isLongPressRef.current = true;
+            setIsShiftOpen(true);
+            if (navigator.vibrate) navigator.vibrate(50);
+        }, 800); // 800ms long press
+    }, []);
+
+    const handleTouchEnd = useCallback(() => {
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+        }
+    }, []);
+
+    const handleTouchMove = useCallback(() => {
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+        }
+    }, []);
+
+    const handleShiftCard = async (targetColumnId) => {
+        if (!moveCard) return;
+        try {
+            // Move to top of target column (index 0)
+            await moveCard(card.id, card.column_id, targetColumnId, 0);
+            setIsShiftOpen(false);
+        } catch (error) {
+            console.error('Failed to move card:', error);
+        }
+    };
 
     if (isDragging) {
         return (
@@ -62,8 +103,15 @@ export function KanbanCard({ card, workspaceId, isOverlay }) {
                 {...listeners}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                onClick={() => setIsEditOpen(true)}
-                className="bg-white dark:bg-[#212121] p-4 rounded-lg shadow-sm border border-gray-200 dark:border-[#2a2a2a] cursor-grab active:cursor-grabbing hover:shadow-md transition-all group relative flex flex-col gap-3"
+                onClick={(e) => {
+                    if (!isLongPressRef.current) {
+                        setIsEditOpen(true);
+                    }
+                }}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                onTouchMove={handleTouchMove}
+                className="bg-white dark:bg-[#212121] p-4 rounded-lg shadow-sm border border-gray-200 dark:border-[#2a2a2a] cursor-grab active:cursor-grabbing hover:shadow-md transition-all group relative flex flex-col gap-3 touch-manipulation"
             >
                 {/* Top Right: Tags & Entities */}
                 <div className="flex flex-wrap gap-1 justify-end">
@@ -162,6 +210,29 @@ export function KanbanCard({ card, workspaceId, isOverlay }) {
                 title="Delete Card"
                 description="Are you sure you want to delete this card? This action cannot be undone."
             />
+
+            <Dialog open={isShiftOpen} onOpenChange={setIsShiftOpen}>
+                <DialogContent className="sm:max-w-[425px] bg-white dark:bg-[#1e1e1e] border-gray-200 dark:border-[#333]">
+                    <DialogHeader>
+                        <DialogTitle className="text-gray-900 dark:text-[#e7e7e7]">Move Card to Column</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-2 py-4">
+                        {allColumns?.filter(col => col.id !== card.column_id).map(col => (
+                            <Button
+                                key={col.id}
+                                variant="outline"
+                                className="w-full justify-start text-left dark:border-[#333] dark:text-gray-200 dark:hover:bg-[#2a2a2a]"
+                                onClick={() => handleShiftCard(col.id)}
+                            >
+                                {col.title}
+                            </Button>
+                        ))}
+                        {allColumns?.filter(col => col.id !== card.column_id).length === 0 && (
+                            <div className="text-center text-gray-500 py-4">No other columns available</div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from '@/components/ui/badge';
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useEntities } from '@/hooks/useEntities';
@@ -77,7 +78,7 @@ export function CardEditModal({ card, isOpen, onClose, onUpdate, workspaceId }) 
                     <DialogTitle className="text-gray-900 dark:text-[#e7e7e7]">Edit Card</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
                         <Input
                             value={title}
@@ -86,7 +87,7 @@ export function CardEditModal({ card, isOpen, onClose, onUpdate, workspaceId }) 
                         />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
                         <Textarea
                             value={description}
@@ -95,20 +96,27 @@ export function CardEditModal({ card, isOpen, onClose, onUpdate, workspaceId }) 
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-4">
+                        <div className="flex flex-col gap-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
-                            <Select value={priority} onValueChange={setPriority}>
-                                <SelectTrigger className="bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a]">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-white dark:bg-[#1c1c1c] border-gray-200 dark:border-[#333]">
-                                    <SelectItem value="low">Low</SelectItem>
-                                    <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="high">High</SelectItem>
-                                    <SelectItem value="urgent">Urgent</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <RadioGroup value={priority} onValueChange={setPriority} className="flex flex-row gap-4 pt-2">
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="low" id="priority-low" />
+                                    <Label htmlFor="priority-low">Low</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="medium" id="priority-medium" />
+                                    <Label htmlFor="priority-medium">Medium</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="high" id="priority-high" />
+                                    <Label htmlFor="priority-high">High</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="urgent" id="priority-urgent" />
+                                    <Label htmlFor="priority-urgent">Urgent</Label>
+                                </div>
+                            </RadioGroup>
                         </div>
                     </div>
 
@@ -192,7 +200,7 @@ export function CardEditModal({ card, isOpen, onClose, onUpdate, workspaceId }) 
                     <DialogClose asChild>
                         <Button variant="outline" className="bg-transparent border-gray-300 dark:border-[#333] text-gray-700 dark:text-gray-300">Cancel</Button>
                     </DialogClose>
-                    <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white">Save Changes</Button>
+                    <Button onClick={handleSave} className="bg-zinc-600 hover:bg-zinc-400 dark:bg-white dark:hover:text-white dark:hover:bg-zinc-500 text-white dark:text-black">Save Changes</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

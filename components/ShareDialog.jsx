@@ -10,15 +10,15 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { 
-  LinkIcon, 
-  TrashIcon, 
-  CheckIcon, 
-  ClipboardIcon, 
-  GlobeAltIcon, 
-  EnvelopeIcon, 
-  LockClosedIcon, 
-  PencilSquareIcon, 
+import {
+  LinkIcon,
+  TrashIcon,
+  CheckIcon,
+  ClipboardIcon,
+  GlobeAltIcon,
+  EnvelopeIcon,
+  LockClosedIcon,
+  PencilSquareIcon,
   XMarkIcon,
   PlusIcon,
   EyeIcon,
@@ -73,7 +73,7 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
   const handleAddEmail = () => {
     const email = emailInput.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
+
     if (email && emailRegex.test(email) && !allowedEmails.includes(email)) {
       setAllowedEmails([...allowedEmails, email]);
       setEmailInput('');
@@ -200,18 +200,18 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
 
         <Tabs defaultValue="create" value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-[#2a2a2a] p-0.5 rounded-lg">
-            <TabsTrigger 
-              value="create" 
-              className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#191919] data-[state=active]:shadow-sm rounded-md transition-all text-gray-700 dark:text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-[#e7e7e7]"
+            <TabsTrigger
+              value="create"
+              className="border-none data-[state=active]:bg-white dark:data-[state=active]:bg-[#191919] data-[state=active]:shadow-sm rounded-md transition-all text-gray-700 dark:text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-[#e7e7e7]"
             >
               <span className="flex items-center gap-1.5 text-xs font-medium">
                 <PlusIcon className="w-3.5 h-3.5" />
                 New Share
               </span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="links" 
-              className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#191919] data-[state=active]:shadow-sm rounded-md transition-all text-gray-700 dark:text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-[#e7e7e7]"
+            <TabsTrigger
+              value="links"
+              className="border-none data-[state=active]:bg-white dark:data-[state=active]:bg-[#191919] data-[state=active]:shadow-sm rounded-md transition-all text-gray-700 dark:text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-[#e7e7e7]"
             >
               <span className="flex items-center gap-1.5 text-xs font-medium">
                 <LinkIcon className="w-3.5 h-3.5" />
@@ -230,11 +230,10 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   onClick={() => setShareType('public')}
-                  className={`p-3 border rounded-lg transition-all duration-200 text-left ${
-                    shareType === 'public'
-                      ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-[#212121]'
-                      : 'border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#333] bg-white dark:bg-[#191919]'
-                  }`}
+                  className={`p-3 border rounded-lg transition-all duration-200 text-left ${shareType === 'public'
+                    ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-[#212121]'
+                    : 'border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#333] bg-white dark:bg-[#191919]'
+                    }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <div className={`p-1.5 rounded-md ${shareType === 'public' ? 'bg-gray-200 dark:bg-[#2a2a2a]' : 'bg-gray-100 dark:bg-[#212121]'}`}>
@@ -250,11 +249,10 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
                 </button>
                 <button
                   onClick={() => setShareType('email')}
-                  className={`p-3 border rounded-lg transition-all duration-200 text-left ${
-                    shareType === 'email'
-                      ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-[#212121]'
-                      : 'border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#333] bg-white dark:bg-[#191919]'
-                  }`}
+                  className={`p-3 border rounded-lg transition-all duration-200 text-left ${shareType === 'email'
+                    ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-[#212121]'
+                    : 'border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#333] bg-white dark:bg-[#191919]'
+                    }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <div className={`p-1.5 rounded-md ${shareType === 'email' ? 'bg-gray-200 dark:bg-[#2a2a2a]' : 'bg-gray-100 dark:bg-[#212121]'}`}>
@@ -288,8 +286,8 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
                     onKeyDown={(e) => e.key === 'Enter' && handleAddEmail()}
                     className="flex-1 text-sm bg-white dark:bg-[#191919] border-gray-300 dark:border-[#2a2a2a] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 text-gray-900 dark:text-[#e7e7e7]"
                   />
-                  <Button 
-                    onClick={handleAddEmail} 
+                  <Button
+                    onClick={handleAddEmail}
                     variant="secondary"
                     className="bg-gray-200 hover:bg-gray-300 dark:bg-[#2a2a2a] dark:hover:bg-[#303030] text-gray-700 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] text-xs"
                   >
@@ -333,11 +331,10 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   onClick={() => setAccessLevel('view')}
-                  className={`p-3 border rounded-lg transition-all duration-200 text-left ${
-                    accessLevel === 'view'
-                      ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-[#212121]'
-                      : 'border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#333] bg-white dark:bg-[#191919]'
-                  }`}
+                  className={`p-3 border rounded-lg transition-all duration-200 text-left ${accessLevel === 'view'
+                    ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-[#212121]'
+                    : 'border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#333] bg-white dark:bg-[#191919]'
+                    }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <div className={`p-1.5 rounded-md ${accessLevel === 'view' ? 'bg-gray-200 dark:bg-[#2a2a2a]' : 'bg-gray-100 dark:bg-[#212121]'}`}>
@@ -353,11 +350,10 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
                 </button>
                 <button
                   onClick={() => setAccessLevel('edit')}
-                  className={`p-3 border rounded-lg transition-all duration-200 text-left ${
-                    accessLevel === 'edit'
-                      ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-[#212121]'
-                      : 'border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#333] bg-white dark:bg-[#191919]'
-                  }`}
+                  className={`p-3 border rounded-lg transition-all duration-200 text-left ${accessLevel === 'edit'
+                    ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-[#212121]'
+                    : 'border-gray-200 dark:border-[#2a2a2a] hover:border-gray-300 dark:hover:border-[#333] bg-white dark:bg-[#191919]'
+                    }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <div className={`p-1.5 rounded-md ${accessLevel === 'edit' ? 'bg-gray-200 dark:bg-[#2a2a2a]' : 'bg-gray-100 dark:bg-[#212121]'}`}>
@@ -437,12 +433,11 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                          <Badge variant={share.share_type === 'public' ? 'default' : 'secondary'} 
-                            className={`text-[10px] font-medium px-2 py-0.5 ${
-                              share.share_type === 'public' 
-                                ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-[#333]' 
-                                : 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-[#333]'
-                            }`}
+                          <Badge variant={share.share_type === 'public' ? 'default' : 'secondary'}
+                            className={`text-[10px] font-medium px-2 py-0.5 ${share.share_type === 'public'
+                              ? 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-[#333]'
+                              : 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-[#333]'
+                              }`}
                           >
                             {share.share_type === 'public' ? (
                               <>
@@ -456,7 +451,7 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
                               </>
                             )}
                           </Badge>
-                          <Badge variant="outline" 
+                          <Badge variant="outline"
                             className="text-[10px] border px-2 py-0.5 border-gray-200 dark:border-[#2a2a2a] text-gray-600 dark:text-gray-400 bg-white dark:bg-[#191919]"
                           >
                             {share.access_level === 'view' ? (
@@ -472,14 +467,14 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
                             )}
                           </Badge>
                         </div>
-                        
+
                         {share.share_type === 'email' && share.allowed_emails?.length > 0 && (
                           <div className="mb-1.5">
                             <p className="text-[10px] text-gray-500 dark:text-gray-500 mb-1 font-medium">Allowed emails:</p>
                             <div className="flex flex-wrap gap-1">
                               {share.allowed_emails.map(email => (
-                                <span 
-                                  key={email} 
+                                <span
+                                  key={email}
                                   className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 rounded"
                                 >
                                   {email}
@@ -577,15 +572,15 @@ export function ShareDialog({ isOpen, onClose, itemId, itemType, itemTitle, work
                     <div className="pt-2.5 border-t border-gray-200 dark:border-[#2a2a2a]">
                       <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-500">
                         <CalendarIcon className="w-3 h-3" />
-                        <span>Created {new Date(share.created_at).toLocaleDateString('en-US', { 
-                          month: 'short', 
+                        <span>Created {new Date(share.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
                           day: 'numeric',
                           year: 'numeric'
                         })}</span>
                         <span className="text-gray-300 dark:text-gray-600">•</span>
-                        <span>{new Date(share.created_at).toLocaleTimeString([], { 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
+                        <span>{new Date(share.created_at).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit'
                         })}</span>
                       </div>
                     </div>
