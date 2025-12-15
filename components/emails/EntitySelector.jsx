@@ -76,15 +76,16 @@ export function EntitySelector({
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className="w-full justify-between bg-background text-foreground border-input"
+                        className="w-full justify-between mt-4"
                         disabled={disabled}
+                        style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}
                     >
                         {value || placeholder}
                         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0 bg-popover text-popover-foreground border-input">
-                    <Command>
+                <PopoverContent className="w-[300px] p-0" style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
+                    <Command style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)' }}>
                         <CommandInput
                             placeholder={`Search ${type}...`}
                             value={searchQuery}
@@ -101,7 +102,7 @@ export function EntitySelector({
                                         onClick={() => setShowCreateDialog(true)}
                                     >
                                         <PlusIcon className="mr-2 h-4 w-4" />
-                                        Create "{searchQuery || 'New'}"
+                                        Create &quot;{searchQuery || 'New'}&quot;
                                     </Button>
                                 </div>
                             </CommandEmpty>
@@ -114,7 +115,7 @@ export function EntitySelector({
                                             onChange(currentValue === value ? "" : currentValue);
                                             setOpen(false);
                                         }}
-                                        className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                                        className="cursor-pointer"
                                     >
                                         <CheckIcon
                                             className={cn(
@@ -150,7 +151,7 @@ export function EntitySelector({
             </Popover>
 
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-                <DialogContent className="bg-background border-border text-foreground">
+                <DialogContent style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
                     <DialogHeader>
                         <DialogTitle>Create New {type}</DialogTitle>
                         <DialogDescription>
@@ -165,7 +166,7 @@ export function EntitySelector({
                                 value={newEntityName}
                                 onChange={(e) => setNewEntityName(e.target.value)}
                                 placeholder={`e.g., ${type === 'Role' ? 'Manager' : 'Boss'}`}
-                                className="bg-background border-input"
+                                style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}
                             />
                         </div>
                         <div className="grid gap-2">
@@ -175,7 +176,7 @@ export function EntitySelector({
                                 value={newEntityContext}
                                 onChange={(e) => setNewEntityContext(e.target.value)}
                                 placeholder="Add extra context about this entity (e.g., 'Strict but fair', 'Always busy'). This will be used as background info."
-                                className="bg-background border-input"
+                                style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}
                             />
                             <p className="text-xs text-muted-foreground">
                                 Note: This context will have low relevance compared to your specific email goal.
@@ -183,10 +184,10 @@ export function EntitySelector({
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="border-border">
+                        <Button variant="outline" onClick={() => setShowCreateDialog(false)} style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
                             Cancel
                         </Button>
-                        <Button onClick={handleCreate} disabled={!newEntityName.trim() || creating} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                        <Button onClick={handleCreate} disabled={!newEntityName.trim() || creating}>
                             {creating ? 'Creating...' : 'Create'}
                         </Button>
                     </DialogFooter>

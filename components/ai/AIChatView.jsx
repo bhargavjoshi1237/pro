@@ -146,6 +146,7 @@ export function AIChatView({ userId, messages, setMessages, aiSettings }) {
           <div className="p-6 min-h-full">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
+                <br />  <br />
                 <div className="p-4 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 rounded-full mb-4">
                   <SparklesIcon className="w-12 h-12 text-purple-600 dark:text-purple-400" />
                 </div>

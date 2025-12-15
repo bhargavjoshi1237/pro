@@ -9,33 +9,29 @@ import {
   UsersIcon,
   SparklesIcon,
   HomeIcon,
-  Cog6ToothIcon,
-  ArrowRightOnRectangleIcon,
   MoonIcon,
   SunIcon,
   ChevronRightIcon,
   TrashIcon,
   EnvelopeIcon,
+  Bars3Icon,
 } from '@heroicons/react/24/outline';
-import { LoadingPage } from '@/components/LoadingSpinner';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import ShareWorkspaceDialog from '@/components/workspace/ShareWorkspaceDialog';
 import MemberAvatars from '@/components/workspace/MemberAvatars';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import CommandPalette from '@/components/CommandPalette';
-// import { NotificationCenter } from '@/components/notifications/NotificationCenter'; // Disabled
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
-import { ChatDrawer } from '@/components/chat/ChatDrawer';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import WorkspaceCustomization from '@/components/workspace/WorkspaceCustomization';
 import { getIconById, DEFAULT_ICON } from '@/components/workspace/WorkspaceIcons';
-
+import MobileSidebar from '@/components/layout/MobileSidebar';
 import { motion, useSpring, useTransform } from 'framer-motion';
 import { WaveBackground } from '@/components/landing/wave/WaveBackground';
 import { ToolCase } from 'lucide-react';
+import UserMenu from '@/components/layout/UserMenu';
 
-// Counter animation component
 function AnimatedCounter({ value }) {
   const spring = useSpring(0, { bounce: 0, duration: 2000 });
   const display = useTransform(spring, (current) => Math.round(current));
@@ -67,6 +63,7 @@ function DashboardContent() {
   const [totalCollaborators, setTotalCollaborators] = useState(0);
   const [totalSnippets, setTotalSnippets] = useState(0);
   const [openingWorkspaceId, setOpeningWorkspaceId] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const loadWorkspaces = async (userId) => {
@@ -368,7 +365,14 @@ function DashboardContent() {
 
           {/* Main Content Skeleton */}
           <div className="flex-1 overflow-auto relative z-10">
-            <div className="bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border-b border-gray-200 dark:border-[#2a2a2a] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            {/* Mobile Header Skeleton */}
+            <div className="lg:hidden sticky top-0 bg-white/95 dark:bg-[#181818]/95 backdrop-blur-md border-b border-gray-200 dark:border-[#2a2a2a] px-3 py-2.5 flex items-center justify-between z-20">
+              <div className="w-8 h-8 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg animate-pulse" />
+              <div className="w-20 h-5 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
+              <div className="w-8 h-8 bg-gray-200 dark:bg-[#2a2a2a] rounded-lg animate-pulse" />
+            </div>
+
+            <div className="hidden lg:block bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border-b border-gray-200 dark:border-[#2a2a2a] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
               <div className="w-48 h-8 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse mb-2" />
               <div className="w-64 h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded animate-pulse" />
             </div>
@@ -459,10 +463,6 @@ function DashboardContent() {
 
         {/* Command Palette */}
         <CommandPalette workspaces={workspaces} />
-
-        {/* Chat Drawer */}
-        {user && <ChatDrawer userId={user.id} />}
-
         {/* Sidebar */}
         <div className="hidden lg:flex lg:w-64 bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border-r border-gray-200 dark:border-[#2a2a2a] flex-col relative z-10">
           {/* Logo with Theme Toggle */}
@@ -513,10 +513,40 @@ function DashboardContent() {
           </nav>
         </div>
 
+        {/* Mobile Navigation Drawer */}
+        <MobileSidebar
+          open={mobileMenuOpen}
+          setOpen={setMobileMenuOpen}
+          user={user}
+          userProfile={userProfile}
+        />
+
         {/* Main Content */}
-        <div className="flex-1 overflow-auto relative z-10">
+        <div className="flex-1 overflow-auto relative z-10 pb-14 lg:pb-0">
+          {/* Mobile Header Bar */}
+          <div className="lg:hidden sticky top-0 bg-white/95 dark:bg-[#181818]/95 backdrop-blur-md border-b border-gray-200 dark:border-[#2a2a2a] px-3 py-2.5 flex items-center justify-between z-20">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+            >
+              <Bars3Icon className="w-5 h-5 text-gray-900 dark:text-[#e7e7e7]" />
+            </button>
+
+            <div className="flex items-center">
+              <SparklesIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            </div>
+
+            <button
+              onClick={() => setShowNewWorkspace(true)}
+              className="p-1.5 -mr-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+              aria-label="Create workspace"
+            >
+              <PlusIcon className="w-5 h-5 text-gray-900 dark:text-[#e7e7e7]" />
+            </button>
+          </div>
+
           {/* Header */}
-          <div className="bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border-b border-gray-200 dark:border-[#2a2a2a] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="hidden lg:block bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border-b border-gray-200 dark:border-[#2a2a2a] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <div className="flex items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-[#e7e7e7] truncate">All Workspaces</h1>
@@ -764,71 +794,11 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* User Menu - Bottom Left */}
-        <div className="absolute bottom-4 left-4 z-10">
-          <button
-            onClick={() => setShowUserMenu(!showUserMenu)}
-            className="w-10 h-10 rounded-full bg-[#e7e7e7] dark:bg-[#282828] hover:bg-gray-300 dark:hover:bg-[#383838] border border-gray-300 dark:border-[#383838] text-gray-900 dark:text-[#e7e7e7] flex items-center justify-center font-semibold shadow-lg transition-colors overflow-hidden"
-          >
-            {userProfile?.avatar_url ? (
-              <img
-                src={userProfile.avatar_url}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              user?.email?.charAt(0).toUpperCase()
-            )}
-          </button>
 
-          {showUserMenu && (
-            <>
-              <div
-                className="fixed inset-0 z-20"
-                onClick={() => setShowUserMenu(false)}
-              />
-              <div className="absolute bottom-12 left-0 w-56 bg-white dark:bg-[#212121] rounded-lg shadow-xl border border-gray-200 dark:border-[#2a2a2a] z-30">
-                <div className="p-3 border-b border-gray-200 dark:border-[#2a2a2a]">
-                  <p className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7] truncate">
-                    {user?.email}
-                  </p>
-                </div>
-                <div className="py-1">
-                  <button
-                    onClick={() => {
-                      setShowSettings(true);
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
-                  >
-                    <Cog6ToothIcon className="w-4 h-4" />
-                    Settings
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    disabled={loggingOut}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loggingOut ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        Logging out...
-                      </>
-                    ) : (
-                      <>
-                        <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                        Logout
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+
+        {/* User Menu - Available on all pages */}
+        <UserMenu user={user} userProfile={userProfile} />
+
 
         {/* Settings Dialog */}
         <SettingsDialog

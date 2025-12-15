@@ -56,11 +56,12 @@ export default function EmailsPage() {
         variant_count: "1"
     });
 
-    // New State
+
     const [templates, setTemplates] = useState([]);
     const [history, setHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+    const [mobileTab, setMobileTab] = useState('input');
 
     // Entity Hook
     const { entities, createEntity } = useEntities(workspaceId);
@@ -262,6 +263,7 @@ export default function EmailsPage() {
             const data = await response.json();
             setGeneratedResult(data);
             saveToHistory(apiData, data);
+            setMobileTab('output');
             toast.success('Email generated successfully!');
 
         } catch (error) {
@@ -299,7 +301,7 @@ export default function EmailsPage() {
                                 History
                             </Button>
                         </SheetTrigger>
-                        <SheetContent className="bg-background border-border">
+                        <SheetContent>
                             <SheetHeader>
                                 <SheetTitle>Email History</SheetTitle>
                             </SheetHeader>
@@ -330,12 +332,35 @@ export default function EmailsPage() {
                 ) : (
                     <div className="flex-1 overflow-hidden p-4 sm:p-6 lg:p-8 h-full">
                         <div className="max-w-7xl mx-auto h-full flex flex-col">
+                            {/* Mobile Tabs */}
+                            <div className="lg:hidden flex border-b border-border bg-card mb-4 min-h-[48px] shrink-0">
+                                <button
+                                    onClick={() => setMobileTab('input')}
+                                    className={`flex-1 flex items-center justify-center text-sm font-medium border-b-2 transition-colors py-3 ${mobileTab === 'input'
+                                        ? 'border-primary text-primary'
+                                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                                        }`}
+                                >
+                                    Input Details
+                                </button>
+                                <button
+                                    onClick={() => setMobileTab('output')}
+                                    className={`flex-1 flex items-center justify-center text-sm font-medium border-b-2 transition-colors py-3 ${mobileTab === 'output'
+                                        ? 'border-primary text-primary'
+                                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                                        }`}
+                                >
+                                    Generated Email
+                                    {generatedResult && <span className="ml-2 w-2 h-2 rounded-full bg-green-500" />}
+                                </button>
+                            </div>
+
                             <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-0">
                                 {/* Input Form */}
-                                <div className="flex flex-col h-full overflow-hidden">
+                                <div className={`flex-col h-full overflow-hidden ${mobileTab === 'input' ? 'flex' : 'hidden'} lg:flex`}>
                                     <ScrollArea className="h-full pr-4">
                                         <div className="space-y-6 pb-6">
-                                            <div className="bg-card border border-border rounded-lg p-6">
+                                            <div className="rounded-lg p-6">
                                                 <div className="flex justify-between items-center mb-4">
                                                     <h2 className="text-lg font-medium text-foreground">Email Details</h2>
                                                     <div className="w-[200px]">
@@ -359,7 +384,8 @@ export default function EmailsPage() {
                                                             onChange={handleInputChange}
                                                             placeholder="e.g., I need to ask for a sick leave for 2 days due to fever..."
                                                             rows={4}
-                                                            className="resize-none"
+                                                            className="resize-none mt-4"
+                                                            style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}
                                                         />
                                                     </div>
 
@@ -399,6 +425,8 @@ export default function EmailsPage() {
                                                             value={formData.goal}
                                                             onChange={handleInputChange}
                                                             placeholder="e.g., Request leave, Apologize for delay"
+                                                            className="mt-4"
+                                                            style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}
                                                         />
                                                     </div>
 
@@ -409,10 +437,10 @@ export default function EmailsPage() {
                                                                 value={formData.tone}
                                                                 onValueChange={(val) => handleValueChange('tone', val)}
                                                             >
-                                                                <SelectTrigger className="w-full">
+                                                                <SelectTrigger className="w-full mt-4" style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
                                                                     <SelectValue placeholder="Select tone" />
                                                                 </SelectTrigger>
-                                                                <SelectContent>
+                                                                <SelectContent style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
                                                                     <SelectItem value="formal">Formal</SelectItem>
                                                                     <SelectItem value="neutral">Neutral</SelectItem>
                                                                     <SelectItem value="friendly">Friendly</SelectItem>
@@ -427,10 +455,10 @@ export default function EmailsPage() {
                                                                 value={formData.length}
                                                                 onValueChange={(val) => handleValueChange('length', val)}
                                                             >
-                                                                <SelectTrigger className="w-full">
+                                                                <SelectTrigger className="w-full mt-4" style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
                                                                     <SelectValue placeholder="Select length" />
                                                                 </SelectTrigger>
-                                                                <SelectContent>
+                                                                <SelectContent style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
                                                                     <SelectItem value="short">Short</SelectItem>
                                                                     <SelectItem value="medium">Medium</SelectItem>
                                                                     <SelectItem value="long">Long</SelectItem>
@@ -446,10 +474,10 @@ export default function EmailsPage() {
                                                                 value={formData.language}
                                                                 onValueChange={(val) => handleValueChange('language', val)}
                                                             >
-                                                                <SelectTrigger className="w-full">
+                                                                <SelectTrigger className="w-full mt-4" style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
                                                                     <SelectValue placeholder="Select language" />
                                                                 </SelectTrigger>
-                                                                <SelectContent>
+                                                                <SelectContent style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
                                                                     <SelectItem value="English">English</SelectItem>
                                                                     <SelectItem value="Spanish">Spanish</SelectItem>
                                                                     <SelectItem value="French">French</SelectItem>
@@ -468,10 +496,10 @@ export default function EmailsPage() {
                                                                 value={String(formData.variant_count)}
                                                                 onValueChange={(val) => handleValueChange('variant_count', parseInt(val))}
                                                             >
-                                                                <SelectTrigger className="w-full">
+                                                                <SelectTrigger className="w-full mt-4" style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
                                                                     <SelectValue placeholder="Select variants" />
                                                                 </SelectTrigger>
-                                                                <SelectContent>
+                                                                <SelectContent style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
                                                                     <SelectItem value="1">1 Variant</SelectItem>
                                                                     <SelectItem value="2">2 Variants</SelectItem>
                                                                     <SelectItem value="3">3 Variants</SelectItem>
@@ -489,6 +517,8 @@ export default function EmailsPage() {
                                                             value={formData.deadline}
                                                             onChange={handleInputChange}
                                                             placeholder="e.g., By Friday 5 PM"
+                                                            className="mt-4"
+                                                            style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}
                                                         />
                                                     </div>
 
@@ -501,7 +531,8 @@ export default function EmailsPage() {
                                                             onChange={handleInputChange}
                                                             placeholder="- Mention the attached report&#10;- Ask for a meeting"
                                                             rows={3}
-                                                            className="resize-none"
+                                                            className="resize-none mt-4"
+                                                            style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}
                                                         />
                                                     </div>
 
@@ -515,7 +546,8 @@ export default function EmailsPage() {
                                                                 onChange={handleInputChange}
                                                                 placeholder="Paste a previous email you wrote to match your style..."
                                                                 rows={3}
-                                                                className="resize-none"
+                                                                className="resize-none mt-4"
+                                                                style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}
                                                             />
                                                         </div>
                                                     )}
@@ -544,27 +576,27 @@ export default function EmailsPage() {
                                 </div>
 
                                 {/* Output Area */}
-                                <div className="flex flex-col h-full overflow-hidden">
+                                <div className={`flex-col h-full overflow-hidden ${mobileTab === 'output' ? 'flex' : 'hidden'} lg:flex`}>
                                     <ScrollArea className="h-full pr-4">
                                         <div className="space-y-6 pb-6">
                                             {generatedResult ? (
                                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                                     {/* Summary Card */}
-                                                    <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/10 dark:to-blue-900/10 border border-purple-100 dark:border-purple-900/20 rounded-lg p-6">
-                                                        <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-100 uppercase tracking-wider mb-2">
+                                                    <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/10 dark:to-blue-900/10 border border-purple-100 dark:border-purple-900/20 rounded-lg p-6" style={{ backgroundColor: 'rgb(30, 23, 40)', borderColor: 'rgb(88, 64, 120)' }}>
+                                                        <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-100 uppercase tracking-wider mb-2" style={{ color: 'rgb(196, 181, 253)' }}>
                                                             TLDR
                                                         </h3>
-                                                        <p className="text-foreground mb-4">
+                                                        <p className="text-foreground mb-4" style={{ color: 'rgb(250, 250, 250)' }}>
                                                             {generatedResult.tldr || generatedResult.summary}
                                                         </p>
                                                         {generatedResult.action_items && generatedResult.action_items.length > 0 && (
                                                             <div>
-                                                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                                                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2" style={{ color: 'rgb(163, 163, 163)' }}>
                                                                     Action Items
                                                                 </h4>
                                                                 <ul className="list-disc list-inside space-y-1">
                                                                     {generatedResult.action_items.map((item, idx) => (
-                                                                        <li key={idx} className="text-sm text-foreground">
+                                                                        <li key={idx} className="text-sm text-foreground" style={{ color: 'rgb(250, 250, 250)' }}>
                                                                             {item}
                                                                         </li>
                                                                     ))}
@@ -575,17 +607,17 @@ export default function EmailsPage() {
 
                                                     {/* Variants */}
                                                     {generatedResult.variants.map((variant, idx) => (
-                                                        <div key={idx} className="bg-card border border-border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                                            <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30">
+                                                        <div key={idx} className="bg-card border border-border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: 'rgb(23, 23, 23)', borderColor: 'rgb(64, 64, 64)' }}>
+                                                            <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30" style={{ backgroundColor: 'rgb(30, 30, 30)', borderColor: 'rgb(64, 64, 64)' }}>
                                                                 <div>
-                                                                    <h3 className="font-semibold text-foreground">
+                                                                    <h3 className="font-semibold text-foreground" style={{ color: 'rgb(250, 250, 250)' }}>
                                                                         {variant.title || `Option ${idx + 1}`}
                                                                     </h3>
                                                                     <div className="flex gap-2 mt-1">
-                                                                        <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full capitalize">
+                                                                        <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full capitalize" style={{ backgroundColor: 'rgb(38, 38, 38)', color: 'rgb(163, 163, 163)' }}>
                                                                             {variant.tone}
                                                                         </span>
-                                                                        <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full capitalize">
+                                                                        <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full capitalize" style={{ backgroundColor: 'rgb(38, 38, 38)', color: 'rgb(163, 163, 163)' }}>
                                                                             {variant.length}
                                                                         </span>
                                                                     </div>
@@ -610,7 +642,7 @@ export default function EmailsPage() {
                                                                 </div>
                                                             </div>
                                                             <div className="p-6">
-                                                                <div className="whitespace-pre-wrap text-foreground font-sans leading-relaxed">
+                                                                <div className="whitespace-pre-wrap text-foreground font-sans leading-relaxed" style={{ color: 'rgb(250, 250, 250)' }}>
                                                                     {variant.email}
                                                                 </div>
                                                             </div>
@@ -618,14 +650,14 @@ export default function EmailsPage() {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-card border border-border border-dashed rounded-lg min-h-[400px]">
-                                                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                                                        <PaperAirplaneIcon className="w-8 h-8 text-muted-foreground" />
+                                                <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-card border border-border border-dashed rounded-lg min-h-[400px]" style={{ backgroundColor: 'rgb(23, 23, 23)', borderColor: 'rgb(64, 64, 64)' }}>
+                                                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgb(38, 38, 38)' }}>
+                                                        <PaperAirplaneIcon className="w-8 h-8 text-muted-foreground" style={{ color: 'rgb(163, 163, 163)' }} />
                                                     </div>
-                                                    <h3 className="text-lg font-medium text-foreground mb-2">
+                                                    <h3 className="text-lg font-medium text-foreground mb-2" style={{ color: 'rgb(250, 250, 250)' }}>
                                                         Ready to Generate
                                                     </h3>
-                                                    <p className="text-sm text-muted-foreground max-w-sm">
+                                                    <p className="text-sm text-muted-foreground max-w-sm" style={{ color: 'rgb(163, 163, 163)' }}>
                                                         Fill in the details on the left and click Generate to create professional emails instantly.
                                                     </p>
                                                 </div>

@@ -55,15 +55,16 @@ export function TemplateSelector({
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className="w-full justify-between bg-background text-foreground border-input"
+                        className="w-full justify-between"
                         disabled={disabled}
+                        style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}
                     >
                         Load Template...
                         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0 bg-popover text-popover-foreground border-input">
-                    <Command>
+                <PopoverContent className="w-[300px] p-0" style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
+                    <Command style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)' }}>
                         <CommandInput
                             placeholder="Search templates..."
                             value={searchQuery}
@@ -93,7 +94,7 @@ export function TemplateSelector({
                                             onSelect(template);
                                             setOpen(false);
                                         }}
-                                        className="cursor-pointer hover:bg-accent hover:text-accent-foreground flex justify-between group"
+                                        className="cursor-pointer flex justify-between group"
                                     >
                                         <span>{template.name}</span>
                                         <Button
@@ -127,7 +128,7 @@ export function TemplateSelector({
             </Popover>
 
             <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-                <DialogContent className="bg-background border-border text-foreground">
+                <DialogContent style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
                     <DialogHeader>
                         <DialogTitle>Save Template</DialogTitle>
                         <DialogDescription>
@@ -142,15 +143,15 @@ export function TemplateSelector({
                                 value={templateName}
                                 onChange={(e) => setTemplateName(e.target.value)}
                                 placeholder="e.g., Monthly Report, Sick Leave"
-                                className="bg-background border-input"
+                                style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}
                             />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowSaveDialog(false)} className="border-border">
+                        <Button variant="outline" onClick={() => setShowSaveDialog(false)} style={{ backgroundColor: 'rgb(23, 23, 23)', color: 'rgb(250, 250, 250)', borderColor: 'rgb(64, 64, 64)' }}>
                             Cancel
                         </Button>
-                        <Button onClick={handleSave} disabled={!templateName.trim()} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                        <Button onClick={handleSave} disabled={!templateName.trim()}>
                             Save
                         </Button>
                     </DialogFooter>
