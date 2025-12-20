@@ -18,9 +18,11 @@ import KanbanBoard from '@/components/kanban/KanbanBoard';
 import StoragePanel from '@/components/workspace/StoragePanel';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { UserGroupIcon, XMarkIcon, SparklesIcon, ChatBubbleLeftRightIcon, ViewColumnsIcon, FolderIcon, ChevronDoubleRightIcon, ChevronDoubleLeftIcon, PresentationChartBarIcon, Square2StackIcon } from '@heroicons/react/24/outline';
+import { UserGroupIcon, XMarkIcon, SparklesIcon, ChatBubbleLeftRightIcon, ViewColumnsIcon, FolderIcon, ChevronDoubleRightIcon, ChevronDoubleLeftIcon, PresentationChartBarIcon, Square2StackIcon, Square3Stack3DIcon } from '@heroicons/react/24/outline';
 import WhiteboardPanel from '@/components/whiteboard/WhiteboardPanel';
 import { SharedBoardsPanel } from '@/components/whiteboard/SharedBoardsPanel';
+import { NotesPanel } from '@/components/notes/NotesPanel';
+import NotesBoard from '@/components/notes/NotesBoard';
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -36,10 +38,12 @@ export default function WorkspacePage() {
   const [kanbanPanelOpen, setKanbanPanelOpen] = useState(false);
   const [storagePanelOpen, setStoragePanelOpen] = useState(false);
   const [sharedBoardsPanelOpen, setSharedBoardsPanelOpen] = useState(false);
+  const [notesPanelOpen, setNotesPanelOpen] = useState(false);
 
-  const [activeView, setActiveView] = useState('editor'); // 'editor' | 'kanban' | 'whiteboard'
+  const [activeView, setActiveView] = useState('editor'); // 'editor' | 'kanban' | 'whiteboard' | 'notes'
   const [activeBoard, setActiveBoard] = useState(null);
   const [activeWhiteboardId, setActiveWhiteboardId] = useState(null);
+  const [activeNotesBoardId, setActiveNotesBoardId] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
@@ -69,6 +73,15 @@ export default function WorkspacePage() {
     setSharedBoardsPanelOpen(false); // Optional: keep open or close? Usually close on mobile, maybe keep on desktop. Let's close for focus.
     if (window.innerWidth < 1024) {
       setSharedBoardsPanelOpen(false);
+    }
+  };
+
+  const handleOpenNotesBoard = (boardId) => {
+    setActiveNotesBoardId(boardId);
+    setActiveView('notes');
+    setNotesPanelOpen(false);
+    if (window.innerWidth < 1024) {
+      setNotesPanelOpen(false);
     }
   };
 
@@ -132,6 +145,7 @@ export default function WorkspacePage() {
         setKanbanPanelOpen(false);
         setStoragePanelOpen(false);
         setSharedBoardsPanelOpen(false);
+        setNotesPanelOpen(false);
       }
     } else if (panel === 'people') {
       setPeoplePanelOpen(!peoplePanelOpen);
@@ -141,6 +155,7 @@ export default function WorkspacePage() {
         setKanbanPanelOpen(false);
         setStoragePanelOpen(false);
         setSharedBoardsPanelOpen(false);
+        setNotesPanelOpen(false);
       }
     } else if (panel === 'chat') {
       setWorkspaceChatOpen(!workspaceChatOpen);
@@ -150,6 +165,7 @@ export default function WorkspacePage() {
         setKanbanPanelOpen(false);
         setStoragePanelOpen(false);
         setSharedBoardsPanelOpen(false);
+        setNotesPanelOpen(false);
       }
     } else if (panel === 'kanban') {
       setKanbanPanelOpen(!kanbanPanelOpen);
@@ -159,6 +175,7 @@ export default function WorkspacePage() {
         setWorkspaceChatOpen(false);
         setStoragePanelOpen(false);
         setSharedBoardsPanelOpen(false);
+        setNotesPanelOpen(false);
       }
     } else if (panel === 'storage') {
       setStoragePanelOpen(!storagePanelOpen);
@@ -168,6 +185,7 @@ export default function WorkspacePage() {
         setWorkspaceChatOpen(false);
         setKanbanPanelOpen(false);
         setSharedBoardsPanelOpen(false);
+        setNotesPanelOpen(false);
       }
     } else if (panel === 'sharedBoards') {
       setSharedBoardsPanelOpen(!sharedBoardsPanelOpen);
@@ -177,11 +195,22 @@ export default function WorkspacePage() {
         setWorkspaceChatOpen(false);
         setKanbanPanelOpen(false);
         setStoragePanelOpen(false);
+        setNotesPanelOpen(false);
+      }
+    } else if (panel === 'notes') {
+      setNotesPanelOpen(!notesPanelOpen);
+      if (!notesPanelOpen) {
+        setAiPanelOpen(false);
+        setPeoplePanelOpen(false);
+        setWorkspaceChatOpen(false);
+        setKanbanPanelOpen(false);
+        setStoragePanelOpen(false);
+        setSharedBoardsPanelOpen(false);
       }
     }
   };
 
-  const isRightPanelOpen = aiPanelOpen || workspaceChatOpen || peoplePanelOpen || kanbanPanelOpen || storagePanelOpen || sharedBoardsPanelOpen;
+  const isRightPanelOpen = aiPanelOpen || workspaceChatOpen || peoplePanelOpen || kanbanPanelOpen || storagePanelOpen || sharedBoardsPanelOpen || notesPanelOpen;
 
   return (
     <div className="flex h-screen bg-white dark:bg-[#191919] overflow-hidden">
@@ -284,6 +313,16 @@ export default function WorkspacePage() {
           >
             <FolderIcon className={`w-6 h-6 ${storagePanelOpen ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'}`} />
             <span className={`text-xs mt-1 ${storagePanelOpen ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'}`}>Files</span>
+          </button>
+
+          <button
+            onClick={() => togglePanel('notes')}
+            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors tap-target ${notesPanelOpen ? 'bg-green-100 dark:bg-green-900/20' : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
+              }`}
+            title="Notes"
+          >
+            <Square3Stack3DIcon className={`w-6 h-6 ${notesPanelOpen ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`} />
+            <span className={`text-xs mt-1 ${notesPanelOpen ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>Notes</span>
           </button>
 
           <button
@@ -399,6 +438,13 @@ export default function WorkspacePage() {
                         userId={user?.id}
                         onClose={() => setActiveView('editor')}
                       />
+                    ) : activeView === 'notes' && activeNotesBoardId ? (
+                      <NotesBoard
+                        boardId={activeNotesBoardId}
+                        workspaceId={workspaceId}
+                        userId={user?.id}
+                        onClose={() => setActiveView('editor')}
+                      />
                     ) : (
                       <EditorTabs
                         tabs={openTabs}
@@ -428,6 +474,7 @@ export default function WorkspacePage() {
                       {peoplePanelOpen && user && <PeoplePanel workspaceId={workspaceId} currentUserId={user.id} />}
                       {kanbanPanelOpen && user && <KanbanPanel workspaceId={workspaceId} onOpenBoard={handleOpenKanban} />}
                       {storagePanelOpen && <StoragePanel workspaceId={workspaceId} />}
+                      {notesPanelOpen && <NotesPanel workspaceId={workspaceId} onOpenBoard={handleOpenNotesBoard} />}
                       {sharedBoardsPanelOpen && <SharedBoardsPanel workspaceId={workspaceId} onOpenBoard={handleOpenWhiteboard} />}
                     </ResizablePanel>
                   </>
@@ -517,6 +564,17 @@ export default function WorkspacePage() {
               )}
             </button>
             <button
+              onClick={() => togglePanel('notes')}
+              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+              title={notesPanelOpen ? 'Hide Notes' : 'Show Notes'}
+            >
+              {notesPanelOpen ? (
+                <XMarkIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
+              ) : (
+                <Square3Stack3DIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
+              )}
+            </button>
+            <button
               onClick={() => togglePanel('sharedBoards')}
               className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
               title={sharedBoardsPanelOpen ? 'Hide Shared Boards' : 'Show Shared Boards'}
@@ -541,6 +599,7 @@ export default function WorkspacePage() {
                 setPeoplePanelOpen(false);
                 setKanbanPanelOpen(false);
                 setStoragePanelOpen(false);
+                setNotesPanelOpen(false);
                 setSharedBoardsPanelOpen(false);
               }}
               className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
@@ -656,6 +715,24 @@ export default function WorkspacePage() {
           </div>
           <div className="h-[calc(100vh-60px)]">
             <SharedBoardsPanel workspaceId={workspaceId} onOpenBoard={handleOpenWhiteboard} />
+          </div>
+        </div>
+      )}
+
+      {/* Notes Panel - Mobile (Full Screen Overlay) */}
+      {notesPanelOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-white dark:bg-[#181818]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a]">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7]">Notes Boards</h2>
+            <button
+              onClick={() => setNotesPanelOpen(false)}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+            >
+              <XMarkIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+            </button>
+          </div>
+          <div className="h-[calc(100vh-60px)]">
+            <NotesPanel workspaceId={workspaceId} onOpenBoard={handleOpenNotesBoard} />
           </div>
         </div>
       )}
