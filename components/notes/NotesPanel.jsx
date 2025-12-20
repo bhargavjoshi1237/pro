@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PlusIcon, Square3Stack3DIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ export function NotesPanel({ workspaceId, onOpenBoard }) {
   const [editingId, setEditingId] = useState(null);
   const [editingName, setEditingName] = useState('');
 
-  const fetchBoards = async () => {
+  const fetchBoards = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('notes_boards')
@@ -29,7 +29,7 @@ export function NotesPanel({ workspaceId, onOpenBoard }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [workspaceId]);
 
   useEffect(() => {
     if (workspaceId) {
@@ -62,7 +62,7 @@ export function NotesPanel({ workspaceId, onOpenBoard }) {
         supabase.removeChannel(channel);
       };
     }
-  }, [workspaceId]);
+  }, [workspaceId, fetchBoards]);
 
   const handleCreateBoard = async () => {
     setCreating(true);

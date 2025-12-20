@@ -112,6 +112,7 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
     };
 
     fetchItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
   // Fetch connections
@@ -140,6 +141,7 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
     };
 
     fetchConnections();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
   // Track active users
@@ -291,6 +293,7 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
   // Subscribe to realtime changes for connections
@@ -325,6 +328,7 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
   const onConnect = useCallback(
