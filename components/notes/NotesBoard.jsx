@@ -175,7 +175,7 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
     };
 
     trackPresence();
-    const interval = setInterval(trackPresence, 10000); // Update every 10 seconds
+    const interval = setInterval(trackPresence, 30000); // Update every 30 seconds
 
     // Fetch active users
     const fetchActiveUsers = async () => {
@@ -200,7 +200,6 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
     };
 
     fetchActiveUsers();
-    const usersInterval = setInterval(fetchActiveUsers, 5000); // Poll every 5 seconds
 
     // Subscribe to realtime session changes
     const channel = supabase
@@ -221,7 +220,6 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
 
     return () => {
       clearInterval(interval);
-      clearInterval(usersInterval);
       supabase.removeChannel(channel);
 
       // Clean up session on unmount
@@ -230,7 +228,8 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
         .delete()
         .eq('user_id', userId)
         .eq('notes_board_id', boardId)
-        .then();
+        .then()
+        .catch((err) => console.error('Failed to cleanup session:', err));
     };
   }, [userId, boardId, workspaceId]);
 
@@ -397,10 +396,10 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
     async (type) => {
       if (!reactFlowInstance) return;
 
-      const center = reactFlowInstance.getViewport();
-      const position = reactFlowInstance.project({
-        x: window.innerWidth / 2 - center.x,
-        y: window.innerHeight / 2 - center.y,
+      // Get center position in flow coordinates
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
       });
 
       const defaultContent = {

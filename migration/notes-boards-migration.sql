@@ -189,9 +189,15 @@ CREATE POLICY "notes_connections_delete"
 -- Add notes_board_id to active_sessions for tracking active users
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'active_sessions' AND column_name = 'notes_board_id') THEN
-        ALTER TABLE active_sessions ADD COLUMN notes_board_id UUID REFERENCES notes_boards(id) ON DELETE CASCADE;
-        CREATE INDEX idx_active_sessions_notes_board_id ON active_sessions(notes_board_id);
+    -- Check if active_sessions table exists
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'active_sessions') THEN
+        -- Check if column doesn't exist before adding
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'active_sessions' AND column_name = 'notes_board_id') THEN
+            ALTER TABLE active_sessions ADD COLUMN notes_board_id UUID REFERENCES notes_boards(id) ON DELETE CASCADE;
+            CREATE INDEX idx_active_sessions_notes_board_id ON active_sessions(notes_board_id);
+        END IF;
+    ELSE
+        RAISE NOTICE 'active_sessions table does not exist. Please create it first or this feature will not work.';
     END IF;
 END $$;
 
