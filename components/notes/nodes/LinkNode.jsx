@@ -44,6 +44,48 @@ export default function LinkNode({ data, isConnectable }) {
         isConnectable={isConnectable}
         className="w-3 h-3 !bg-gray-400 border-2 border-white"
       />
+      <Handle
+        type="source"
+        position={Position.Top}
+        isConnectable={isConnectable}
+        className="w-3 h-3 !bg-gray-400 border-2 border-white"
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        isConnectable={isConnectable}
+        className="w-3 h-3 !bg-gray-400 border-2 border-white"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        isConnectable={isConnectable}
+        className="w-3 h-3 !bg-gray-400 border-2 border-white"
+      />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        isConnectable={isConnectable}
+        className="w-3 h-3 !bg-gray-400 border-2 border-white"
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        isConnectable={isConnectable}
+        className="w-3 h-3 !bg-gray-400 border-2 border-white"
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        isConnectable={isConnectable}
+        className="w-3 h-3 !bg-gray-400 border-2 border-white"
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        isConnectable={isConnectable}
+        className="w-3 h-3 !bg-gray-400 border-2 border-white"
+      />
       
       <div 
         className="w-full h-full p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 dark:border-[#3a3a3a] flex flex-col gap-2"

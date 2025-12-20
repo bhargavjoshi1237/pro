@@ -11,6 +11,8 @@ import ReactFlow, {
   addEdge,
   Panel,
   BackgroundVariant,
+  ConnectionLineType,
+  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { 
@@ -20,18 +22,33 @@ import {
   Square2StackIcon,
   PhotoIcon,
   LinkIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  TableCellsIcon,
+  ListBulletIcon,
+  ChatBubbleLeftIcon,
+  PencilIcon,
+  ViewColumnsIcon
 } from '@heroicons/react/24/outline';
 import StickyNoteNode from './nodes/StickyNoteNode';
 import TextCardNode from './nodes/TextCardNode';
 import ImageNode from './nodes/ImageNode';
 import LinkNode from './nodes/LinkNode';
+import TodoNode from './nodes/TodoNode';
+import TableNode from './nodes/TableNode';
+import ColumnNode from './nodes/ColumnNode';
+import CommentNode from './nodes/CommentNode';
+import DrawNode from './nodes/DrawNode';
 
 const nodeTypes = {
   sticky: StickyNoteNode,
   text: TextCardNode,
   image: ImageNode,
   link: LinkNode,
+  todo: TodoNode,
+  table: TableNode,
+  column: ColumnNode,
+  comment: CommentNode,
+  draw: DrawNode,
 };
 
 const colorPresets = [
@@ -131,7 +148,11 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
           source: conn.source_id,
           target: conn.target_id,
           type: conn.type,
-          style: conn.style,
+          style: conn.style || { stroke: '#ffffff', strokeWidth: 2 },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: (conn.style?.stroke || '#ffffff'),
+          },
         }));
 
         setEdges(flowEdges);
@@ -314,7 +335,11 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
               source: payload.new.source_id,
               target: payload.new.target_id,
               type: payload.new.type,
-              style: payload.new.style,
+              style: payload.new.style || { stroke: '#ffffff', strokeWidth: 2 },
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+                color: (payload.new.style?.stroke || '#ffffff'),
+              },
             };
             setEdges((eds) => [...eds, newEdge]);
           } else if (payload.eventType === 'DELETE') {
@@ -339,8 +364,11 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
             board_id: boardId,
             source_id: params.source,
             target_id: params.target,
-            type: 'default',
-            style: {}
+            type: 'straight',
+            style: {
+              stroke: '#ffffff',
+              strokeWidth: 2,
+            }
           })
           .select()
           .single();
@@ -403,17 +431,27 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
       });
 
       const defaultContent = {
-        sticky: { text: 'New note' },
+        sticky: { text: '' },
         text: { title: 'Title', text: 'Start typing...' },
         image: { url: '', alt: 'Image' },
         link: { url: '', title: 'Link' },
+        todo: { title: 'To-do List', items: [{ id: 1, text: 'Task 1', checked: false }] },
+        table: { rows: 3, cols: 2, tableContent: {} },
+        column: { title: 'Column', cards: [] },
+        comment: { text: '' },
+        draw: { paths: [] },
       };
 
       const defaultStyles = {
-        sticky: { backgroundColor: colorPresets[0].value, color: '#000000' },
+        sticky: { backgroundColor: '#2a2a2a', color: '#9ca3af' },
         text: { backgroundColor: '#ffffff', color: '#000000' },
         image: {},
         link: { backgroundColor: '#ffffff', color: '#000000' },
+        todo: {},
+        table: {},
+        column: {},
+        comment: {},
+        draw: {},
       };
 
       try {
@@ -426,8 +464,8 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
             content: defaultContent[type],
             position_x: position.x,
             position_y: position.y,
-            width: type === 'sticky' ? 200 : type === 'image' ? 300 : 250,
-            height: type === 'sticky' ? 200 : type === 'image' ? 300 : 150,
+            width: type === 'sticky' ? 400 : type === 'image' ? 300 : type === 'column' ? 280 : 250,
+            height: type === 'sticky' ? 120 : type === 'image' ? 300 : type === 'column' ? 400 : 150,
             z_index: 0,
             style: defaultStyles[type],
             created_by: user?.id
@@ -440,6 +478,54 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
     },
     [boardId, reactFlowInstance]
   );
+
+  const [copiedNodes, setCopiedNodes] = useState([]);
+
+  useEffect(() => {
+    const handleKeyDown = async (e) => {
+      // Ignore if typing in an input/textarea
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        return;
+      }
+
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'c') {
+          const selectedNodes = nodes.filter(n => n.selected);
+          if (selectedNodes.length > 0) {
+            setCopiedNodes(selectedNodes);
+          }
+        } else if (e.key === 'v') {
+          if (copiedNodes.length > 0) {
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            // Paste with offset
+            const promises = copiedNodes.map(node => {
+              // Filter out function props and id from data
+              const { itemId, onUpdate, onDelete, ...content } = node.data;
+              
+              return supabase.from('notes_items').insert({
+                board_id: boardId,
+                type: node.type,
+                content: content,
+                position_x: node.position.x + 50,
+                position_y: node.position.y + 50,
+                width: node.style?.width || 200,
+                height: node.style?.height || 200,
+                z_index: 10,
+                style: node.data.style || {},
+                created_by: user?.id
+              });
+            });
+
+            await Promise.all(promises);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [nodes, copiedNodes, boardId]);
 
   if (loading) {
     return (
@@ -466,8 +552,14 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
         nodeTypes={nodeTypes}
         fitView
         className="bg-gray-50 dark:bg-[#191919]"
+        panOnScroll={true}
+        panOnDrag={[1, 2]}
+        selectionOnDrag={true}
+        snapToGrid={true}
+        snapGrid={[15, 15]}
+        connectionLineType={ConnectionLineType.Straight}
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e5e7eb" />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#333333" />
         <Controls />
         <MiniMap
           nodeColor={(node) => {
@@ -520,20 +612,48 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
 
         <Panel position="top-right" className="relative">
           {showToolbar ? (
-            <div className="bg-white dark:bg-[#2a2a2a] p-2 rounded-lg shadow-lg border border-gray-200 dark:border-[#3a3a3a] space-y-1">
+            <div className="bg-white dark:bg-[#2a2a2a] p-2 rounded-lg shadow-lg border border-gray-200 dark:border-[#3a3a3a] space-y-1 max-h-[80vh] overflow-y-auto">
               <button
                 onClick={() => addNewItem('sticky')}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] rounded transition-colors"
               >
                 <Square2StackIcon className="w-4 h-4" />
-                Sticky Note
+                Note
               </button>
               <button
-                onClick={() => addNewItem('text')}
+                onClick={() => addNewItem('link')}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] rounded transition-colors"
               >
-                <DocumentTextIcon className="w-4 h-4" />
-                Text Card
+                <LinkIcon className="w-4 h-4" />
+                Link
+              </button>
+              <button
+                onClick={() => addNewItem('todo')}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] rounded transition-colors"
+              >
+                <ListBulletIcon className="w-4 h-4" />
+                To-do
+              </button>
+              <button
+                onClick={() => addNewItem('column')}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] rounded transition-colors"
+              >
+                <ViewColumnsIcon className="w-4 h-4" />
+                Column
+              </button>
+              <button
+                onClick={() => addNewItem('comment')}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] rounded transition-colors"
+              >
+                <ChatBubbleLeftIcon className="w-4 h-4" />
+                Comment
+              </button>
+              <button
+                onClick={() => addNewItem('table')}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] rounded transition-colors"
+              >
+                <TableCellsIcon className="w-4 h-4" />
+                Table
               </button>
               <button
                 onClick={() => addNewItem('image')}
@@ -543,11 +663,11 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
                 Image
               </button>
               <button
-                onClick={() => addNewItem('link')}
+                onClick={() => addNewItem('draw')}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] rounded transition-colors"
               >
-                <LinkIcon className="w-4 h-4" />
-                Link
+                <PencilIcon className="w-4 h-4" />
+                Draw
               </button>
               <div className="pt-1 border-t border-gray-200 dark:border-[#3a3a3a]">
                 <button
