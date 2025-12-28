@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Handle, Position } from 'reactflow';
-import { TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { TrashIcon, PlusIcon, ArrowUpRightIcon } from '@heroicons/react/24/outline';
 
 export default function ColumnNode({ data, isConnectable }) {
   const [title, setTitle] = useState(data.title || 'Column');
@@ -35,7 +35,7 @@ export default function ColumnNode({ data, isConnectable }) {
   };
 
   return (
-    <div className="bg-gray-100 rounded-lg shadow-sm border border-gray-200 min-w-[280px] flex flex-col max-h-[500px]">
+    <div className="relative group bg-gray-100 rounded-lg shadow-sm border border-gray-200 min-w-[280px] flex flex-col max-h-[500px]">
       <div className="p-3 border-b border-gray-200 flex justify-between items-center drag-handle">
         <input
           type="text"
@@ -84,14 +84,35 @@ export default function ColumnNode({ data, isConnectable }) {
         </button>
       </div>
 
-      <Handle type="target" position={Position.Top} isConnectable={isConnectable} className="w-3 h-3 bg-blue-500" />
-      <Handle type="source" position={Position.Top} isConnectable={isConnectable} className="w-3 h-3 bg-blue-500" />
-      <Handle type="target" position={Position.Right} isConnectable={isConnectable} className="w-3 h-3 bg-blue-500" />
-      <Handle type="source" position={Position.Right} isConnectable={isConnectable} className="w-3 h-3 bg-blue-500" />
-      <Handle type="target" position={Position.Bottom} isConnectable={isConnectable} className="w-3 h-3 bg-blue-500" />
-      <Handle type="source" position={Position.Bottom} isConnectable={isConnectable} className="w-3 h-3 bg-blue-500" />
-      <Handle type="target" position={Position.Left} isConnectable={isConnectable} className="w-3 h-3 bg-blue-500" />
-      <Handle type="source" position={Position.Left} isConnectable={isConnectable} className="w-3 h-3 bg-blue-500" />
+      {/* Target handles on all sides (invisible) */}
+      <Handle type="target" position={Position.Top} isConnectable={isConnectable} className="!opacity-0 !w-full !h-2 !-top-1" />
+      <Handle type="target" position={Position.Bottom} isConnectable={isConnectable} className="!opacity-0 !w-full !h-2 !-bottom-1" />
+      <Handle type="target" position={Position.Left} isConnectable={isConnectable} className="!opacity-0 !w-2 !h-full !-left-1" />
+      <Handle type="target" position={Position.Right} isConnectable={isConnectable} className="!opacity-0 !w-2 !h-full !-right-1" />
+
+      {/* Connection Point (Source) - Top Right */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ 
+          top: 0, 
+          right: 0, 
+          transform: 'translate(50%, -50%)',
+          background: '#3b82f6',
+          width: '24px',
+          height: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '2px solid white',
+          borderRadius: '50%',
+          zIndex: 50
+        }}
+        className="opacity-0 group-hover:opacity-100 transition-opacity cursor-crosshair"
+        isConnectable={isConnectable}
+      >
+        <ArrowUpRightIcon className="w-3 h-3 text-white" />
+      </Handle>
     </div>
   );
 }

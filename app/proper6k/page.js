@@ -10,7 +10,20 @@ import {
     Filter,
     LayoutGrid,
     Plus,
-    Loader2
+    Loader2,
+    List,
+    CheckCircle2,
+    Circle,
+    Archive,
+    Folder,
+    Clock,
+    ChevronRight,
+    ChevronDown,
+    Calendar,
+    Hash,
+    Layers,
+    Inbox,
+    Trello
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +59,8 @@ function LinearDashboard({ userProfile, workspaceId, userId }) {
     const [activeFilter, setActiveFilter] = useState('active'); // 'all', 'active', 'backlog'
     const [statusFilter, setStatusFilter] = useState([]);
     const [defaultProject, setDefaultProject] = useState(null);
+    const [selectedProject, setSelectedProject] = useState(null);
+    const [selectedCycle, setSelectedCycle] = useState(null);
 
     // Ensure default project exists
     useEffect(() => {
@@ -102,13 +117,23 @@ function LinearDashboard({ userProfile, workspaceId, userId }) {
             filtered = filtered.filter(issue => issue.status === 'backlog');
         }
 
+        // Apply project filter
+        if (selectedProject) {
+            filtered = filtered.filter(issue => issue.project_id === selectedProject);
+        }
+
+        // Apply cycle filter
+        if (selectedCycle) {
+            filtered = filtered.filter(issue => issue.cycle_id === selectedCycle);
+        }
+
         // Apply status filter
         if (statusFilter.length > 0) {
             filtered = filtered.filter(issue => statusFilter.includes(issue.status));
         }
 
         return filtered;
-    }, [issues, searchQuery, activeFilter, statusFilter]);
+    }, [issues, searchQuery, activeFilter, statusFilter, selectedProject, selectedCycle]);
 
     // Group issues by status
     const groupedIssues = useMemo(() => {
@@ -182,6 +207,41 @@ function LinearDashboard({ userProfile, workspaceId, userId }) {
         }
     };
 
+    const SidebarItem = ({ icon: Icon, label, count, active, onClick, color }) => (
+        <button
+            onClick={onClick}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 group ${
+                active 
+                ? 'bg-primary/10 text-primary shadow-sm' 
+                : 'text-muted-foreground/60 hover:bg-white/5 hover:text-foreground'
+            }`}
+        >
+            <div className="flex items-center gap-3">
+                <Icon className={`w-4 h-4 ${active ? 'text-primary' : color || 'text-muted-foreground/40 group-hover:text-foreground'}`} />
+                <span className={`text-sm font-medium ${active ? 'text-primary' : ''}`}>{label}</span>
+            </div>
+            {count !== undefined && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                    active ? 'bg-primary/20 text-primary' : 'bg-white/5 text-muted-foreground/40'
+                }`}>
+                    {count}
+                </span>
+            )}
+        </button>
+    );
+
+    const SidebarSection = ({ title, children, action }) => (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between px-3">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/40">{title}</h3>
+                {action}
+            </div>
+            <div className="space-y-1">
+                {children}
+            </div>
+        </div>
+    );
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full">
@@ -203,135 +263,214 @@ function LinearDashboard({ userProfile, workspaceId, userId }) {
 
     return (
         <>
-            <div className="flex flex-col h-full w-full bg-background text-foreground">
-                {/* Top Filter Bar */}
-                <div className="flex items-center justify-between px-5 py-3 border-b border-border dark:border-gray-600">
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-1 text-sm font-medium text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
-                            <Filter className="w-4 h-4 mr-1" />
-                            <span>Filter</span>
-                        </div>
-                        <Separator orientation="vertical" className="h-4" />
-                        <div className="flex items-center space-x-4 text-sm font-medium">
-                            <button
-                                onClick={() => setActiveFilter('all')}
-                                className={`${activeFilter === 'all'
-                                    ? 'text-foreground'
-                                    : 'text-muted-foreground hover:text-foreground'
-                                    } cursor-pointer transition-colors`}
-                            >
-                                All issues
-                            </button>
-                            <button
-                                onClick={() => setActiveFilter('active')}
-                                className={`${activeFilter === 'active'
-                                    ? 'text-foreground'
-                                    : 'text-muted-foreground hover:text-foreground'
-                                    } cursor-pointer transition-colors`}
-                            >
-                                Active
-                            </button>
-                            <button
-                                onClick={() => setActiveFilter('backlog')}
-                                className={`${activeFilter === 'backlog'
-                                    ? 'text-foreground'
-                                    : 'text-muted-foreground hover:text-foreground'
-                                    } cursor-pointer transition-colors`}
-                            >
-                                Backlog
-                            </button>
+            <div className="flex h-full w-full bg-white/10 dark:bg-black/10 backdrop-blur-md text-foreground dark:text-[#e7e7e7] overflow-hidden">
+                {/* Proper 6K Sidebar */}
+                <div className="w-64 border-r border-border/50 dark:border-white/5 flex flex-col bg-white/5 dark:bg-black/5 backdrop-blur-sm p-6 space-y-8 overflow-y-auto">
+                    <div className="flex items-center justify-between px-3 mb-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                                <Trello className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="font-bold tracking-tight">Proper 6K</span>
                         </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                        <div className="relative">
-                            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input
-                                id="issue-search"
-                                className="h-8 pl-8 w-[200px] bg-muted/50 border-transparent focus:bg-background focus:border-border transition-all"
-                                placeholder="Search..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                    <SidebarSection title="Views">
+                        <SidebarItem 
+                            icon={Inbox} 
+                            label="All issues" 
+                            active={activeFilter === 'all' && !selectedProject && !selectedCycle}
+                            onClick={() => {
+                                setActiveFilter('all');
+                                setSelectedProject(null);
+                                setSelectedCycle(null);
+                            }}
+                            count={issues.length}
+                        />
+                        <SidebarItem 
+                            icon={CheckCircle2} 
+                            label="Active" 
+                            active={activeFilter === 'active' && !selectedProject && !selectedCycle}
+                            onClick={() => {
+                                setActiveFilter('active');
+                                setSelectedProject(null);
+                                setSelectedCycle(null);
+                            }}
+                            count={issues.filter(i => !['done', 'canceled'].includes(i.status)).length}
+                            color="text-blue-500"
+                        />
+                        <SidebarItem 
+                            icon={Archive} 
+                            label="Backlog" 
+                            active={activeFilter === 'backlog' && !selectedProject && !selectedCycle}
+                            onClick={() => {
+                                setActiveFilter('backlog');
+                                setSelectedProject(null);
+                                setSelectedCycle(null);
+                            }}
+                            count={issues.filter(i => i.status === 'backlog').length}
+                            color="text-gray-500"
+                        />
+                    </SidebarSection>
+
+                    <SidebarSection 
+                        title="Projects" 
+                        action={
+                            <button className="p-1 hover:bg-white/5 rounded-md text-muted-foreground/40 hover:text-foreground transition-colors">
+                                <Plus className="w-3 h-3" />
+                            </button>
+                        }
+                    >
+                        {projects.map(project => (
+                            <SidebarItem 
+                                key={project.id}
+                                icon={Folder} 
+                                label={project.name} 
+                                active={selectedProject === project.id}
+                                onClick={() => {
+                                    setSelectedProject(project.id);
+                                    setSelectedCycle(null);
+                                    setActiveFilter('all');
+                                }}
+                                color={project.color ? `text-[${project.color}]` : 'text-purple-500'}
                             />
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        >
-                            <LayoutGrid className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            size="sm"
-                            className="h-8 bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-3"
-                            onClick={() => setCreateDialogOpen(true)}
-                        >
-                            New Issue
-                        </Button>
-                    </div>
+                        ))}
+                    </SidebarSection>
+
+                    <SidebarSection title="Cycles">
+                        {cycles.map(cycle => (
+                            <SidebarItem 
+                                key={cycle.id}
+                                icon={Clock} 
+                                label={cycle.name} 
+                                active={selectedCycle === cycle.id}
+                                onClick={() => {
+                                    setSelectedCycle(cycle.id);
+                                    setSelectedProject(null);
+                                    setActiveFilter('all');
+                                }}
+                                color="text-orange-500"
+                            />
+                        ))}
+                        {cycles.length === 0 && (
+                            <p className="px-3 text-[10px] text-muted-foreground/40 italic">No active cycles</p>
+                        )}
+                    </SidebarSection>
                 </div>
 
-                {/* Main Content */}
-                <div className="flex-1 overflow-auto p-6">
-                    {filteredIssues.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-center">
-                            <div className="space-y-3">
-                                <p className="text-lg font-medium text-muted-foreground">
-                                    {searchQuery ? 'No issues found' : 'No issues yet'}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    {searchQuery
-                                        ? 'Try adjusting your search or filters'
-                                        : 'Create your first issue to get started'
-                                    }
-                                </p>
-                                {!searchQuery && (
-                                    <Button onClick={() => setCreateDialogOpen(true)}>
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Create Issue
-                                    </Button>
-                                )}
+                {/* Main Content Area */}
+                <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                    {/* Top Bar */}
+                    <div className="flex items-center justify-between px-8 py-4 border-b border-border/50 dark:border-white/5 backdrop-blur-xl z-10">
+                        <div className="flex items-center gap-4 flex-1">
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 dark:bg-white/5 border border-border/50 dark:border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-foreground dark:hover:text-white cursor-pointer transition-all">
+                                <Filter className="w-3.5 h-3.5" />
+                                <span>Filter</span>
+                            </div>
+                            
+                            <div className="relative group flex-1 max-w-md">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
+                                <Input
+                                    id="issue-search"
+                                    className="h-10 pl-10 w-full bg-white/50 dark:bg-white/5 border-border/50 dark:border-white/10 rounded-2xl focus:ring-primary/20 transition-all placeholder:text-muted-foreground/30"
+                                    placeholder="Search issues, projects..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
                             </div>
                         </div>
-                    ) : (
-                        Object.entries(groupedIssues).map(([status, statusIssues]) => {
-                            if (statusIssues.length === 0) return null;
 
-                            const statusInfo = statusConfig[status];
-                            const StatusIcon = statusInfo.icon;
+                        <div className="flex items-center gap-3 ml-4">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-10 w-10 rounded-2xl text-muted-foreground/40 hover:text-foreground dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5 transition-all"
+                            >
+                                <LayoutGrid className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                size="sm"
+                                className="h-10 bg-primary hover:bg-primary/90 text-white font-bold px-6 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95"
+                                onClick={() => setCreateDialogOpen(true)}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                New Issue
+                            </Button>
+                        </div>
+                    </div>
 
-                            return (
-                                <div key={status} className="mb-8">
-                                    <div className="flex items-center justify-between mb-2 group">
-                                        <div className="flex items-center space-x-2">
-                                            <StatusIcon className={`w-4 h-4 ${statusInfo.color}`} />
-                                            <h3 className="font-medium text-sm dark:text-white">
-                                                {statusInfo.label}
-                                            </h3>
-                                            <span className="text-muted-foreground dark:text-gray-400 text-sm ml-2">
-                                                {statusIssues.length}
-                                            </span>
-                                        </div>
+                    {/* Issue List Area */}
+                    <div className="flex-1 overflow-auto p-8">
+                        {filteredIssues.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full text-center">
+                                <div className="space-y-6 max-w-sm">
+                                    <div className="w-20 h-20 bg-muted/20 dark:bg-white/5 rounded-[2rem] flex items-center justify-center mx-auto">
+                                        <Search className="w-8 h-8 text-muted-foreground/20" />
                                     </div>
-
-                                    <div className="space-y-[1px]">
-                                        {statusIssues.map(issue => (
-                                            <IssueRow
-                                                key={issue.id}
-                                                issue={issue}
-                                                onClick={handleIssueClick}
-                                                onDelete={deleteIssue}
-                                            />
-                                        ))}
+                                    <div className="space-y-2">
+                                        <h3 className="text-xl font-bold dark:text-white">
+                                            {searchQuery ? 'No issues found' : 'No issues yet'}
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground/60">
+                                            {searchQuery
+                                                ? 'Try adjusting your search or filters to find what you\'re looking for.'
+                                                : 'Create your first issue to start tracking your progress.'
+                                            }
+                                        </p>
                                     </div>
+                                    {!searchQuery && (
+                                        <Button 
+                                            onClick={() => setCreateDialogOpen(true)}
+                                            className="h-12 px-8 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+                                        >
+                                            <Plus className="w-5 h-5 mr-2" />
+                                            Create Issue
+                                        </Button>
+                                    )}
                                 </div>
-                            );
-                        })
-                    )}
+                            </div>
+                        ) : (
+                            <div className="max-w-6xl mx-auto space-y-12">
+                                {Object.entries(groupedIssues).map(([status, statusIssues]) => {
+                                    if (statusIssues.length === 0) return null;
 
-                    {/* Keyboard shortcuts hint */}
-                    <div className="fixed bottom-4 right-4 text-xs text-muted-foreground bg-muted/50 backdrop-blur px-3 py-2 rounded-md border border-border">
-                        Press <kbd className="px-1 py-0.5 bg-background border border-border rounded">C</kbd> to create issue, <kbd className="px-1 py-0.5 bg-background border border-border rounded">/</kbd> to search
+                                    const statusInfo = statusConfig[status];
+                                    const StatusIcon = statusInfo.icon;
+
+                                    return (
+                                        <div key={status} className="space-y-4">
+                                            <div className="flex items-center gap-3 px-2">
+                                                <StatusIcon className={`w-4 h-4 ${statusInfo.color}`} />
+                                                <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">
+                                                    {statusInfo.label}
+                                                    <span className="ml-2 text-muted-foreground/30">{statusIssues.length}</span>
+                                                </h2>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                {statusIssues.map(issue => (
+                                                    <IssueRow
+                                                        key={issue.id}
+                                                        issue={issue}
+                                                        members={members}
+                                                        onClick={() => {
+                                                            setSelectedIssue(issue);
+                                                            setDetailPanelOpen(true);
+                                                        }}
+                                                        onUpdate={updateIssue}
+                                                        onDelete={deleteIssue}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* Keyboard shortcuts hint */}
+                        <div className="fixed bottom-8 right-8 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 bg-white/50 dark:bg-white/5 backdrop-blur-xl px-4 py-2.5 rounded-2xl border border-border/50 dark:border-white/10 shadow-2xl">
+                            Press <kbd className="px-1.5 py-0.5 bg-white dark:bg-white/10 border border-border/50 dark:border-white/10 rounded-md mx-1">C</kbd> to create, <kbd className="px-1.5 py-0.5 bg-white dark:bg-white/10 border border-border/50 dark:border-white/10 rounded-md mx-1">/</kbd> to search
+                        </div>
                     </div>
                 </div>
             </div>
@@ -408,7 +547,7 @@ function Proper6kContent() {
 
     if (loading) {
         return (
-            <div className="flex h-screen w-full items-center justify-center bg-background">
+            <div className="flex h-screen w-full items-center justify-center bg-background dark:bg-[#0a0a0a]">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
         );
@@ -416,10 +555,10 @@ function Proper6kContent() {
 
     if (!workspaceId) {
         return (
-            <div className="flex h-screen w-full items-center justify-center bg-background">
+            <div className="flex h-screen w-full items-center justify-center bg-background dark:bg-[#0a0a0a]">
                 <div className="text-center space-y-2">
-                    <p className="text-lg font-medium">No workspace found</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-lg font-medium dark:text-[#e7e7e7]">No workspace found</p>
+                    <p className="text-sm text-muted-foreground dark:text-gray-500">
                         Please create a workspace to use Proper 6K
                     </p>
                 </div>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Handle, Position } from 'reactflow';
-import { TrashIcon, LinkIcon as LinkIconOutline } from '@heroicons/react/24/outline';
+import { TrashIcon, LinkIcon as LinkIconOutline, ArrowUpRightIcon } from '@heroicons/react/24/outline';
 
 export default function LinkNode({ data, isConnectable }) {
   const [url, setUrl] = useState(data.url || '');
@@ -38,54 +38,35 @@ export default function LinkNode({ data, isConnectable }) {
       className="relative group"
       style={{ width: '100%', height: '100%' }}
     >
-      <Handle
-        type="target"
-        position={Position.Top}
-        isConnectable={isConnectable}
-        className="w-3 h-3 !bg-gray-400 border-2 border-white"
-      />
-      <Handle
-        type="source"
-        position={Position.Top}
-        isConnectable={isConnectable}
-        className="w-3 h-3 !bg-gray-400 border-2 border-white"
-      />
-      <Handle
-        type="target"
-        position={Position.Right}
-        isConnectable={isConnectable}
-        className="w-3 h-3 !bg-gray-400 border-2 border-white"
-      />
+      {/* Target handles on all sides (invisible) */}
+      <Handle type="target" position={Position.Top} isConnectable={isConnectable} className="!opacity-0 !w-full !h-2 !-top-1" />
+      <Handle type="target" position={Position.Bottom} isConnectable={isConnectable} className="!opacity-0 !w-full !h-2 !-bottom-1" />
+      <Handle type="target" position={Position.Left} isConnectable={isConnectable} className="!opacity-0 !w-2 !h-full !-left-1" />
+      <Handle type="target" position={Position.Right} isConnectable={isConnectable} className="!opacity-0 !w-2 !h-full !-right-1" />
+
+      {/* Connection Point (Source) - Top Right */}
       <Handle
         type="source"
         position={Position.Right}
+        style={{ 
+          top: 0, 
+          right: 0, 
+          transform: 'translate(50%, -50%)',
+          background: '#3b82f6',
+          width: '24px',
+          height: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '2px solid white',
+          borderRadius: '50%',
+          zIndex: 50
+        }}
+        className="opacity-0 group-hover:opacity-100 transition-opacity cursor-crosshair"
         isConnectable={isConnectable}
-        className="w-3 h-3 !bg-gray-400 border-2 border-white"
-      />
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        isConnectable={isConnectable}
-        className="w-3 h-3 !bg-gray-400 border-2 border-white"
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        isConnectable={isConnectable}
-        className="w-3 h-3 !bg-gray-400 border-2 border-white"
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        isConnectable={isConnectable}
-        className="w-3 h-3 !bg-gray-400 border-2 border-white"
-      />
-      <Handle
-        type="source"
-        position={Position.Left}
-        isConnectable={isConnectable}
-        className="w-3 h-3 !bg-gray-400 border-2 border-white"
-      />
+      >
+        <ArrowUpRightIcon className="w-3 h-3 text-white" />
+      </Handle>
       
       <div 
         className="w-full h-full p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 dark:border-[#3a3a3a] flex flex-col gap-2"

@@ -14,7 +14,10 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { statusConfig } from "./StatusSelector";
+import { statusConfig, StatusSelector } from "./StatusSelector";
+import { PrioritySelector } from "./PrioritySelector";
+import { AssigneeSelector } from "./AssigneeSelector";
+import { formatDistanceToNow } from 'date-fns';
 import {
     Circle,
     SignalLow,
@@ -31,7 +34,7 @@ const priorityConfig = {
     urgent: { icon: AlertTriangle, color: 'text-red-500' }
 };
 
-export function IssueRow({ issue, onClick, onDelete }) {
+export function IssueRow({ issue, onClick, onDelete, onUpdate, members }) {
     const statusInfo = statusConfig[issue.status] || statusConfig.backlog;
     const StatusIcon = statusInfo.icon;
 
@@ -57,68 +60,71 @@ export function IssueRow({ issue, onClick, onDelete }) {
 
     return (
         <div
-            className="group flex items-center justify-between py-2.5 px-3 bg-card hover:bg-accent/50 border border-border/40 dark:border-gray-600 hover:border-border dark:hover:border-gray-400 rounded-md transition-all cursor-pointer"
+            className="group flex items-center justify-between py-4 px-6 bg-white/40 dark:bg-white/[0.02] hover:bg-white/60 dark:hover:bg-white/[0.05] border border-border/50 dark:border-white/5 rounded-2xl transition-all duration-200 cursor-pointer hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-none hover:-translate-y-0.5 active:scale-[0.99]"
             onClick={() => onClick?.(issue)}
         >
-            <div className="flex items-center gap-3 overflow-hidden flex-1">
-                {/* Status Icon */}
-                <div className="flex-shrink-0">
-                    <StatusIcon className={`w-4 h-4 ${statusInfo.color}`} />
+            <div className="flex items-center gap-4 overflow-hidden flex-1">
+                {/* Status Selector */}
+                <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <StatusSelector
+                        value={issue.status}
+                        onChange={(status) => onUpdate?.(issue.id, { status })}
+                        variant="icon"
+                    />
                 </div>
 
-                {/* Issue ID */}
-                <span className="text-xs font-mono text-muted-foreground dark:text-gray-400 min-w-[60px]">
-                    {issueIdentifier}
-                </span>
-
-                {/* Priority Icon */}
-                {issue.priority !== 'none' && (
-                    <div className="flex-shrink-0">
-                        <PriorityIcon className={`w-4 h-4 ${priorityInfo.color}`} />
-                    </div>
-                )}
-
-                {/* Title */}
-                <span className="text-sm font-medium text-foreground dark:text-white truncate pr-4 flex-1">
-                    {issue.title}
-                </span>
+                {/* Issue ID & Title */}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <span className="text-[10px] font-bold tracking-widest text-muted-foreground/40 dark:text-gray-600 group-hover:text-muted-foreground/60 transition-colors">
+                        {issueIdentifier}
+                    </span>
+                    <span className="text-sm font-semibold text-foreground/90 dark:text-gray-200 truncate group-hover:text-foreground transition-colors">
+                        {issue.title}
+                    </span>
+                </div>
             </div>
 
             {/* Meta Info (labels, assignee, actions) */}
-            <div className="flex items-center gap-3 flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-6 flex-shrink-0">
                 {/* Labels */}
                 {issue.labels && issue.labels.length > 0 && (
-                    <div className="flex gap-1">
+                    <div className="hidden md:flex items-center gap-1.5">
                         {issue.labels.slice(0, 2).map((label) => (
                             <Badge
                                 key={label.id}
                                 variant="outline"
-                                className="text-[10px] h-5 px-1.5 font-normal border-border dark:border-gray-500 bg-transparent dark:text-gray-300"
-                                style={{ borderColor: label.color, color: label.color }}
+                                className="px-2 py-0 text-[10px] font-bold uppercase tracking-wider bg-white/50 dark:bg-white/5 border-border/50 dark:border-white/10 text-muted-foreground dark:text-gray-400 rounded-full"
+                                style={{ borderColor: `${label.color}40`, color: label.color }}
                             >
                                 {label.name}
                             </Badge>
                         ))}
                         {issue.labels.length > 2 && (
-                            <Badge
-                                variant="outline"
-                                className="text-[10px] h-5 px-1.5 font-normal border-border dark:border-gray-500 bg-transparent dark:text-gray-300"
-                            >
+                            <span className="text-[10px] font-bold text-muted-foreground/40 px-1">
                                 +{issue.labels.length - 2}
-                            </Badge>
+                            </span>
                         )}
                     </div>
                 )}
 
-                {/* Assignee */}
-                {issue.assignee && (
-                    <Avatar className="h-5 w-5">
-                        <AvatarImage src={issue.assignee.avatar_url} />
-                        <AvatarFallback className="text-[9px] bg-muted text-muted-foreground">
-                            {issue.assignee.display_name?.charAt(0)?.toUpperCase() || 'U'}
-                        </AvatarFallback>
-                    </Avatar>
-                )}
+                {/* Priority Selector */}
+                <div className="hidden sm:block flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <PrioritySelector
+                        value={issue.priority}
+                        onChange={(priority) => onUpdate?.(issue.id, { priority })}
+                        variant="icon"
+                    />
+                </div>
+
+                {/* Assignee Selector */}
+                <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <AssigneeSelector
+                        value={issue.assignee_id}
+                        onChange={(assignee_id) => onUpdate?.(issue.id, { assignee_id })}
+                        members={members}
+                        variant="avatar"
+                    />
+                </div>
 
                 {/* Actions Menu */}
                 <DropdownMenu>
@@ -126,30 +132,30 @@ export function IssueRow({ issue, onClick, onDelete }) {
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                            className="h-8 w-8 rounded-xl opacity-0 group-hover:opacity-100 text-muted-foreground/50 dark:text-gray-500 hover:text-foreground dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5 transition-all"
                         >
                             <MoreHorizontal className="w-4 h-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handleCopyLink}>
+                    <DropdownMenuContent align="end" className="w-48 bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-xl border-border/50 dark:border-white/10 rounded-2xl shadow-2xl p-2">
+                        <DropdownMenuItem onClick={handleCopyLink} className="rounded-xl focus:bg-primary/10 focus:text-primary dark:text-gray-300 cursor-pointer py-2.5">
                             <Copy className="w-4 h-4 mr-2" />
-                            Copy link
+                            <span className="font-medium">Copy link</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => {
                             e.stopPropagation();
                             onClick?.(issue);
-                        }}>
+                        }} className="rounded-xl focus:bg-primary/10 focus:text-primary dark:text-gray-300 cursor-pointer py-2.5">
                             <ExternalLink className="w-4 h-4 mr-2" />
-                            Open details
+                            <span className="font-medium">Open details</span>
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator className="my-1 bg-border/50 dark:bg-white/5" />
                         <DropdownMenuItem
                             onClick={handleDelete}
-                            className="text-red-600 dark:text-red-400"
+                            className="rounded-xl focus:bg-red-500/10 text-red-600 dark:text-red-400 cursor-pointer py-2.5"
                         >
                             <Trash2 className="w-4 h-4 mr-2" />
-                            Delete issue
+                            <span className="font-medium">Delete issue</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

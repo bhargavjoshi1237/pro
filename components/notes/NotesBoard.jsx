@@ -69,7 +69,7 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
   const [showToolbar, setShowToolbar] = useState(false);
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
-
+  const proOptions = { hideAttribution: true };
   // Fetch board data
   useEffect(() => {
     const fetchBoard = async () => {
@@ -148,10 +148,10 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
           source: conn.source_id,
           target: conn.target_id,
           type: conn.type,
-          style: conn.style || { stroke: '#ffffff', strokeWidth: 2 },
+          style: conn.style || { stroke: '#3b82f6', strokeWidth: 2 },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: (conn.style?.stroke || '#ffffff'),
+            color: (conn.style?.stroke || '#3b82f6'),
           },
         }));
 
@@ -335,10 +335,10 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
               source: payload.new.source_id,
               target: payload.new.target_id,
               type: payload.new.type,
-              style: payload.new.style || { stroke: '#ffffff', strokeWidth: 2 },
+              style: payload.new.style || { stroke: '#3b82f6', strokeWidth: 2 },
               markerEnd: {
                 type: MarkerType.ArrowClosed,
-                color: (payload.new.style?.stroke || '#ffffff'),
+                color: (payload.new.style?.stroke || '#3b82f6'),
               },
             };
             setEdges((eds) => [...eds, newEdge]);
@@ -366,7 +366,7 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
             target_id: params.target,
             type: 'straight',
             style: {
-              stroke: '#ffffff',
+              stroke: '#3b82f6',
               strokeWidth: 2,
             }
           })
@@ -393,6 +393,23 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
           .eq('id', node.id);
       } catch (err) {
         console.error('Error updating node position:', err);
+      }
+    },
+    []
+  );
+
+  const handleNodeResizeStop = useCallback(
+    async (event, { id, width, height }) => {
+      try {
+        await supabase
+          .from('notes_items')
+          .update({
+            width,
+            height,
+          })
+          .eq('id', id);
+      } catch (err) {
+        console.error('Error updating node dimensions:', err);
       }
     },
     []
@@ -519,6 +536,14 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
 
             await Promise.all(promises);
           }
+        } else if (e.key === 'Delete' || e.key === 'Backspace') {
+          const selectedNodes = nodes.filter(n => n.selected);
+          if (selectedNodes.length > 0) {
+            const promises = selectedNodes.map(node => 
+              supabase.from('notes_items').delete().eq('id', node.id)
+            );
+            await Promise.all(promises);
+          }
         }
       }
     };
@@ -542,31 +567,29 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
   return (
     <div className="w-full h-full relative" ref={reactFlowWrapper}>
       <ReactFlow
+        proOptions={proOptions}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeDragStop={handleNodeDragStop}
+        onNodeResizeStop={handleNodeResizeStop}
         onInit={setReactFlowInstance}
         nodeTypes={nodeTypes}
-        fitView
+        defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
         className="bg-gray-50 dark:bg-[#191919]"
         panOnScroll={true}
         panOnDrag={[1, 2]}
         selectionOnDrag={true}
-        snapToGrid={true}
-        snapGrid={[15, 15]}
+        snapToGrid={false}
+        snapGrid={[1, 1]}
         connectionLineType={ConnectionLineType.Straight}
+        connectionLineStyle={{ stroke: '#3b82f6', strokeWidth: 2 }}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#333333" />
         <Controls />
-        <MiniMap
-          nodeColor={(node) => {
-            return node.data?.style?.backgroundColor || '#ffffff';
-          }}
-          className="bg-white dark:bg-[#2a2a2a]"
-        />
+         
         
         <Panel position="top-left" className="flex items-center gap-3 bg-white dark:bg-[#2a2a2a] p-3 rounded-lg shadow-lg border border-gray-200 dark:border-[#3a3a3a]">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7]">
