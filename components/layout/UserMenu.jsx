@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import SettingsDialog from '@/components/settings/SettingsDialog';
 
 export default function UserMenu({ user, userProfile }) {
     const router = useRouter();
@@ -59,7 +60,7 @@ export default function UserMenu({ user, userProfile }) {
                             <div className="py-1">
                                 <button
                                     onClick={() => {
-                                        router.push('/settings');
+                                        setShowSettings(true);
                                         setShowUserMenu(false);
                                     }}
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
@@ -92,6 +93,13 @@ export default function UserMenu({ user, userProfile }) {
                     </>
                 )}
             </div>
+
+            {/* Settings Dialog */}
+            <SettingsDialog
+                isOpen={showSettings}
+                onClose={() => setShowSettings(false)}
+                user={user}
+            />
         </>
     );
 }
