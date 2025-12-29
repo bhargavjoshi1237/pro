@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { PlusIcon, PresentationChartBarIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import LoadingSpinner from '../LoadingSpinner';
 
 export function SharedBoardsPanel({ workspaceId, onOpenBoard }) {
     const [boards, setBoards] = useState([]);
@@ -90,12 +91,8 @@ export function SharedBoardsPanel({ workspaceId, onOpenBoard }) {
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {loading ? (
-                    <div className="flex justify-center py-4">
-                        <div className="flex gap-1">
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                        </div>
+                    <div className="flex justify-center py-8">
+                          <LoadingSpinner  />
                     </div>
                 ) : boards.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">

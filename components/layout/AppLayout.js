@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
     HomeIcon,
@@ -29,10 +29,28 @@ export default function AppLayout({
     const pathname = usePathname();
     const { theme, toggleTheme } = useTheme();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [showExperimentalFeatures, setShowExperimentalFeatures] = useState(false);
+
+    useEffect(() => {
+        // Check localStorage for experimental features setting
+        const experimentalEnabled = localStorage.getItem('experimentalFeaturesEnabled') === 'true';
+        setShowExperimentalFeatures(experimentalEnabled);
+
+        // Listen for changes to experimental features setting
+        const handleExperimentalFeaturesChange = (event) => {
+            setShowExperimentalFeatures(event.detail.enabled);
+        };
+
+        window.addEventListener('experimentalFeaturesChanged', handleExperimentalFeaturesChange);
+
+        return () => {
+            window.removeEventListener('experimentalFeaturesChanged', handleExperimentalFeaturesChange);
+        };
+    }, []);
 
     return (
-        <div className="relative min-h-screen overflow-hidden">
-            <div className="flex flex-col lg:flex-row h-screen">
+        <div className="relative h-full overflow-hidden">
+            <div className="flex flex-col lg:flex-row h-full">
                 <WaveBackground />
 
                 {/* Blurred Overlay */}
@@ -60,10 +78,9 @@ export default function AppLayout({
 
                     <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                         {[
-                            { path: '/dashboard', label: 'Home', icon: HomeIcon },
+                            { path: '/dashboard', label: 'Dashboard', icon: HomeIcon },
                             { path: '/ai-chat', label: 'AI Chat', icon: SparklesIcon },
                             { path: '/emails', label: 'Emails', icon: EnvelopeIcon },
-                            { path: '/proper6k', label: 'Proper 6K', icon: ToolCase },
                         ].map((item) => {
                             const Icon = item.icon;
                             const isActive = pathname === item.path || (pathname?.startsWith(item.path + '/') && item.path !== '/dashboard');
@@ -95,6 +112,7 @@ export default function AppLayout({
                     setOpen={setMobileMenuOpen}
                     user={user}
                     userProfile={userProfile}
+                    showExperimentalFeatures={showExperimentalFeatures}
                 />
 
                 {/* Main Content */}
@@ -108,7 +126,7 @@ export default function AppLayout({
                             <Bars3Icon className="w-5 h-5 text-gray-900 dark:text-[#e7e7e7]" />
                         </button>
 
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 -ml-2">
                             <SparklesIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                             <span className="text-sm font-semibold text-gray-900 dark:text-[#e7e7e7]">Prodigy</span>
                         </div>

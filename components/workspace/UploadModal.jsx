@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { XMarkIcon, DocumentIcon, CloudArrowUpIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 export default function UploadModal({ isOpen, onClose, onUpload, maxFileSize = 5 * 1024 * 1024 }) { // 5MB default
     const [dragActive, setDragActive] = useState(false);
@@ -168,7 +169,7 @@ export default function UploadModal({ isOpen, onClose, onUpload, maxFileSize = 5
                     >
                         {uploading ? (
                             <>
-                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <LoadingSpinner size="sm" color="white" />
                                 Uploading...
                             </>
                         ) : (

@@ -108,8 +108,8 @@ export default function ProfileSettings({ user }) {
       </div>
 
       {/* Avatar Section */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-4 sm:p-6 bg-gray-50 dark:bg-[#1c1c1c] rounded-xl border border-gray-200 dark:border-[#2a2a2a]">
-        <Avatar className="w-16 h-16 sm:w-20 sm:h-20 ring-4 ring-white dark:ring-[#2a2a2a] shadow-sm shrink-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-4 sm:p-6 bg-gray-50 dark:bg-[#1c1c1c] rounded-xl border border-gray-200 dark:border-[#2a2a2a] transition-colors hover:bg-gray-100 dark:hover:bg-[#232323]">
+        <Avatar className="w-16 h-16 sm:w-20 sm:h-20 ring-4 ring-white dark:ring-[#2a2a2a] shadow-sm shrink-0 transition-transform hover:scale-105">
           {avatarUrl ? (
             <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
@@ -134,7 +134,7 @@ export default function ProfileSettings({ user }) {
               size="sm"
               onClick={() => document.getElementById('avatar-upload')?.click()}
               disabled={uploading}
-              className="bg-white dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-200 border-gray-300 dark:border-[#333] text-xs sm:text-sm"
+              className="bg-white dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-200 border-gray-300 dark:border-[#333] text-xs sm:text-sm transition-colors hover:bg-gray-100 dark:hover:bg-[#232323] hover:border-gray-400 dark:hover:border-[#444]"
             >
               {uploading ? 'Uploading...' : 'Upload New'}
             </Button>
@@ -143,7 +143,7 @@ export default function ProfileSettings({ user }) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setAvatarUrl('')}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs sm:text-sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs sm:text-sm transition-colors"
               >
                 Remove
               </Button>
@@ -167,7 +167,7 @@ export default function ProfileSettings({ user }) {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Enter your display name"
-              className="bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#333] h-10 text-sm"
+              className="bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#333] h-10 text-sm transition-colors hover:border-gray-400 dark:hover:border-[#444] focus:border-blue-500 dark:focus:border-blue-500"
             />
           </div>
 
@@ -190,7 +190,7 @@ export default function ProfileSettings({ user }) {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px] w-full sm:w-auto text-sm h-10"
+          className="bg-black text-white dark:bg-white dark:text-black min-w-[120px] w-full sm:w-auto text-sm h-10 transition-colors hover:bg-gray-900 dark:hover:bg-gray-200"
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>

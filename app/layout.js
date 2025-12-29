@@ -28,17 +28,20 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover', // Important for notched devices
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="h-full">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased h-full overflow-hidden`}
         suppressHydrationWarning
       >
         <ThemeProvider>
-          {children}
+          <div className="h-full overflow-auto">
+            {children}
+          </div>
           <Toaster />
         </ThemeProvider>
       </body>

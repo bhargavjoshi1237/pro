@@ -24,7 +24,7 @@ export async function POST(request) {
       }
     );
 
-    const { messages, conversationHistory, userId } = await request.json();
+    const { messages, userId } = await request.json();
 
     // Verify user is authenticated - SKIPPED as per user request
     // const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -55,7 +55,7 @@ export async function POST(request) {
       ? settings.apiUrl.slice(0, -1)
       : (settings.apiUrl || 'https://api.openai.com/v1');
 
-    // Call AI provider
+    // Call AI provider with messages array (already properly ordered from client)
     const response = await fetch(`${apiUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -64,14 +64,7 @@ export async function POST(request) {
       },
       body: JSON.stringify({
         model: settings.model || 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: settings.systemPrompt || 'You are a helpful writing assistant.',
-          },
-          ...conversationHistory,
-          ...messages,
-        ],
+        messages: messages || [],
         temperature: settings.temperature || 0.7,
         max_tokens: settings.maxTokens || 2000,
       }),

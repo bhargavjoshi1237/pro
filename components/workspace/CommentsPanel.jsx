@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useMemo, useEffect } from 'react';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import {
   ChatBubbleLeftIcon,
   XMarkIcon,
@@ -275,7 +276,7 @@ export default function CommentsPanel({
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+        <LoadingSpinner size="md" color="gray" />
         <p className="text-sm text-gray-500">Loading discussion...</p>
       </div>
     );

@@ -9,7 +9,7 @@ import { PrioritySelector } from "./PrioritySelector";
 import { StatusSelector } from "./StatusSelector";
 import { AssigneeSelector } from "./AssigneeSelector";
 import { LabelSelector } from "./LabelSelector";
-import { Trash2, Send } from 'lucide-react';
+import { Trash2, Send, X } from 'lucide-react';
 import { supabase } from "@/lib/supabase";
 
 export function IssueDetailPanel({
@@ -133,12 +133,46 @@ export function IssueDetailPanel({
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="w-full sm:max-w-2xl overflow-y-auto bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border-l border-border/50 dark:border-[#2a2a2a]/50 shadow-2xl">
-                <SheetHeader className="pb-4 border-b border-border/50 dark:border-[#2a2a2a]/50">
-                    <div className="flex items-center justify-between">
-                        <SheetTitle className="text-xs font-mono text-muted-foreground dark:text-gray-500 tracking-wider uppercase">
-                            {issueIdentifier}
-                        </SheetTitle>
+            <SheetContent className="w-full sm:max-w-xl overflow-y-auto bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-xl border-l border-border/50 dark:border-[#2a2a2a]/50 shadow-2xl">
+                <SheetHeader className="pb-3 border-b border-border/50 dark:border-[#2a2a2a]/50">
+                    <div className="flex items-center justify-between gap-3">
+                        <div>
+                            <SheetTitle className="text-xs font-mono text-muted-foreground dark:text-gray-500 tracking-wider uppercase">
+                                {issueIdentifier}
+                            </SheetTitle>
+                            <div className="mt-1 text-xl font-bold leading-tight dark:text-white">{title}</div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <div className="hidden sm:flex items-center gap-2">
+                                <StatusSelector
+                                    value={status}
+                                    onChange={(val) => {
+                                        setStatus(val);
+                                        handleUpdate('status', val);
+                                    }}
+                                    className="h-9" />
+                                <PrioritySelector
+                                    value={priority}
+                                    onChange={(val) => {
+                                        setPriority(val);
+                                        handleUpdate('priority', val);
+                                    }}
+                                    className="h-9" />
+                                <AssigneeSelector
+                                    value={assigneeId}
+                                    onChange={(val) => {
+                                        setAssigneeId(val);
+                                        handleUpdate('assignee_id', val);
+                                    }}
+                                    members={members}
+                                    className="h-9" />
+                            </div>
+
+                            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} title="Close">
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
                     </div>
                 </SheetHeader>
 
@@ -155,34 +189,34 @@ export function IssueDetailPanel({
                         />
                     </div>
 
-                    {/* Properties Grid - More compact and modern */}
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-6 bg-muted/30 dark:bg-white/5 p-6 rounded-2xl border border-border/50 dark:border-white/5">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground dark:text-gray-500">Status</label>
+                    {/* Properties Grid - compact */}
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4 p-4 rounded-lg bg-transparent border border-border/20">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Status</label>
                             <StatusSelector
                                 value={status}
                                 onChange={(val) => {
                                     setStatus(val);
                                     handleUpdate('status', val);
                                 }}
-                                className="h-9 bg-background/50 dark:bg-black/20 border-border/50 dark:border-white/10 rounded-lg"
+                                className="h-9"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground dark:text-gray-500">Priority</label>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Priority</label>
                             <PrioritySelector
                                 value={priority}
                                 onChange={(val) => {
                                     setPriority(val);
                                     handleUpdate('priority', val);
                                 }}
-                                className="h-9 bg-background/50 dark:bg-black/20 border-border/50 dark:border-white/10 rounded-lg"
+                                className="h-9"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground dark:text-gray-500">Assignee</label>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Assignee</label>
                             <AssigneeSelector
                                 value={assigneeId}
                                 onChange={(val) => {
@@ -190,12 +224,12 @@ export function IssueDetailPanel({
                                     handleUpdate('assignee_id', val);
                                 }}
                                 members={members}
-                                className="h-9 bg-background/50 dark:bg-black/20 border-border/50 dark:border-white/10 rounded-lg"
+                                className="h-9"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground dark:text-gray-500">Labels</label>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Labels</label>
                             <LabelSelector
                                 value={selectedLabels}
                                 onChange={async (newLabels) => {
@@ -203,21 +237,21 @@ export function IssueDetailPanel({
                                 }}
                                 labels={labels}
                                 onCreateLabel={onCreateLabel}
-                                className="h-9 bg-background/50 dark:bg-black/20 border-border/50 dark:border-white/10 rounded-lg"
+                                className="h-9"
                             />
                         </div>
                     </div>
 
                     {/* Description */}
                     <div className="space-y-3">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground dark:text-gray-500 px-1">Description</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Description</label>
                         <Textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             onBlur={handleDescriptionBlur}
                             placeholder="Add a detailed description..."
-                            rows={8}
-                            className="resize-none bg-transparent border-none focus-visible:ring-0 p-1 text-base leading-relaxed dark:text-gray-200 placeholder:text-muted-foreground/30"
+                            rows={6}
+                            className="resize-none bg-muted/10 dark:bg-white/5 border border-border/20 rounded-lg p-3 text-base leading-relaxed dark:text-gray-200 placeholder:text-muted-foreground/30"
                         />
                     </div>
 
@@ -250,7 +284,7 @@ export function IssueDetailPanel({
                                                 {new Date(comment.created_at).toLocaleDateString()}
                                             </span>
                                         </div>
-                                        <div className="text-sm text-foreground/80 dark:text-gray-300 leading-relaxed bg-muted/20 dark:bg-white/5 p-3 rounded-xl rounded-tl-none border border-border/30 dark:border-white/5">
+                                        <div className="text-sm text-foreground/80 dark:text-gray-300 leading-relaxed bg-white/5 dark:bg-white/5 p-3 rounded-lg border border-border/20">
                                             {comment.content}
                                         </div>
                                     </div>
@@ -265,7 +299,7 @@ export function IssueDetailPanel({
                                 onChange={(e) => setNewComment(e.target.value)}
                                 placeholder="Write a comment..."
                                 rows={3}
-                                className="resize-none w-full bg-muted/30 dark:bg-white/5 border-border/50 dark:border-white/10 rounded-2xl p-4 pr-12 text-sm focus-visible:ring-primary/20 transition-all"
+                                className="resize-none w-full bg-muted/10 dark:bg-white/5 border border-border/20 rounded-lg p-3 pr-12 text-sm focus-visible:ring-primary/20 transition-all"
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                                         handleAddComment();
@@ -276,7 +310,7 @@ export function IssueDetailPanel({
                                 size="icon"
                                 onClick={handleAddComment}
                                 disabled={!newComment.trim()}
-                                className="absolute right-3 bottom-3 h-8 w-8 rounded-xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all disabled:opacity-0 disabled:scale-90"
+                                className="absolute right-3 bottom-3 h-8 w-8 rounded-xl bg-primary hover:bg-primary/90 text-white shadow transition-all disabled:opacity-0 disabled:scale-90"
                             >
                                 <Send className="w-4 h-4" />
                             </Button>

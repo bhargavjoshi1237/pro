@@ -10,9 +10,15 @@ import {
   SparklesIcon,
   ArrowPathIcon,
   ClipboardDocumentIcon,
-  CheckIcon
+  CheckIcon,
+  PencilSquareIcon,
+  BoltIcon,
+  Bars3BottomLeftIcon,
+  AdjustmentsHorizontalIcon,
+  SpeakerWaveIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
+import LoadingSpinner from '../LoadingSpinner';
 
 export function AIAssistantPanel({ workspaceId, currentUserId }) {
   const [content, setContent] = useState('');
@@ -126,14 +132,16 @@ export function AIAssistantPanel({ workspaceId, currentUserId }) {
               Connected
             </Badge>
           ) : (
-            <Badge variant="secondary" className="ml-auto bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">
-              Not Configured
+            <Badge variant="secondary" className="ml-auto bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 flex items-center gap-1 px-2 py-1 text-xs">
+              <span className="text-xs">Connecting</span>
+              <span className="ml-1"><LoadingSpinner size="sm" /></span>
             </Badge>
           )}
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-4">
+      {/* Main scrollable area using shadcn ScrollArea, responsive for mobile */}
+      <ScrollArea className="flex-1 p-4 h-[calc(100dvh-56px)] sm:h-auto min-h-0">
         <div className="space-y-4">
           {/* Content */}
           <div>
@@ -165,19 +173,15 @@ export function AIAssistantPanel({ workspaceId, currentUserId }) {
           <Button
             onClick={generateResponse}
             disabled={loading || !aiSettings?.apiKey}
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white relative overflow-hidden"
           >
-            {loading ? (
-              <>
-                <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <SparklesIcon className="w-4 h-4 mr-2" />
-                Generate Response
-              </>
-            )}
+            <div className={`flex items-center justify-center transition-opacity duration-400 ${!loading ? 'opacity-100' : 'opacity-0'}`}>
+              <SparklesIcon className="w-4 h-4 mr-2" />
+              Generate Response
+            </div>
+            <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-400 ${loading ? 'opacity-100' : 'opacity-0'}`}>
+              <LoadingSpinner />
+            </div>
           </Button>
 
           {/* Output */}
@@ -239,8 +243,9 @@ export function AIAssistantPanel({ workspaceId, currentUserId }) {
                   setInstructions('Improve the grammar and spelling');
                   setSystemPrompt('You are a professional editor. Fix grammar and spelling errors while maintaining the author\'s voice.');
                 }}
-                className="text-xs bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+                className="text-xs bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] flex items-center gap-1"
               >
+                <PencilSquareIcon className="w-4 h-4" />
                 Fix Grammar
               </Button>
               <Button
@@ -250,8 +255,9 @@ export function AIAssistantPanel({ workspaceId, currentUserId }) {
                   setInstructions('Make this more engaging and dramatic');
                   setSystemPrompt('You are a creative writing coach. Enhance the text to be more engaging and dramatic.');
                 }}
-                className="text-xs bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+                className="text-xs bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] flex items-center gap-1"
               >
+                <BoltIcon className="w-4 h-4" />
                 Enhance Drama
               </Button>
               <Button
@@ -261,8 +267,9 @@ export function AIAssistantPanel({ workspaceId, currentUserId }) {
                   setInstructions('Summarize this in 2-3 sentences');
                   setSystemPrompt('You are a summarization expert. Create concise summaries.');
                 }}
-                className="text-xs bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+                className="text-xs bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] flex items-center gap-1"
               >
+                <Bars3BottomLeftIcon className="w-4 h-4" />
                 Summarize
               </Button>
               <Button
@@ -272,9 +279,34 @@ export function AIAssistantPanel({ workspaceId, currentUserId }) {
                   setInstructions('Expand this with more details and descriptions');
                   setSystemPrompt('You are a descriptive writer. Add vivid details and descriptions.');
                 }}
-                className="text-xs bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+                className="text-xs bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] flex items-center gap-1"
               >
+                <AdjustmentsHorizontalIcon className="w-4 h-4" />
                 Expand
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setInstructions('Make this more concise');
+                  setSystemPrompt('You are an expert at concise writing. Shorten the text while preserving its meaning.');
+                }}
+                className="text-xs bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] flex items-center gap-1"
+              >
+                <SpeakerWaveIcon className="w-4 h-4" />
+                Make Concise
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setInstructions('Change the tone to be more formal');
+                  setSystemPrompt('You are a professional editor. Rewrite the text to have a more formal tone.');
+                }}
+                className="text-xs bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-[#e7e7e7] border-gray-300 dark:border-[#2a2a2a] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] flex items-center gap-1"
+              >
+                <SparklesIcon className="w-4 h-4" />
+                Formal Tone
               </Button>
             </div>
           </div>

@@ -271,7 +271,10 @@ export default function WorkspaceCustomization({
           <button
             onClick={handleSave}
             disabled={saving || uploading}
-            className="px-3 sm:px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300 dark:disabled:bg-[#2a2a2a] text-white rounded-lg transition-colors flex items-center gap-2"
+            className="px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2
+              bg-black text-white hover:bg-gray-800 active:bg-gray-900
+              dark:bg-white dark:text-black dark:hover:bg-gray-200 dark:active:bg-gray-300
+              disabled:bg-gray-300 dark:disabled:bg-[#2a2a2a]"
           >
             {saving ? (
               <>

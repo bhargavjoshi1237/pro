@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner';
 import UploadModal from './UploadModal';
 import CreateFolderModal from './CreateFolderModal';
+import LoadingSpinner from '../LoadingSpinner';
 
 export default function StoragePanel({ workspaceId }) {
     const [currentPath, setCurrentPath] = useState(''); // Relative to workspaceId
@@ -448,7 +449,9 @@ export default function StoragePanel({ workspaceId }) {
             {/* File List */}
             <div className="flex-1 overflow-y-auto p-2">
                 {loading ? (
-                    <div className="flex items-center justify-center h-20 text-xs text-gray-400">Loading...</div>
+                    <div className="flex justify-center items-center h-40">
+                          <LoadingSpinner  />
+                    </div>
                 ) : filteredAndSortedItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 text-gray-400 gap-2">
                         <FolderIcon className="w-8 h-8 opacity-20" />

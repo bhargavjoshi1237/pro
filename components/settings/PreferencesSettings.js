@@ -18,13 +18,18 @@ export default function PreferencesSettings({ userId }) {
   const [autoCompleteDelay, setAutoCompleteDelay] = useState(5000);
   const [mounted, setMounted] = useState(false);
 
+  // Experimental Features
+  const [experimentalFeaturesEnabled, setExperimentalFeaturesEnabled] = useState(false);
+
   useEffect(() => {
     setMounted(true);
     const savedEnabled = localStorage.getItem('autoCompleteEnabled') === 'true';
     const savedDelay = localStorage.getItem('autoCompleteDelay');
+    const savedExperimental = localStorage.getItem('experimentalFeaturesEnabled') === 'true';
 
     if (savedEnabled) setAutoCompleteEnabled(true);
     if (savedDelay) setAutoCompleteDelay(Number(savedDelay));
+    if (savedExperimental) setExperimentalFeaturesEnabled(true);
   }, []);
 
   const handleAutoCompleteChange = (enabled) => {
@@ -35,6 +40,13 @@ export default function PreferencesSettings({ userId }) {
   const handleDelayChange = (delay) => {
     setAutoCompleteDelay(delay);
     localStorage.setItem('autoCompleteDelay', String(delay));
+  };
+
+  const handleExperimentalFeaturesChange = (enabled) => {
+    setExperimentalFeaturesEnabled(enabled);
+    localStorage.setItem('experimentalFeaturesEnabled', String(enabled));
+    // Trigger a custom event to notify other components
+    window.dispatchEvent(new CustomEvent('experimentalFeaturesChanged', { detail: { enabled } }));
   };
 
   const handleThemeChange = (newTheme) => {
@@ -58,22 +70,22 @@ export default function PreferencesSettings({ userId }) {
           <button
             onClick={() => handleThemeChange('light')}
             className={`p-3 lg:p-4 border rounded-xl transition-all flex flex-col items-center gap-2 lg:gap-3 ${theme === 'light'
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500'
+              ? 'border-black bg-gray-50 dark:bg-gray-900/20 ring-1 ring-black'
               : 'border-gray-200 dark:border-[#333] hover:border-gray-300 dark:hover:border-[#444] bg-white dark:bg-[#1c1c1c]'
               }`}
           >
-            <SunIcon className={`w-5 h-5 lg:w-6 lg:h-6 ${theme === 'light' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`} />
-            <span className={`text-xs lg:text-sm font-medium ${theme === 'light' ? 'text-blue-900 dark:text-blue-100' : 'text-gray-700 dark:text-gray-300'}`}>Light Mode</span>
+            <SunIcon className={`w-5 h-5 lg:w-6 lg:h-6 ${theme === 'light' ? 'text-black dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} />
+            <span className={`text-xs lg:text-sm font-medium ${theme === 'light' ? 'text-black dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>Light Mode</span>
           </button>
           <button
             onClick={() => handleThemeChange('dark')}
             className={`p-3 lg:p-4 border rounded-xl transition-all flex flex-col items-center gap-2 lg:gap-3 ${theme === 'dark'
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500'
+              ? 'border-white bg-gray-900/20 dark:bg-white/5 ring-1 ring-white'
               : 'border-gray-200 dark:border-[#333] hover:border-gray-300 dark:hover:border-[#444] bg-white dark:bg-[#1c1c1c]'
               }`}
           >
-            <MoonIcon className={`w-5 h-5 lg:w-6 lg:h-6 ${theme === 'dark' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`} />
-            <span className={`text-xs lg:text-sm font-medium ${theme === 'dark' ? 'text-blue-900 dark:text-blue-100' : 'text-gray-700 dark:text-gray-300'}`}>Dark Mode</span>
+            <MoonIcon className={`w-5 h-5 lg:w-6 lg:h-6 ${theme === 'dark' ? 'text-white dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} />
+            <span className={`text-xs lg:text-sm font-medium ${theme === 'dark' ? 'text-white dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>Dark Mode</span>
           </button>
         </div>
       </div>
@@ -102,7 +114,7 @@ export default function PreferencesSettings({ userId }) {
               min="500"
               max="5000"
               step="500"
-              className="max-w-[200px] bg-white dark:bg-[#1c1c1c] border-gray-300 dark:border-[#333] h-9 lg:h-10 text-sm"
+              className="dark:text-white max-w-[200px] bg-white dark:bg-[#1c1c1c] border-gray-300 dark:border-[#333] h-9 lg:h-10 text-sm"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">Changes will be saved after {autoSaveDelay}ms of inactivity</p>
           </div>
@@ -153,7 +165,7 @@ export default function PreferencesSettings({ userId }) {
               min="5"
               max="60"
               step="1"
-              className="max-w-[200px] bg-white dark:bg-[#1c1c1c] border-gray-300 dark:border-[#333] h-9 lg:h-10 text-sm"
+              className="dark:text-white max-w-[200px] bg-white dark:bg-[#1c1c1c] border-gray-300 dark:border-[#333] h-9 lg:h-10 text-sm"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Suggestions will appear after {autoCompleteDelay / 1000} seconds of inactivity
@@ -164,25 +176,28 @@ export default function PreferencesSettings({ userId }) {
 
       <div className="h-px bg-gray-200 dark:bg-[#2a2a2a]" />
 
-      {/* Language */}
-      <div className="space-y-3 lg:space-y-4">
-        <h4 className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7]">Language & Region</h4>
-        <div className="space-y-2">
-          <Label className="text-xs lg:text-sm text-gray-700 dark:text-gray-300">Interface Language</Label>
-          <Select defaultValue="en-US">
-            <SelectTrigger className="w-full bg-white dark:bg-[#1c1c1c] border-gray-300 dark:border-[#333] h-9 lg:h-10 text-sm">
-              <SelectValue placeholder="Select language" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="en-US">English (US)</SelectItem>
-              <SelectItem value="en-UK">English (UK)</SelectItem>
-              <SelectItem value="es">Spanish</SelectItem>
-              <SelectItem value="fr">French</SelectItem>
-              <SelectItem value="de">German</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* Experimental Features */}
+      <div className="space-y-4 lg:space-y-6">
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 dark:text-[#e7e7e7]">Experimental Features</h4>
+          <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 mt-1">Enable experimental and beta features</p>
         </div>
-      </div>
+
+        {mounted && (
+          <div className="flex items-start sm:items-center justify-between gap-4">
+            <div className="space-y-0.5 flex-1 min-w-0">
+              <Label className="text-sm lg:text-base text-gray-900 dark:text-[#e7e7e7]">Enable Experimental Features</Label>
+              <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400">Show Proper 6K and other experimental features in sidebar</p>
+            </div>
+            
+            <Switch
+              checked={experimentalFeaturesEnabled}
+              onCheckedChange={handleExperimentalFeaturesChange}
+              className="shrink-0"
+            />
+          </div>
+        )}
+      </div>  
     </div>
   );
 }

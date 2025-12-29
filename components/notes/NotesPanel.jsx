@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import LoadingSpinner from '../LoadingSpinner';
 
 export function NotesPanel({ workspaceId, onOpenBoard }) {
   const [boards, setBoards] = useState([]);
@@ -191,12 +192,8 @@ export function NotesPanel({ workspaceId, onOpenBoard }) {
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {loading ? (
-          <div className="flex justify-center py-4">
-            <div className="flex gap-1">
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-            </div>
+          <div className="flex justify-center py-8">
+            <LoadingSpinner  />
           </div>
         ) : boards.length === 0 ? (
           <div className="text-center py-12 bg-gray-50/50 dark:bg-[#212121]/50 rounded-xl border-2 border-dashed border-gray-200 dark:border-[#2a2a2a]">

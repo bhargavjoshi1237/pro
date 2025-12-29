@@ -33,6 +33,7 @@ import { IssueRow } from '@/components/proper-6k/IssueRow';
 import { IssueCreateDialog } from '@/components/proper-6k/IssueCreateDialog';
 import { IssueDetailPanel } from '@/components/proper-6k/IssueDetailPanel';
 import { statusConfig } from '@/components/proper-6k/StatusSelector';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 function LinearDashboard({ userProfile, workspaceId, userId }) {
     const {
@@ -245,7 +246,7 @@ function LinearDashboard({ userProfile, workspaceId, userId }) {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <LoadingSpinner  />
             </div>
         );
     }
@@ -264,115 +265,53 @@ function LinearDashboard({ userProfile, workspaceId, userId }) {
     return (
         <>
             <div className="flex h-full w-full bg-white/10 dark:bg-black/10 backdrop-blur-md text-foreground dark:text-[#e7e7e7] overflow-hidden">
-                {/* Proper 6K Sidebar */}
-                <div className="w-64 border-r border-border/50 dark:border-white/5 flex flex-col bg-white/5 dark:bg-black/5 backdrop-blur-sm p-6 space-y-8 overflow-y-auto">
-                    <div className="flex items-center justify-between px-3 mb-2">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                                <Trello className="w-5 h-5 text-white" />
-                            </div>
-                            <span className="font-bold tracking-tight">Proper 6K</span>
-                        </div>
-                    </div>
-
-                    <SidebarSection title="Views">
-                        <SidebarItem 
-                            icon={Inbox} 
-                            label="All issues" 
-                            active={activeFilter === 'all' && !selectedProject && !selectedCycle}
-                            onClick={() => {
-                                setActiveFilter('all');
-                                setSelectedProject(null);
-                                setSelectedCycle(null);
-                            }}
-                            count={issues.length}
-                        />
-                        <SidebarItem 
-                            icon={CheckCircle2} 
-                            label="Active" 
-                            active={activeFilter === 'active' && !selectedProject && !selectedCycle}
-                            onClick={() => {
-                                setActiveFilter('active');
-                                setSelectedProject(null);
-                                setSelectedCycle(null);
-                            }}
-                            count={issues.filter(i => !['done', 'canceled'].includes(i.status)).length}
-                            color="text-blue-500"
-                        />
-                        <SidebarItem 
-                            icon={Archive} 
-                            label="Backlog" 
-                            active={activeFilter === 'backlog' && !selectedProject && !selectedCycle}
-                            onClick={() => {
-                                setActiveFilter('backlog');
-                                setSelectedProject(null);
-                                setSelectedCycle(null);
-                            }}
-                            count={issues.filter(i => i.status === 'backlog').length}
-                            color="text-gray-500"
-                        />
-                    </SidebarSection>
-
-                    <SidebarSection 
-                        title="Projects" 
-                        action={
-                            <button className="p-1 hover:bg-white/5 rounded-md text-muted-foreground/40 hover:text-foreground transition-colors">
-                                <Plus className="w-3 h-3" />
-                            </button>
-                        }
-                    >
-                        {projects.map(project => (
-                            <SidebarItem 
-                                key={project.id}
-                                icon={Folder} 
-                                label={project.name} 
-                                active={selectedProject === project.id}
-                                onClick={() => {
-                                    setSelectedProject(project.id);
-                                    setSelectedCycle(null);
-                                    setActiveFilter('all');
-                                }}
-                                color={project.color ? `text-[${project.color}]` : 'text-purple-500'}
-                            />
-                        ))}
-                    </SidebarSection>
-
-                    <SidebarSection title="Cycles">
-                        {cycles.map(cycle => (
-                            <SidebarItem 
-                                key={cycle.id}
-                                icon={Clock} 
-                                label={cycle.name} 
-                                active={selectedCycle === cycle.id}
-                                onClick={() => {
-                                    setSelectedCycle(cycle.id);
-                                    setSelectedProject(null);
-                                    setActiveFilter('all');
-                                }}
-                                color="text-orange-500"
-                            />
-                        ))}
-                        {cycles.length === 0 && (
-                            <p className="px-3 text-[10px] text-muted-foreground/40 italic">No active cycles</p>
-                        )}
-                    </SidebarSection>
-                </div>
+    
 
                 {/* Main Content Area */}
                 <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                    {/* Top Bar */}
-                    <div className="flex items-center justify-between px-8 py-4 border-b border-border/50 dark:border-white/5 backdrop-blur-xl z-10">
-                        <div className="flex items-center gap-4 flex-1">
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 dark:bg-white/5 border border-border/50 dark:border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-foreground dark:hover:text-white cursor-pointer transition-all">
-                                <Filter className="w-3.5 h-3.5" />
-                                <span>Filter</span>
+                    {/* Compact Header */}
+                    <div className="flex items-center justify-between gap-4 px-6 py-3 border-b border-border/50 dark:border-white/5 z-10">
+                        <div className="flex items-center gap-3">
+                            <div className="inline-flex items-center rounded-lg bg-white/5 dark:bg-white/5 p-1 shadow-sm hidden sm:flex">
+                                <button
+                                    className={`text-[11px] px-3 py-1 rounded-md font-bold transition ${activeFilter === 'all' && !selectedProject && !selectedCycle ? 'bg-white/10 text-primary' : 'text-muted-foreground/60 hover:bg-white/5'}`}
+                                    onClick={() => { setActiveFilter('all'); setSelectedProject(null); setSelectedCycle(null); }}
+                                >All</button>
+                                <button
+                                    className={`text-[11px] px-3 py-1 rounded-md font-bold transition ${activeFilter === 'active' && !selectedProject && !selectedCycle ? 'bg-white/10 text-primary' : 'text-muted-foreground/60 hover:bg-white/5'}`}
+                                    onClick={() => { setActiveFilter('active'); setSelectedProject(null); setSelectedCycle(null); }}
+                                >Active</button>
+                                <button
+                                    className={`text-[11px] px-3 py-1 rounded-md font-bold transition ${activeFilter === 'backlog' && !selectedProject && !selectedCycle ? 'bg-white/10 text-primary' : 'text-muted-foreground/60 hover:bg-white/5'}`}
+                                    onClick={() => { setActiveFilter('backlog'); setSelectedProject(null); setSelectedCycle(null); }}
+                                >Backlog</button>
                             </div>
-                            
-                            <div className="relative group flex-1 max-w-md">
+
+                            {/* Project selector (compact) */}
+                            {projects.length > 0 && (
+                                <select
+                                    value={selectedProject || ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value || null;
+                                        setSelectedProject(val);
+                                        setSelectedCycle(null);
+                                        setActiveFilter('all');
+                                    }}
+                                    className="ml-3 bg-transparent border border-border/30 text-sm rounded-md px-3 py-1 text-muted-foreground/80 hidden sm:inline-block"
+                                >
+                                    <option value="">All projects</option>
+                                    {projects.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                            )}
+
+                            <div className="relative max-w-md w-[420px]">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
                                 <Input
                                     id="issue-search"
-                                    className="h-10 pl-10 w-full bg-white/50 dark:bg-white/5 border-border/50 dark:border-white/10 rounded-2xl focus:ring-primary/20 transition-all placeholder:text-muted-foreground/30"
+                                    aria-label="Search issues and projects"
+                                    className="h-9 pl-10 w-full bg-white/50 dark:bg-white/5 border-border/50 dark:border-white/10 rounded-2xl focus:ring-primary/20 transition-all placeholder:text-muted-foreground/30"
                                     placeholder="Search issues, projects..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -380,17 +319,19 @@ function LinearDashboard({ userProfile, workspaceId, userId }) {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3 ml-4">
+                        <div className="flex items-center gap-3">
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-10 w-10 rounded-2xl text-muted-foreground/40 hover:text-foreground dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5 transition-all"
+                                className="h-9 w-9 rounded-2xl text-muted-foreground/40 hover:text-foreground dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5 transition-all"
+                                title="Change layout"
                             >
                                 <LayoutGrid className="w-4 h-4" />
                             </Button>
                             <Button
                                 size="sm"
-                                className="h-10 bg-primary hover:bg-primary/90 text-white font-bold px-6 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95"
+                                aria-label="Create new issue"
+                                className="h-9 bg-primary hover:bg-primary/90 text-white font-bold px-4 rounded-2xl shadow transition-all active:scale-95"
                                 onClick={() => setCreateDialogOpen(true)}
                             >
                                 <Plus className="w-4 h-4 mr-2" />

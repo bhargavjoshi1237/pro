@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
 import UploadModal from './UploadModal';
+import LoadingSpinner from '../LoadingSpinner';
 
 export default function AttachmentManager({ workspaceId, parentId, parentType }) {
     const [files, setFiles] = useState([]);
@@ -158,7 +159,9 @@ export default function AttachmentManager({ workspaceId, parentId, parentType })
             />
 
             {loading ? (
-                <div className="text-xs text-gray-400 italic">Loading...</div>
+                <div className="flex justify-center py-4">
+                      <LoadingSpinner  />
+                </div>
             ) : files.length === 0 ? (
                 <div className="text-xs text-gray-400 italic">No attachments</div>
             ) : (

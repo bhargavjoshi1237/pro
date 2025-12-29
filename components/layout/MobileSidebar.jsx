@@ -12,7 +12,7 @@ import { ToolCase, Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useTheme } from '@/context/ThemeContext';
 
-export default function MobileSidebar({ open, setOpen, user, userProfile }) {
+export default function MobileSidebar({ open, setOpen, user, userProfile, showExperimentalFeatures = false }) {
     const router = useRouter();
     const pathname = usePathname();
     const { theme, toggleTheme } = useTheme();
@@ -21,7 +21,6 @@ export default function MobileSidebar({ open, setOpen, user, userProfile }) {
         { path: '/dashboard', label: 'Home', icon: HomeIcon },
         { path: '/ai-chat', label: 'AI Chat', icon: SparklesIcon },
         { path: '/emails', label: 'Emails', icon: EnvelopeIcon },
-        { path: '/proper6k', label: 'Proper 6K', icon: ToolCase },
     ];
 
     const handleNavigation = (path) => {

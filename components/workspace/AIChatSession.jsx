@@ -316,11 +316,7 @@ export function AIChatSession({ session, user }) {
                                         </Avatar>
                                         <div className="flex-1">
                                             <div className="inline-block px-3 py-2 rounded-lg bg-gray-100 dark:bg-[#2a2a2a]">
-                                                <div className="flex gap-1">
-                                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                                                </div>
+                                                <LoadingSpinner />
                                             </div>
                                         </div>
                                     </div>

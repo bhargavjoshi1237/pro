@@ -26,7 +26,7 @@ function LandingContent() {
   }, []);
 
   return (
-    <div className="relative min-h-screen text-gray-900 dark:text-[#e7e7e7] overflow-hidden">
+    <div className="relative min-h-screen h-full text-gray-900 dark:text-[#e7e7e7] overflow-y-auto overflow-x-hidden">
       <div>
         {/* Animated background */}
         <WaveBackground />

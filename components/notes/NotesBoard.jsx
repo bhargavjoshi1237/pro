@@ -555,11 +555,7 @@ export default function NotesBoard({ boardId, workspaceId, userId, onClose }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-[#191919]">
-        <div className="flex gap-2">
-          <div className="w-3 h-3 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-          <div className="w-3 h-3 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-          <div className="w-3 h-3 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-        </div>
+        <LoadingSpinner color="gray" className="gap-2" />
       </div>
     );
   }

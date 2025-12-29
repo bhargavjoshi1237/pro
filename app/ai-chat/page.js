@@ -129,6 +129,7 @@ export default function AIChatPage() {
             messages={messages}
             setMessages={setMessages}
             aiSettings={aiSettings}
+            userProfile={userProfile}
           />
         )}
       </AppLayout>

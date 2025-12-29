@@ -60,10 +60,17 @@ export function IssueRow({ issue, onClick, onDelete, onUpdate, members }) {
 
     return (
         <div
-            className="group flex items-center justify-between py-4 px-6 bg-white/40 dark:bg-white/[0.02] hover:bg-white/60 dark:hover:bg-white/[0.05] border border-border/50 dark:border-white/5 rounded-2xl transition-all duration-200 cursor-pointer hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-none hover:-translate-y-0.5 active:scale-[0.99]"
+            role="button"
+            tabIndex={0}
+            aria-label={`Open issue ${issueIdentifier}`}
+            className="group flex items-center justify-between py-3 px-4 bg-transparent hover:bg-white/5 rounded-lg border border-border/30 transition-colors cursor-pointer"
             onClick={() => onClick?.(issue)}
+            onKeyDown={(e) => { if (e.key === 'Enter') onClick?.(issue); }}
         >
-            <div className="flex items-center gap-4 overflow-hidden flex-1">
+            <div className="flex items-center gap-4 overflow-hidden flex-1 min-w-0">
+                {/* Status strip */}
+                <div className={`w-1 h-10 rounded-full ${statusInfo.color ? statusInfo.color.replace('text-', 'bg-') : 'bg-gray-400'}`} />
+
                 {/* Status Selector */}
                 <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                     <StatusSelector
@@ -74,41 +81,30 @@ export function IssueRow({ issue, onClick, onDelete, onUpdate, members }) {
                 </div>
 
                 {/* Issue ID & Title */}
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <span className="text-[10px] font-bold tracking-widest text-muted-foreground/40 dark:text-gray-600 group-hover:text-muted-foreground/60 transition-colors">
-                        {issueIdentifier}
-                    </span>
-                    <span className="text-sm font-semibold text-foreground/90 dark:text-gray-200 truncate group-hover:text-foreground transition-colors">
-                        {issue.title}
-                    </span>
-                </div>
-            </div>
-
-            {/* Meta Info (labels, assignee, actions) */}
-            <div className="flex items-center gap-6 flex-shrink-0">
-                {/* Labels */}
-                {issue.labels && issue.labels.length > 0 && (
-                    <div className="hidden md:flex items-center gap-1.5">
-                        {issue.labels.slice(0, 2).map((label) => (
-                            <Badge
-                                key={label.id}
-                                variant="outline"
-                                className="px-2 py-0 text-[10px] font-bold uppercase tracking-wider bg-white/50 dark:bg-white/5 border-border/50 dark:border-white/10 text-muted-foreground dark:text-gray-400 rounded-full"
-                                style={{ borderColor: `${label.color}40`, color: label.color }}
-                            >
-                                {label.name}
-                            </Badge>
-                        ))}
-                        {issue.labels.length > 2 && (
-                            <span className="text-[10px] font-bold text-muted-foreground/40 px-1">
-                                +{issue.labels.length - 2}
+                <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-mono tracking-widest text-muted-foreground/40 truncate">{issueIdentifier}</span>
+                        <span className="text-sm font-semibold text-foreground/90 dark:text-gray-200 truncate">{issue.title}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 text-[12px] text-muted-foreground/60 truncate">
+                        {issue.project?.name && <span className="hidden sm:inline">{issue.project.name}</span>}
+                        {issue.labels && issue.labels.length > 0 && (
+                            <span className="hidden md:inline-flex items-center gap-2">
+                                {issue.labels.slice(0,2).map(label => (
+                                    <Badge key={label.id} className="text-[10px] font-bold uppercase" style={{ borderColor: `${label.color}40`, color: label.color }}>
+                                        {label.name}
+                                    </Badge>
+                                ))}
+                                {issue.labels.length > 2 && <span className="text-[10px]">+{issue.labels.length - 2}</span>}
                             </span>
                         )}
                     </div>
-                )}
+                </div>
+            </div>
 
-                {/* Priority Selector */}
-                <div className="hidden sm:block flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            {/* Meta Info (priority, assignee, actions) */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="hidden sm:block" onClick={(e) => e.stopPropagation()}>
                     <PrioritySelector
                         value={issue.priority}
                         onChange={(priority) => onUpdate?.(issue.id, { priority })}
@@ -116,7 +112,6 @@ export function IssueRow({ issue, onClick, onDelete, onUpdate, members }) {
                     />
                 </div>
 
-                {/* Assignee Selector */}
                 <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                     <AssigneeSelector
                         value={issue.assignee_id}
@@ -126,7 +121,6 @@ export function IssueRow({ issue, onClick, onDelete, onUpdate, members }) {
                     />
                 </div>
 
-                {/* Actions Menu */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button

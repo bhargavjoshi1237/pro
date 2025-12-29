@@ -29,6 +29,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from '@/lib/supabase';
+import LoadingSpinner from '../LoadingSpinner';
 
 export function KanbanPanel({ workspaceId, onOpenBoard }) {
     const {
@@ -129,7 +130,9 @@ export function KanbanPanel({ workspaceId, onOpenBoard }) {
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 {loading ? (
                     <div className="flex justify-center py-8">
-                        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-8 h-8 relative">
+                             <LoadingSpinner  />
+                        </div>
                     </div>
                 ) : boards.length === 0 ? (
                     <div className="text-center py-8 px-4">

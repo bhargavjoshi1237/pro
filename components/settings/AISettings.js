@@ -186,9 +186,7 @@ export default function AISettings({ user }) {
             {testing ? 'Testing...' : 'Test'}
           </Button>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Examples: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">OpenAI</a>, <a href="https://cerebras.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">Cerebras</a>, <a href="https://together.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">Together AI</a>
-        </p>
+         
       </div>
 
       {/* Model Selection */}

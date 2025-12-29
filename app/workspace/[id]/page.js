@@ -23,6 +23,7 @@ import WhiteboardPanel from '@/components/whiteboard/WhiteboardPanel';
 import { SharedBoardsPanel } from '@/components/whiteboard/SharedBoardsPanel';
 import { NotesPanel } from '@/components/notes/NotesPanel';
 import NotesBoard from '@/components/notes/NotesBoard';
+import { WorkspaceLoading } from '@/components/LoadingSpinner';
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -213,9 +214,9 @@ export default function WorkspacePage() {
   const isRightPanelOpen = aiPanelOpen || workspaceChatOpen || peoplePanelOpen || kanbanPanelOpen || storagePanelOpen || sharedBoardsPanelOpen || notesPanelOpen;
 
   return (
-    <div className="flex h-screen bg-white dark:bg-[#191919] overflow-hidden">
+    <div className="flex h-full bg-white dark:bg-[#191919] overflow-hidden">
       {/* Mobile Layout */}
-      <div className="lg:hidden flex flex-col flex-1 h-full w-full">
+      <div className="lg:hidden flex flex-col flex-1 h-full w-full min-h-0">
         {/* Mobile Header - Sticky */}
         <div className={`sticky top-0 z-40 items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#191919] ${showMobileUI ? 'flex' : 'hidden'}`}>
           <h1 className="text-lg font-semibold text-gray-900 dark:text-[#e7e7e7] truncate flex-1">
@@ -243,6 +244,22 @@ export default function WorkspacePage() {
               workspaceId={workspaceId}
               onClose={() => setActiveView('editor')}
             />
+          ) : activeView === 'whiteboard' && activeWhiteboardId ? (
+            <div className="h-full">
+              <WhiteboardPanel
+                workspaceId={workspaceId}
+                whiteboardId={activeWhiteboardId}
+                onClose={() => setActiveView('editor')}
+              />
+            </div>
+          ) : activeView === 'notes' && activeNotesBoardId ? (
+            <div className="h-full">
+              <NotesBoard
+                boardId={activeNotesBoardId}
+                workspaceId={workspaceId}
+                onClose={() => setActiveView('editor')}
+              />
+            </div>
           ) : (
             <EditorTabs
               tabs={openTabs}
