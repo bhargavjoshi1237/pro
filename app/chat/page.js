@@ -9,7 +9,7 @@ import {
   UserGroupIcon,
   ArrowLeftIcon 
 } from '@heroicons/react/24/outline';
-import { LoadingPage } from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
@@ -131,7 +131,11 @@ function ChatListContent() {
   };
 
   if (loading || !user) {
-    return <LoadingPage message="Loading chats..." />;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   return (

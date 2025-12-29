@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { ChatRoom } from '@/components/chat/ChatRoom';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ArrowLeftIcon, UserGroupIcon } from '@heroicons/react/24/outline';
-import { LoadingPage } from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 function ChatPageContent() {
@@ -85,7 +85,11 @@ function ChatPageContent() {
   }, [router, roomId]);
 
   if (loading || !user) {
-    return <LoadingPage message="Loading chat..." />;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   const displayName = room?.type === 'workspace' 
